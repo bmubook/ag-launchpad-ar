@@ -29,13 +29,7 @@
             --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
             --shadow-glow: 0 0 30px rgba(108, 99, 255, 0.15);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'IBM Plex Sans Arabic', sans-serif;
             background: var(--bg-primary);
@@ -43,704 +37,342 @@
             min-height: 100vh;
             line-height: 1.7;
         }
-
-        /* Background Pattern */
         body::before {
             content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background:
-                radial-gradient(circle at 20% 20%, rgba(108, 99, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
+                radial-gradient(circle at 20% 20%, rgba(108,99,255,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59,130,246,0.05) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
         }
-
-        .container {
-            max-width: 780px;
-            margin: 0 auto;
-            padding: 40px 24px 60px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-
-        .header-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 100px;
-            padding: 8px 20px;
-            font-size: 13px;
-            color: var(--accent);
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 32px;
-            font-weight: 700;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 12px;
-        }
-
-        .header p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            max-width: 550px;
-            margin: 0 auto;
-        }
-
-        /* Steps indicator */
-        .steps {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 40px;
-        }
-
-        .step {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 500;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            transition: all 0.3s ease;
-        }
-
-        .step.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        .step.done {
-            background: var(--success-bg);
-            border-color: var(--success);
-            color: var(--success);
-        }
-
-        .step-num {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        /* Form Card */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow);
-            transition: border-color 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(108, 99, 255, 0.3);
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-title .icon {
-            font-size: 22px;
-        }
-
-        /* Form Fields */
-        .field {
-            margin-bottom: 24px;
-        }
-
-        .field:last-child {
-            margin-bottom: 0;
-        }
-
-        .field label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .field .hint {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        input[type="text"],
-        textarea,
-        select {
-            width: 100%;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            font-size: 15px;
-            color: var(--text-primary);
-            outline: none;
-            transition: all 0.3s ease;
-            direction: rtl;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        input::placeholder,
-        textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239895b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: 16px center;
-        }
-
-        /* Radio Options */
-        .radio-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .radio-option {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .radio-option input {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .radio-label {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            padding: 16px;
-            background: var(--bg-input);
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            transition: all 0.3s ease;
-        }
-
-        .radio-option input:checked + .radio-label {
-            border-color: var(--accent);
-            background: rgba(108, 99, 255, 0.08);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        .radio-label:hover {
-            border-color: rgba(108, 99, 255, 0.4);
-        }
-
-        .radio-label .title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .radio-label .desc {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Project Type - 3 columns */
-        .radio-group-3 {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-
+        .container { max-width: 780px; margin: 0 auto; padding: 40px 24px 60px; position: relative; z-index: 1; }
+        .header { text-align: center; margin-bottom: 48px; }
+        .header-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 100px; padding: 8px 20px; font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 20px; }
+        .header h1 { font-size: 32px; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
+        .header p { font-size: 16px; color: var(--text-secondary); max-width: 550px; margin: 0 auto; }
+        .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; }
+        .step { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.3s ease; }
+        .step.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 20px var(--accent-glow); }
+        .step.done { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+        .step-num { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow); transition: border-color 0.3s ease; }
+        .card:hover { border-color: rgba(108,99,255,0.3); }
+        .card-design { border-color: rgba(108,99,255,0.25); background: linear-gradient(135deg, #161638 0%, #1a1645 100%); animation: fadeInDown 0.35s ease; }
+        .card-design-hidden { display: none; }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+        .card-title .icon { font-size: 22px; }
+        .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: -18px; margin-bottom: 24px; padding-right: 32px; }
+        .field { margin-bottom: 24px; }
+        .field:last-child { margin-bottom: 0; }
+        .field label { display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+        .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        input[type="text"], textarea, select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 15px; color: var(--text-primary); outline: none; transition: all 0.3s ease; direction: rtl; }
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); }
+        textarea { resize: vertical; min-height: 100px; }
+        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239895b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 16px center; }
+        .radio-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .radio-option { position: relative; cursor: pointer; }
+        .radio-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .radio-label { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--bg-input); border: 2px solid var(--border); border-radius: var(--radius); transition: all 0.3s ease; }
+        .radio-option input:checked + .radio-label { border-color: var(--accent); background: rgba(108,99,255,0.08); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .radio-label:hover { border-color: rgba(108,99,255,0.4); }
+        .radio-label .title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .radio-label .desc { font-size: 12px; color: var(--text-muted); }
+        .radio-group-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .radio-group-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
         @media (max-width: 640px) {
-            .radio-group-3 {
-                grid-template-columns: 1fr;
-            }
-            .radio-group {
-                grid-template-columns: 1fr;
-            }
+            .radio-group-4 { grid-template-columns: 1fr 1fr; }
+            .radio-group-3 { grid-template-columns: 1fr; }
+            .radio-group { grid-template-columns: 1fr; }
         }
-
-        /* Generate Button */
-        .btn-generate {
-            width: 100%;
-            padding: 16px 32px;
-            background: var(--gradient-1);
-            border: none;
-            border-radius: var(--radius);
-            color: #fff;
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px var(--accent-glow);
-        }
-
-        .btn-generate:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px var(--accent-glow);
-        }
-
-        .btn-generate:active {
-            transform: translateY(0);
-        }
-
-        .btn-generate:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Output Section */
-        .output-section {
-            display: none;
-            animation: slideUp 0.5s ease;
-        }
-
-        .output-section.visible {
-            display: block;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .output-card {
-            background: var(--bg-card);
-            border: 2px solid var(--success);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: 0 0 30px rgba(45, 212, 168, 0.1);
-        }
-
-        .output-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            background: var(--success-bg);
-            border-bottom: 1px solid rgba(45, 212, 168, 0.2);
-        }
-
-        .output-header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--success);
-        }
-
-        .btn-copy {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 20px;
-            background: var(--success);
-            border: none;
-            border-radius: 100px;
-            color: #0a0a1a;
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-copy:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-copy.copied {
-            background: #fff;
-            color: var(--success);
-        }
-
-        .output-body {
-            padding: 24px;
-        }
-
-        .output-text {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            font-size: 14px;
-            line-height: 2;
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            direction: rtl;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .output-text::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .output-text::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .output-text::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
-
-        /* Highlight user values */
-        .highlight {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            margin-top: 48px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-
-        /* Validation */
-        .field.error input,
-        .field.error textarea,
-        .field.error select {
-            border-color: #ef4444;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-        }
-
-        .error-msg {
-            color: #ef4444;
-            font-size: 12px;
-            margin-top: 6px;
-            display: none;
-        }
-
-        .field.error .error-msg {
-            display: block;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--success);
-            color: #0a0a1a;
-            padding: 12px 28px;
-            border-radius: 100px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            z-index: 1000;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 8px 30px rgba(45, 212, 168, 0.3);
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+        .color-hint-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+        .color-swatch { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+        .color-swatch:hover { border-color: var(--accent); color: var(--text-primary); }
+        .color-swatch .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .btn-generate { width: 100%; padding: 16px 32px; background: var(--gradient-1); border: none; border-radius: var(--radius); color: #fff; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+        .btn-generate:active { transform: translateY(0); }
+        .output-section { display: none; animation: slideUp 0.5s ease; }
+        .output-section.visible { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        .output-card { background: var(--bg-card); border: 2px solid var(--success); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 30px rgba(45,212,168,0.1); }
+        .output-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--success-bg); border-bottom: 1px solid rgba(45,212,168,0.2); }
+        .output-header-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; color: var(--success); }
+        .btn-copy { display: flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--success); border: none; border-radius: 100px; color: #0a0a1a; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-copy:hover { transform: scale(1.05); }
+        .btn-copy.copied { background: #fff; color: var(--success); }
+        .output-body { padding: 24px; }
+        .output-text { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; font-size: 14px; line-height: 2; color: var(--text-primary); white-space: pre-wrap; direction: rtl; max-height: 500px; overflow-y: auto; }
+        .output-text::-webkit-scrollbar { width: 6px; }
+        .output-text::-webkit-scrollbar-track { background: transparent; }
+        .output-text::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; }
+        .field.error input, .field.error textarea, .field.error select { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+        .error-msg { color: #ef4444; font-size: 12px; margin-top: 6px; display: none; }
+        .field.error .error-msg { display: block; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--success); color: #0a0a1a; padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 600; font-family: 'IBM Plex Sans Arabic', sans-serif; z-index: 1000; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 8px 30px rgba(45,212,168,0.3); }
+        .toast.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-badge">⚡ Antigravity 2.0 Template</div>
-            <h1>🚀 مولّد الإقلاع الذكي</h1>
-            <p>عبّي الحقول بالأسفل واضغط "توليد" — وبرومبت الإقلاع جاهز للنسخ بضغطة واحدة</p>
-        </div>
+<div class="container">
+    <div class="header">
+        <div class="header-badge">⚡ Antigravity 2.0 Template</div>
+        <h1>🚀 مولّد الإقلاع الذكي</h1>
+        <p>عبّي الحقول بالأسفل واضغط "توليد" — وبرومبت الإقلاع جاهز للنسخ بضغطة واحدة</p>
+    </div>
+    <div class="steps">
+        <div class="step active" id="step1"><span class="step-num">1</span> تعبئة البيانات</div>
+        <div class="step" id="step2"><span class="step-num">2</span> توليد البرومبت</div>
+        <div class="step" id="step3"><span class="step-num">3</span> نسخ وإرسال</div>
+    </div>
+    <form id="promptForm" novalidate>
 
-        <!-- Steps -->
-        <div class="steps">
-            <div class="step active" id="step1">
-                <span class="step-num">1</span>
-                تعبئة البيانات
+        <!-- بطاقة 1: معلومات المشروع -->
+        <div class="card">
+            <div class="card-title"><span class="icon">📋</span> معلومات المشروع</div>
+            <div class="field" id="field-name">
+                <label for="projectName">اسم المشروع *</label>
+                <input type="text" id="projectName" placeholder="مثال: NativePrime أو متجر راهو" required>
+                <div class="error-msg">⚠️ اسم المشروع مطلوب</div>
             </div>
-            <div class="step" id="step2">
-                <span class="step-num">2</span>
-                توليد البرومبت
+            <div class="field" id="field-type">
+                <label>طبيعة المشروع *</label>
+                <div class="radio-group radio-group-3">
+                    <label class="radio-option">
+                        <input type="radio" name="projectType" value="تطبيق ويب متجاوب لجميع الشاشات" id="type-web">
+                        <div class="radio-label"><span class="title">🌐 تطبيق ويب</span><span class="desc">متجاوب لجميع الشاشات</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="projectType" value="تطبيق جوال React Native" id="type-mobile">
+                        <div class="radio-label"><span class="title">📱 تطبيق جوال</span><span class="desc">React Native</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="projectType" value="مشروع باك إند وقاعدة بيانات فقط" id="type-backend">
+                        <div class="radio-label"><span class="title">⚙️ باك إند</span><span class="desc">قاعدة بيانات فقط</span></div>
+                    </label>
+                </div>
+                <div class="error-msg">⚠️ اختر طبيعة المشروع</div>
             </div>
-            <div class="step" id="step3">
-                <span class="step-num">3</span>
-                نسخ وإرسال
-            </div>
-        </div>
-
-        <!-- Form -->
-        <form id="promptForm" novalidate>
-            <!-- Card 1: Project Info -->
-            <div class="card">
-                <div class="card-title">
-                    <span class="icon">📋</span>
-                    معلومات المشروع
-                </div>
-
-                <div class="field" id="field-name">
-                    <label for="projectName">اسم المشروع *</label>
-                    <input type="text" id="projectName" placeholder="مثال: NativePrime أو متجر راهو" required>
-                    <div class="error-msg">⚠️ اسم المشروع مطلوب</div>
-                </div>
-
-                <div class="field" id="field-type">
-                    <label>طبيعة المشروع *</label>
-                    <div class="radio-group radio-group-3">
-                        <label class="radio-option">
-                            <input type="radio" name="projectType" value="تطبيق ويب متجاوب لجميع الشاشات">
-                            <div class="radio-label">
-                                <span class="title">🌐 تطبيق ويب</span>
-                                <span class="desc">متجاوب لجميع الشاشات</span>
-                            </div>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="projectType" value="تطبيق جوال React Native">
-                            <div class="radio-label">
-                                <span class="title">📱 تطبيق جوال</span>
-                                <span class="desc">React Native</span>
-                            </div>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="projectType" value="مشروع باك إند وقاعدة بيانات فقط">
-                            <div class="radio-label">
-                                <span class="title">⚙️ باك إند</span>
-                                <span class="desc">قاعدة بيانات فقط</span>
-                            </div>
-                        </label>
-                    </div>
-                    <div class="error-msg">⚠️ اختر طبيعة المشروع</div>
-                </div>
-
-                <div class="field" id="field-idea">
-                    <label for="projectIdea">الفكرة المبدئية *</label>
-                    <textarea id="projectIdea" placeholder="اشرح فكرة مشروعك بالتفصيل... مثال: تطبيق لإدارة المواعيد الطبية يربط المرضى بالأطباء مع نظام إشعارات ودفع إلكتروني" required></textarea>
-                    <div class="error-msg">⚠️ اكتب فكرة مشروعك</div>
-                </div>
-            </div>
-
-            <!-- Card 2: Settings -->
-            <div class="card">
-                <div class="card-title">
-                    <span class="icon">⚙️</span>
-                    إعدادات التشغيل
-                </div>
-
-                <div class="field" id="field-mode">
-                    <label>وضع التشغيل *</label>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="opMode" value="prototype">
-                            <div class="radio-label">
-                                <span class="title">🧪 Prototype</span>
-                                <span class="desc">تجريب سريع — قواعد مخففة</span>
-                            </div>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="opMode" value="production">
-                            <div class="radio-label">
-                                <span class="title">🏭 Production</span>
-                                <span class="desc">إنتاج كامل — صرامة جميع القواعد</span>
-                            </div>
-                        </label>
-                    </div>
-                    <div class="error-msg">⚠️ اختر وضع التشغيل</div>
-                </div>
-
-                <div class="field" id="field-callsign">
-                    <label for="callSign">اسم النداء *</label>
-                    <input type="text" id="callSign" placeholder="مثال: يا مدير / يا كابتن / يا باشمهندس" required>
-                    <p class="hint">💡 الوكيل يناديك بهذا الاسم في كل رد — إذا نسيه يعني فقد السياق</p>
-                    <div class="error-msg">⚠️ اسم النداء مطلوب</div>
-                </div>
-            </div>
-
-            <!-- Generate Button -->
-            <button type="submit" class="btn-generate" id="btnGenerate">
-                ⚡ توليد البرومبت
-            </button>
-        </form>
-
-        <!-- Output Section -->
-        <div class="output-section" id="outputSection">
-            <div class="output-card">
-                <div class="output-header">
-                    <div class="output-header-title">
-                        ✅ البرومبت جاهز — انسخه وأرسله للوكيل
-                    </div>
-                    <button class="btn-copy" id="btnCopy" onclick="copyPrompt()">
-                        📋 نسخ البرومبت
-                    </button>
-                </div>
-                <div class="output-body">
-                    <div class="output-text" id="outputText"></div>
-                </div>
+            <div class="field" id="field-idea">
+                <label for="projectIdea">الفكرة المبدئية *</label>
+                <textarea id="projectIdea" placeholder="اشرح فكرة مشروعك بالتفصيل... مثال: تطبيق لإدارة المواعيد الطبية يربط المرضى بالأطباء مع نظام إشعارات ودفع إلكتروني" required></textarea>
+                <div class="error-msg">⚠️ اكتب فكرة مشروعك</div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            Antigravity 2.0 Starter Template — مولّد الإقلاع الذكي v1.0
+        <!-- بطاقة 2: تفضيلات التصميم (تظهر للويب والجوال فقط) -->
+        <div class="card card-design card-design-hidden" id="cardDesign">
+            <div class="card-title"><span class="icon">🎨</span> تفضيلات التصميم</div>
+            <p class="card-subtitle">هذه المعلومات تُمكّن الوكيل من بناء نظام التصميم مباشرةً دون أسئلة إضافية</p>
+            <div class="field">
+                <label>المستخدم النهائي لمشروعك *</label>
+                <textarea id="targetUser" rows="2" style="min-height:70px" placeholder="مثال: أصحاب المطاعم الصغيرة من 25-45 سنة، يحتاجون لإدارة طلبات التوصيل بسرعة من الجوال"></textarea>
+                <p class="hint">💡 وصف دقيق للمستخدم يُغني عن جلسة بحث كاملة</p>
+            </div>
+            <div class="field">
+                <label>طابع التصميم المطلوب *</label>
+                <div class="radio-group radio-group-4">
+                    <label class="radio-option">
+                        <input type="radio" name="designStyle" value="احترافي تقني — خطوط نظيفة، ألوان محايدة، يعطي ثقة وجدية">
+                        <div class="radio-label"><span class="title">💼 احترافي</span><span class="desc">SaaS / أعمال</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="designStyle" value="تجاري حيوي — ألوان دافئة وجذابة، يشجع على الشراء والتفاعل">
+                        <div class="radio-label"><span class="title">🛒 تجاري</span><span class="desc">متجر / تسوّق</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="designStyle" value="إبداعي جريء — تدرجات وتأثيرات بصرية، يُبهر المستخدم عند الدخول">
+                        <div class="radio-label"><span class="title">✨ إبداعي</span><span class="desc">تسويق / إبداع</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="designStyle" value="رسمي موثوق — هادئ ومنظم، يعطي انطباع الموثوقية والرسمية">
+                        <div class="radio-label"><span class="title">🏛️ رسمي</span><span class="desc">حكومي / تعليمي</span></div>
+                    </label>
+                </div>
+            </div>
+            <div class="field">
+                <label>الوضع البصري المفضل *</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="colorMode" value="وضع داكن (Dark Mode)">
+                        <div class="radio-label"><span class="title">🌙 داكن</span><span class="desc">Dark Mode — أقل إرهاقاً للعين</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="colorMode" value="وضع فاتح (Light Mode)">
+                        <div class="radio-label"><span class="title">☀️ فاتح</span><span class="desc">Light Mode — أوضح للقراءة</span></div>
+                    </label>
+                </div>
+            </div>
+            <div class="field">
+                <label for="primaryColor">لون رئيسي مفضل <span style="color:var(--text-muted);font-weight:400">(اختياري)</span></label>
+                <input type="text" id="primaryColor" placeholder="مثال: أزرق / أخضر زمردي / بنفسجي / #6c63ff">
+                <div class="color-hint-row">
+                    <span style="font-size:12px;color:var(--text-muted)">اقتراحات:</span>
+                    <div class="color-swatch" onclick="setColor('أزرق ملكي #3b82f6')"><div class="dot" style="background:#3b82f6"></div> أزرق</div>
+                    <div class="color-swatch" onclick="setColor('أخضر زمردي #2dd4a8')"><div class="dot" style="background:#2dd4a8"></div> زمردي</div>
+                    <div class="color-swatch" onclick="setColor('بنفسجي #6c63ff')"><div class="dot" style="background:#6c63ff"></div> بنفسجي</div>
+                    <div class="color-swatch" onclick="setColor('برتقالي دافئ #f59e0b')"><div class="dot" style="background:#f59e0b"></div> برتقالي</div>
+                    <div class="color-swatch" onclick="setColor('أحمر مرجاني #ef4444')"><div class="dot" style="background:#ef4444"></div> مرجاني</div>
+                </div>
+                <p class="hint">💡 يُستخدم كنقطة انطلاق لبناء لوحة الألوان الكاملة</p>
+            </div>
+        </div>
+
+        <!-- بطاقة 3: إعدادات التشغيل -->
+        <div class="card">
+            <div class="card-title"><span class="icon">⚙️</span> إعدادات التشغيل</div>
+            <div class="field" id="field-mode">
+                <label>وضع التشغيل *</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="opMode" value="prototype">
+                        <div class="radio-label"><span class="title">🧪 Prototype</span><span class="desc">تجريب سريع — قواعد مخففة</span></div>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="opMode" value="production">
+                        <div class="radio-label"><span class="title">🏭 Production</span><span class="desc">إنتاج كامل — صرامة جميع القواعد</span></div>
+                    </label>
+                </div>
+                <div class="error-msg">⚠️ اختر وضع التشغيل</div>
+            </div>
+            <div class="field" id="field-callsign">
+                <label for="callSign">اسم النداء *</label>
+                <input type="text" id="callSign" placeholder="مثال: يا مدير / يا كابتن / يا باشمهندس" required>
+                <p class="hint">💡 الوكيل يناديك بهذا الاسم في كل رد — إذا نسيه يعني فقد السياق</p>
+                <div class="error-msg">⚠️ اسم النداء مطلوب</div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-generate" id="btnGenerate">⚡ توليد البرومبت</button>
+    </form>
+
+    <div class="output-section" id="outputSection">
+        <div class="output-card">
+            <div class="output-header">
+                <div class="output-header-title">✅ البرومبت جاهز — انسخه وأرسله للوكيل</div>
+                <button class="btn-copy" id="btnCopy" onclick="copyPrompt()">📋 نسخ البرومبت</button>
+            </div>
+            <div class="output-body"><div class="output-text" id="outputText"></div></div>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">✅ تم نسخ البرومبت بنجاح!</div>
+    <div class="footer">Antigravity 2.0 Starter Template — مولّد الإقلاع الذكي v2.0</div>
+</div>
+<div class="toast" id="toast">✅ تم نسخ البرومبت بنجاح!</div>
 
-    <script>
-        const form = document.getElementById('promptForm');
-        const outputSection = document.getElementById('outputSection');
-        const outputText = document.getElementById('outputText');
-        const btnCopy = document.getElementById('btnCopy');
-        const toast = document.getElementById('toast');
+<script>
+    const form = document.getElementById('promptForm');
+    const outputSection = document.getElementById('outputSection');
+    const outputText = document.getElementById('outputText');
+    const btnCopy = document.getElementById('btnCopy');
+    const toast = document.getElementById('toast');
+    const cardDesign = document.getElementById('cardDesign');
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+    document.querySelectorAll('input[name="projectType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const needsUI = (this.id === 'type-web' || this.id === 'type-mobile');
+            if (needsUI) {
+                cardDesign.classList.remove('card-design-hidden');
+            } else {
+                cardDesign.classList.add('card-design-hidden');
+                document.getElementById('targetUser').value = '';
+                document.querySelectorAll('input[name="designStyle"]').forEach(r => r.checked = false);
+                document.querySelectorAll('input[name="colorMode"]').forEach(r => r.checked = false);
+                document.getElementById('primaryColor').value = '';
+            }
+        });
+    });
 
-            // Reset errors
-            document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
+    function setColor(val) { document.getElementById('primaryColor').value = val; }
 
-            // Validate
-            let valid = true;
-            const name = document.getElementById('projectName').value.trim();
-            const type = document.querySelector('input[name="projectType"]:checked');
-            const idea = document.getElementById('projectIdea').value.trim();
-            const mode = document.querySelector('input[name="opMode"]:checked');
-            const callSign = document.getElementById('callSign').value.trim();
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
 
-            if (!name) { document.getElementById('field-name').classList.add('error'); valid = false; }
-            if (!type) { document.getElementById('field-type').classList.add('error'); valid = false; }
-            if (!idea) { document.getElementById('field-idea').classList.add('error'); valid = false; }
-            if (!mode) { document.getElementById('field-mode').classList.add('error'); valid = false; }
-            if (!callSign) { document.getElementById('field-callsign').classList.add('error'); valid = false; }
+        const name     = document.getElementById('projectName').value.trim();
+        const typeEl   = document.querySelector('input[name="projectType"]:checked');
+        const idea     = document.getElementById('projectIdea').value.trim();
+        const modeEl   = document.querySelector('input[name="opMode"]:checked');
+        const callSign = document.getElementById('callSign').value.trim();
 
-            if (!valid) return;
+        let valid = true;
+        if (!name)     { document.getElementById('field-name').classList.add('error'); valid = false; }
+        if (!typeEl)   { document.getElementById('field-type').classList.add('error'); valid = false; }
+        if (!idea)     { document.getElementById('field-idea').classList.add('error'); valid = false; }
+        if (!modeEl)   { document.getElementById('field-mode').classList.add('error'); valid = false; }
+        if (!callSign) { document.getElementById('field-callsign').classList.add('error'); valid = false; }
+        if (!valid) return;
 
-            // Generate prompt
-            const modeText = mode.value === 'prototype'
-                ? 'prototype للتجريب السريع وبناء النموذج الأولي'
-                : 'production للإنتاج الكامل بصرامة جميع القواعد';
+        const hasUI        = !cardDesign.classList.contains('card-design-hidden');
+        const targetUser   = document.getElementById('targetUser').value.trim();
+        const designStyle  = document.querySelector('input[name="designStyle"]:checked');
+        const colorMode    = document.querySelector('input[name="colorMode"]:checked');
+        const primaryColor = document.getElementById('primaryColor').value.trim();
 
-            const prompt = `السلام عليكم. أنا مستخدم Vibe Builder، وهذا المجلد يحتوي على ملفات الإدارة الأساسية في الجذر. بما أنك تعمل داخل بيئة Antigravity 2.0 وتملك صلاحيات الملفات والطرفية، نفّذ المهام التالية فوراً وبشكل تلقائي:
+        const modeText = modeEl.value === 'prototype'
+            ? 'prototype للتجريب السريع وبناء النموذج الأولي'
+            : 'production للإنتاج الكامل بصرامة جميع القواعد';
+
+        let designSection = '';
+        if (hasUI) {
+            const styleText  = designStyle  ? designStyle.value  : 'لم يُحدد (استنتج من طبيعة المشروع)';
+            const modeUIText = colorMode    ? colorMode.value    : 'لم يُحدد (اختر الأنسب)';
+            const colorText  = primaryColor ? primaryColor       : 'لم يُحدد (اختر ما يناسب الطابع)';
+            const userText   = targetUser   ? targetUser         : 'لم يُحدد (استنتج من فكرة المشروع)';
+            designSection = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎨 تفضيلات التصميم (أنشئ tokens.css مباشرةً بهذه البيانات)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n9. المستخدم النهائي: ${userText}\n10. طابع التصميم: ${styleText}\n11. الوضع البصري: ${modeUIText}\n12. اللون الرئيسي المفضل: ${colorText}\n\n⚠️ تعليمات التصميم للوكيل:\n- لا تسأل عن تفضيلات التصميم — البيانات أعلاه كافية للبدء.\n- أنشئ ملف tokens.css بقيم فعلية (ليس placeholders) بناءً على الطابع والألوان أعلاه.\n- ابنِ نموذجاً تجريبياً HTML/CSS للشاشة الرئيسية واعرضه للمستخدم قبل البناء الكامل.\n- اسأل سؤالاً واحداً فقط: "هل هذا الاتجاه البصري يعكس تصورك؟" — ثم انطلق بعد الموافقة.`;
+        } else {
+            designSection = `\n9. المشروع باك إند فقط — لا واجهات مستخدم مطلوبة. عطّل مُراجع UI/UX تلقائياً وحوّل وزنه التقييمي لمُراجع الأمن والأداء.`;
+        }
+
+        const prompt =
+`السلام عليكم. أنا مستخدم Vibe Builder، وهذا المجلد يحتوي على ملفات الإدارة الأساسية في الجذر. بما أنك تعمل داخل بيئة Antigravity 2.0 وتملك صلاحيات الملفات والطرفية، نفّذ المهام التالية فوراً وبشكل تلقائي:
 
 1. اقرأ ملف master_rules.md من جذر المشروع مباشرة واعتبره الدستور الحاكم الصارم لك في هذا المشروع، والتزم بكل بند فيه (اللغة العربية الفصحى، حماية الـ RLS، منع الكسل، سقف حجم الملفات لـ 200 سطر، تتبّع الهجرات SQL، وحظر فوضى الحزم).
 2. اطّلع على الملفات الأخرى (project_map.md, changelog.md, bugs_log.md) لتفهم الهيكلية الحالية للمشروع.
 3. استخدم الطرفية والـ Sandbox المدمج لديك لتشغيل الفحص البيئي (Environment Audit) لمعرفة نظام تشغيلي وإصدارات (Node/Python/Git) والمنافذ المتاحة، وسجّل النتائج فوراً في قسم البيئة المحلية بملف project_map.md.
-4. اسم مشروعي الجديد هو: \${name}
-5. طبيعة المشروع وهويته التقنية هي: \${type.value}
-6. الفكرة المبدئية في عقلي هي: \${idea}
-7. وضع التشغيل المطلوب هو: \${modeText}
-8. اسم النداء الخاص بي هو: \${callSign}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 بيانات المشروع
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. اسم مشروعي الجديد هو: ${name}
+5. طبيعة المشروع وهويته التقنية هي: ${typeEl.value}
+6. الفكرة المبدئية في عقلي هي: ${idea}
+7. وضع التشغيل المطلوب هو: ${modeText}
+8. اسم النداء الخاص بي هو: ${callSign}${designSection}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 بعد إنهاء الفحص البيئي وتحديث المستندات، ابدأ العصف الذهني واطرح أسئلتك حبة حبة لتفكيك الـ MVP دون أي تأخير أو كود ناقص.`;
 
-            outputText.textContent = prompt;
+        outputText.textContent = prompt;
+        outputSection.classList.add('visible');
+        outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step1').classList.add('done');
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step2').classList.add('done');
+        document.getElementById('step3').classList.add('active');
+        document.getElementById('btnGenerate').innerHTML = '🔄 إعادة التوليد';
+    });
 
-            // Show output
-            outputSection.classList.add('visible');
-            outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            // Update steps
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step1').classList.add('done');
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step2').classList.add('done');
-            document.getElementById('step3').classList.add('active');
-
-            // Change button text
-            document.getElementById('btnGenerate').innerHTML = '🔄 إعادة التوليد';
+    function copyPrompt() {
+        navigator.clipboard.writeText(outputText.textContent).then(() => {
+            btnCopy.innerHTML = '✅ تم النسخ!';
+            btnCopy.classList.add('copied');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+            setTimeout(() => { btnCopy.innerHTML = '📋 نسخ البرومبت'; btnCopy.classList.remove('copied'); }, 3000);
         });
+    }
 
-        function copyPrompt() {
-            const text = outputText.textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                btnCopy.innerHTML = '✅ تم النسخ!';
-                btnCopy.classList.add('copied');
-
-                // Show toast
-                toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 2500);
-
-                setTimeout(() => {
-                    btnCopy.innerHTML = '📋 نسخ البرومبت';
-                    btnCopy.classList.remove('copied');
-                }, 3000);
-            });
-        }
-
-        // Remove error on input
-        document.querySelectorAll('input, textarea, select').forEach(el => {
-            el.addEventListener('input', function() {
-                this.closest('.field')?.classList.remove('error');
-            });
-        });
-
-        document.querySelectorAll('input[type="radio"]').forEach(el => {
-            el.addEventListener('change', function() {
-                this.closest('.field')?.classList.remove('error');
-            });
-        });
-    </script>
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+        el.addEventListener('input', function() { this.closest('.field')?.classList.remove('error'); });
+    });
+    document.querySelectorAll('input[type="radio"]').forEach(el => {
+        el.addEventListener('change', function() { this.closest('.field')?.classList.remove('error'); });
+    });
+</script>
 </body>
 </html>
