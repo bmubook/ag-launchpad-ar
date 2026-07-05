@@ -58,11 +58,12 @@ ag-launchpad-ar/
 ## 🚀 كيف تبدأ؟
 
 ### الطريقة السريعة (مستحسنة):
-1. حمّل المشروع:
+1. حمّل المشروع (واستبدل `my-project` باسم مشروعك الفعلي):
    ```bash
    git clone https://github.com/YOUR_USERNAME/ag-launchpad-ar.git my-project
    cd my-project
    ```
+   > 💡 **تنبيه:** تأكد من تغيير اسم المجلد `my-project` إلى اسم مشروعك الفعلي لتمييزه وتفادي التكرار في مشاريعك القادمة.
 2. افتح المجلد في **Google Antigravity 2.0**
 3. افتح ملف **`SETUP_GUIDE.html`** في المتصفح
 4. عبّي الحقول واضغط **"توليد البرومبت"** ⚡
@@ -100,7 +101,7 @@ ag-launchpad-ar/
 | Git | أحدث إصدار |
 | Google Antigravity 2.0 | **مطلوب** |
 
-> ⚠️ هذا القالب مصمم **حصرياً** لبيئة Google Antigravity 2.0 التي توفر Sandbox، Terminal، MCP، وأدوات البحث. بعض البنود لن تعمل in بيئات أخرى (Cursor, Windsurf, etc.).
+> ⚠️ هذا القالب مصمم **حصرياً** لبيئة Google Antigravity 2.0 التي توفر Sandbox، Terminal، MCP، وأدوات البحث. بعض البنود لن تعمل في بيئات أخرى (Cursor, Windsurf, etc.).
 
 ---
 
