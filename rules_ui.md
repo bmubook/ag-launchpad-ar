@@ -53,7 +53,7 @@
 ┌─────────────────────────────────┐
 │  [شعار]   [قائمة]   [زر رئيسي] │  ← Navbar
 ├─────────────────────────────────┤
-│  ███████████████████████████████   │  ← Hero / Banner
+│  ████████████████████████████   │  ← Hero / Banner
 │  [عنوان رئيسي] [وصف] [CTA]     │
 ├─────────────────────────────────┤
 │  [بطاقة]   [بطاقة]   [بطاقة]   │  ← محتوى
@@ -72,41 +72,74 @@
 ### أ. ملف المتغيرات المركزي — الواجب الأول (tokens.css)
 **أول ملف يُنشأ في أي مشروع واجهات.** يملأ الوكيل القيم الفعلية من بيانات SETUP_GUIDE:
 
+**جدول مرجعي — الألوان الجاهزة (انسخ الصف المطابق لبيانات SETUP_GUIDE):**
+
+| الطابع | الوضع | primary | secondary | background | surface | text |
+|:-------|:-----:|:-------:|:---------:|:----------:|:-------:|:----:|
+| احترافي | داكن | `#6c63ff` | `#3b82f6` | `#0a0a1a` | `#161638` | `#e8e6f0` |
+| احترافي | فاتح | `#4f46e5` | `#3b82f6` | `#f8fafc` | `#ffffff` | `#1e1b4b` |
+| تجاري | داكن | `#f59e0b` | `#ef4444` | `#0f0f0f` | `#1a1a1a` | `#fafafa` |
+| تجاري | فاتح | `#ea580c` | `#f59e0b` | `#fffbf5` | `#ffffff` | `#431407` |
+| إبداعي | داكن | `#a855f7` | `#ec4899` | `#09090b` | `#18181b` | `#fafafa` |
+| إبداعي | فاتح | `#7c3aed` | `#db2777` | `#fdf4ff` | `#ffffff` | `#3b0764` |
+| رسمي | داكن | `#0ea5e9` | `#64748b` | `#0f172a` | `#1e293b` | `#f1f5f9` |
+| رسمي | فاتح | `#0369a1` | `#475569` | `#f0f9ff` | `#ffffff` | `#0c4a6e` |
+
+> إذا حدّد المستخدم لوناً مفضلاً في SETUP_GUIDE، يُستخدم كـ `primary` مباشرةً ويُشتق منه الباقي.
+
 ```css
-/* src/styles/tokens.css */
+/* src/styles/tokens.css — يُنشأ أولاً قبل أي شاشة، يُملأ من SETUP_GUIDE */
 :root {
-  /* الألوان — قيم فعلية من SETUP_GUIDE */
-  --color-primary:    [مشتق من اللون المفضل + الطابع];
-  --color-secondary:  [لون مكمّل يختاره الوكيل];
-  --color-surface:    [خلفية البطاقات];
-  --color-background: [الخلفية الرئيسية];
-  --color-text:       [لون النص الأساسي];
-  --color-text-muted: [لون النص الثانوي];
-  --color-error:   #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
 
-  /* الخطوط — مضبوطة للعربية */
-  --font-family:    [الخط المناسب للطابع], sans-serif;
-  --font-display:   2rem;     /* 32px */
-  --font-heading:   1.5rem;   /* 24px */
-  --font-body:      1rem;     /* 16px — حد أدنى مطلق */
-  --font-caption:   0.875rem; /* 14px */
-  --line-height:    1.8;      /* للعربية — لا ينزل عنه */
-  --font-weight-normal: 400;
-  --font-weight-bold:   700;
+  /* ══ الألوان ══ */
+  --color-primary:    #6c63ff;   /* من الجدول أعلاه (أو اللون المفضل من SETUP_GUIDE) */
+  --color-secondary:  #3b82f6;   /* لون مكمّل — من الجدول */
+  --color-accent:     color-mix(in srgb, var(--color-primary) 70%, white);
+  --color-surface:    #161638;   /* خلفية البطاقات */
+  --color-background: #0a0a1a;   /* الخلفية الرئيسية */
+  --color-border:     color-mix(in srgb, var(--color-primary) 25%, transparent);
+  --color-text:       #e8e6f0;   /* النص الأساسي */
+  --color-text-muted: #9895b0;   /* النص الثانوي */
+  --color-error:      #dc2626;   /* ثابت لجميع المشاريع */
+  --color-success:    #16a34a;   /* ثابت لجميع المشاريع */
+  --color-warning:    #d97706;   /* ثابت لجميع المشاريع */
 
-  /* التباعد — مضاعفات 4px */
-  --space-2:  0.5rem;  /* 8px */
-  --space-4:  1rem;    /* 16px — الوحدة الأساسية */
-  --space-5:  1.5rem;  /* 24px */
-  --space-6:  2rem;    /* 32px */
-  --space-8:  3rem;    /* 48px */
+  /* ══ الخطوط (اختر من جدول البند 19.ب) ══ */
+  --font-family:        'IBM Plex Sans Arabic', sans-serif;
+  --font-display:        2rem;      /* 32px — عناوين كبرى */
+  --font-heading:        1.5rem;    /* 24px — عناوين أقسام */
+  --font-body:           1rem;      /* 16px — حد أدنى مطلق */
+  --font-caption:        0.875rem;  /* 14px — تسميات وبيانات */
+  --line-height:         1.8;       /* للعربية — لا ينزل عنه أبداً */
+  --font-weight-normal:  400;
+  --font-weight-medium:  500;
+  --font-weight-bold:    700;
 
-  /* الحدود والظلال */
-  --radius-sm: 6px;  --radius-md: 10px;  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  /* ══ التباعد (مضاعفات 4px — لا قيم خارجها) ══ */
+  --space-1:   0.25rem;  /*  4px */
+  --space-2:   0.5rem;   /*  8px */
+  --space-3:   0.75rem;  /* 12px */
+  --space-4:   1rem;     /* 16px — الوحدة الأساسية */
+  --space-5:   1.5rem;   /* 24px */
+  --space-6:   2rem;     /* 32px */
+  --space-8:   3rem;     /* 48px */
+  --space-10:  4rem;     /* 64px */
+
+  /* ══ الحدود والظلال ══ */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:   0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg:   0 8px 24px rgba(0,0,0,0.18);
+  --shadow-glow: 0 0 30px color-mix(in srgb, var(--color-primary) 30%, transparent);
+
+  /* ══ نقاط التجاوب ══ */
+  --screen-sm:  375px;   /* جوال صغير — أصغر شاشة مدعومة */
+  --screen-md:  768px;   /* آيباد */
+  --screen-lg:  1024px;  /* لابتوب */
+  --screen-xl:  1280px;  /* كمبيوتر مكتبي */
 }
 ```
 
@@ -154,7 +187,7 @@
 | **الثبات** | كل قيمة لون/خط/تباعد تأتي من `tokens.css` |
 | **الاستكشاف** | كل زر له نص، كل أيقونة لها `aria-label`، لا وظائف خلف hover فقط |
 | **القراءة** | خط ≥ 16px، تباين لوني ≥ 4.5:1، line-height ≥ 1.7 |
-| **البساطة** | "لو حذفناه، هل يخسر المستخدم شيئاً مهماً؟" — إذا لا، يُحذف |
+| **البساطة** | "لو حذفناه هل يخسر المستخدم شيئاً مهماً؟" |
 
 ---
 
