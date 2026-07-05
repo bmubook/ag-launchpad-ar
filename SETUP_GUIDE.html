@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity 2.0 — مولّد الإقلاع الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #111128;
+            --bg-card: #161638;
+            --bg-input: #1c1c45;
+            --border: #2a2a5c;
+            --border-focus: #6c63ff;
+            --accent: #6c63ff;
+            --accent-glow: rgba(108, 99, 255, 0.3);
+            --accent-hover: #7f78ff;
+            --text-primary: #e8e6f0;
+            --text-secondary: #9895b0;
+            --text-muted: #6b6890;
+            --success: #2dd4a8;
+            --success-bg: rgba(45, 212, 168, 0.1);
+            --warning: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #6c63ff 0%, #3b82f6 100%);
+            --gradient-2: linear-gradient(135deg, #0a0a1a 0%, #161638 100%);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 30px rgba(108, 99, 255, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(108, 99, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 550px;
+            margin: 0 auto;
+        }
+
+        /* Steps indicator */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .step.done {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Form Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(108, 99, 255, 0.3);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            font-size: 22px;
+        }
+
+        /* Form Fields */
+        .field {
+            margin-bottom: 24px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        .field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .field .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+            direction: rtl;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239895b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 16px center;
+        }
+
+        /* Radio Options */
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .radio-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-option input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .radio-label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 16px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+        }
+
+        .radio-option input:checked + .radio-label {
+            border-color: var(--accent);
+            background: rgba(108, 99, 255, 0.08);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .radio-label:hover {
+            border-color: rgba(108, 99, 255, 0.4);
+        }
+
+        .radio-label .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .radio-label .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Project Type - 3 columns */
+        .radio-group-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        @media (max-width: 640px) {
+            .radio-group-3 {
+                grid-template-columns: 1fr;
+            }
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Generate Button */
+        .btn-generate {
+            width: 100%;
+            padding: 16px 32px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Output Section */
+        .output-section {
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        .output-section.visible {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .output-card {
+            background: var(--bg-card);
+            border: 2px solid var(--success);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(45, 212, 168, 0.1);
+        }
+
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--success-bg);
+            border-bottom: 1px solid rgba(45, 212, 168, 0.2);
+        }
+
+        .output-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--success);
+        }
+
+        .btn-copy {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            background: var(--success);
+            border: none;
+            border-radius: 100px;
+            color: #0a0a1a;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-copy.copied {
+            background: #fff;
+            color: var(--success);
+        }
+
+        .output-body {
+            padding: 24px;
+        }
+
+        .output-text {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            font-size: 14px;
+            line-height: 2;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            direction: rtl;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .output-text::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .output-text::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .output-text::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        /* Highlight user values */
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Validation */
+        .field.error input,
+        .field.error textarea,
+        .field.error select {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .field.error .error-msg {
+            display: block;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: #0a0a1a;
+            padding: 12px 28px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 30px rgba(45, 212, 168, 0.3);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge">⚡ Antigravity 2.0 Template</div>
+            <h1>🚀 مولّد الإقلاع الذكي</h1>
+            <p>عبّي الحقول بالأسفل واضغط "توليد" — وبرومبت الإقلاع جاهز للنسخ بضغطة واحدة</p>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps">
+            <div class="step active" id="step1">
+                <span class="step-num">1</span>
+                تعبئة البيانات
+            </div>
+            <div class="step" id="step2">
+                <span class="step-num">2</span>
+                توليد البرومبت
+            </div>
+            <div class="step" id="step3">
+                <span class="step-num">3</span>
+                نسخ وإرسال
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form id="promptForm" novalidate>
+            <!-- Card 1: Project Info -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">📋</span>
+                    معلومات المشروع
+                </div>
+
+                <div class="field" id="field-name">
+                    <label for="projectName">اسم المشروع *</label>
+                    <input type="text" id="projectName" placeholder="مثال: NativePrime أو متجر راهو" required>
+                    <div class="error-msg">⚠️ اسم المشروع مطلوب</div>
+                </div>
+
+                <div class="field" id="field-type">
+                    <label>طبيعة المشروع *</label>
+                    <div class="radio-group radio-group-3">
+                        <label class="radio-option">
+                            <input type="radio" name="projectType" value="تطبيق ويب متجاوب لجميع الشاشات">
+                            <div class="radio-label">
+                                <span class="title">🌐 تطبيق ويب</span>
+                                <span class="desc">متجاوب لجميع الشاشات</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="projectType" value="تطبيق جوال React Native">
+                            <div class="radio-label">
+                                <span class="title">📱 تطبيق جوال</span>
+                                <span class="desc">React Native</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="projectType" value="مشروع باك إند وقاعدة بيانات فقط">
+                            <div class="radio-label">
+                                <span class="title">⚙️ باك إند</span>
+                                <span class="desc">قاعدة بيانات فقط</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="error-msg">⚠️ اختر طبيعة المشروع</div>
+                </div>
+
+                <div class="field" id="field-idea">
+                    <label for="projectIdea">الفكرة المبدئية *</label>
+                    <textarea id="projectIdea" placeholder="اشرح فكرة مشروعك بالتفصيل... مثال: تطبيق لإدارة المواعيد الطبية يربط المرضى بالأطباء مع نظام إشعارات ودفع إلكتروني" required></textarea>
+                    <div class="error-msg">⚠️ اكتب فكرة مشروعك</div>
+                </div>
+            </div>
+
+            <!-- Card 2: Settings -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">⚙️</span>
+                    إعدادات التشغيل
+                </div>
+
+                <div class="field" id="field-mode">
+                    <label>وضع التشغيل *</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="opMode" value="prototype">
+                            <div class="radio-label">
+                                <span class="title">🧪 Prototype</span>
+                                <span class="desc">تجريب سريع — قواعد مخففة</span>
+                            </div>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="opMode" value="production">
+                            <div class="radio-label">
+                                <span class="title">🏭 Production</span>
+                                <span class="desc">إنتاج كامل — صرامة جميع القواعد</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="error-msg">⚠️ اختر وضع التشغيل</div>
+                </div>
+
+                <div class="field" id="field-callsign">
+                    <label for="callSign">اسم النداء *</label>
+                    <input type="text" id="callSign" placeholder="مثال: يا مدير / يا كابتن / يا باشمهندس" required>
+                    <p class="hint">💡 الوكيل يناديك بهذا الاسم في كل رد — إذا نسيه يعني فقد السياق</p>
+                    <div class="error-msg">⚠️ اسم النداء مطلوب</div>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button type="submit" class="btn-generate" id="btnGenerate">
+                ⚡ توليد البرومبت
+            </button>
+        </form>
+
+        <!-- Output Section -->
+        <div class="output-section" id="outputSection">
+            <div class="output-card">
+                <div class="output-header">
+                    <div class="output-header-title">
+                        ✅ البرومبت جاهز — انسخه وأرسله للوكيل
+                    </div>
+                    <button class="btn-copy" id="btnCopy" onclick="copyPrompt()">
+                        📋 نسخ البرومبت
+                    </button>
+                </div>
+                <div class="output-body">
+                    <div class="output-text" id="outputText"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Antigravity 2.0 Starter Template — مولّد الإقلاع الذكي v1.0
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✅ تم نسخ البرومبت بنجاح!</div>
+
+    <script>
+        const form = document.getElementById('promptForm');
+        const outputSection = document.getElementById('outputSection');
+        const outputText = document.getElementById('outputText');
+        const btnCopy = document.getElementById('btnCopy');
+        const toast = document.getElementById('toast');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Reset errors
+            document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
+
+            // Validate
+            let valid = true;
+            const name = document.getElementById('projectName').value.trim();
+            const type = document.querySelector('input[name="projectType"]:checked');
+            const idea = document.getElementById('projectIdea').value.trim();
+            const mode = document.querySelector('input[name="opMode"]:checked');
+            const callSign = document.getElementById('callSign').value.trim();
+
+            if (!name) { document.getElementById('field-name').classList.add('error'); valid = false; }
+            if (!type) { document.getElementById('field-type').classList.add('error'); valid = false; }
+            if (!idea) { document.getElementById('field-idea').classList.add('error'); valid = false; }
+            if (!mode) { document.getElementById('field-mode').classList.add('error'); valid = false; }
+            if (!callSign) { document.getElementById('field-callsign').classList.add('error'); valid = false; }
+
+            if (!valid) return;
+
+            // Generate prompt
+            const modeText = mode.value === 'prototype'
+                ? 'prototype للتجريب السريع وبناء النموذج الأولي'
+                : 'production للإنتاج الكامل بصرامة جميع القواعد';
+
+            const prompt = `السلام عليكم. أنا مستخدم Vibe Builder، وهذا المجلد يحتوي على ملفات الإدارة الأساسية في الجذر. بما أنك تعمل داخل بيئة Antigravity 2.0 وتملك صلاحيات الملفات والطرفية، نفّذ المهام التالية فوراً وبشكل تلقائي:
+
+1. اقرأ ملف master_rules.md من جذر المشروع مباشرة واعتبره الدستور الحاكم الصارم لك في هذا المشروع، والتزم بكل بند فيه (اللغة العربية الفصحى، حماية الـ RLS، منع الكسل، سقف حجم الملفات لـ 200 سطر، تتبّع الهجرات SQL، وحظر فوضى الحزم).
+2. اطّلع على الملفات الأخرى (project_map.md, changelog.md, bugs_log.md) لتفهم الهيكلية الحالية للمشروع.
+3. استخدم الطرفية والـ Sandbox المدمج لديك لتشغيل الفحص البيئي (Environment Audit) لمعرفة نظام تشغيلي وإصدارات (Node/Python/Git) والمنافذ المتاحة، وسجّل النتائج فوراً في قسم البيئة المحلية بملف project_map.md.
+4. اسم مشروعي الجديد هو: \${name}
+5. طبيعة المشروع وهويته التقنية هي: \${type.value}
+6. الفكرة المبدئية في عقلي هي: \${idea}
+7. وضع التشغيل المطلوب هو: \${modeText}
+8. اسم النداء الخاص بي هو: \${callSign}
+
+بعد إنهاء الفحص البيئي وتحديث المستندات، ابدأ العصف الذهني واطرح أسئلتك حبة حبة لتفكيك الـ MVP دون أي تأخير أو كود ناقص.`;
+
+            outputText.textContent = prompt;
+
+            // Show output
+            outputSection.classList.add('visible');
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Update steps
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step1').classList.add('done');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step2').classList.add('done');
+            document.getElementById('step3').classList.add('active');
+
+            // Change button text
+            document.getElementById('btnGenerate').innerHTML = '🔄 إعادة التوليد';
+        });
+
+        function copyPrompt() {
+            const text = outputText.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btnCopy.innerHTML = '✅ تم النسخ!';
+                btnCopy.classList.add('copied');
+
+                // Show toast
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2500);
+
+                setTimeout(() => {
+                    btnCopy.innerHTML = '📋 نسخ البرومبت';
+                    btnCopy.classList.remove('copied');
+                }, 3000);
+            });
+        }
+
+        // Remove error on input
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.addEventListener('input', function() {
+                this.closest('.field')?.classList.remove('error');
+            });
+        });
+
+        document.querySelectorAll('input[type="radio"]').forEach(el => {
+            el.addEventListener('change', function() {
+                this.closest('.field')?.classList.remove('error');
+            });
+        });
+    </script>
+</body>
+</html>
