@@ -32,3 +32,6 @@
 | التاريخ والوقت | الإصدار | نوع التغيير | الهوية النشطة | الملفات المتأثرة | نوع الإجراء ووصفه التقني المختصر | مرجع Git | نتيجة درجات الإجماع (Consensus Score) |
 | :--- | :---: | :---: | :--- | :--- | :--- | :--- | :--- |
 | 2026-07-05 18:35 | v3.0.1 | docs | Senior Project Manager | README.md, SETUP_GUIDE.md | docs(setup): إضافة تنبيه لتعديل اسم مجلد المشروع لمنع تكرار الاسم | local | - |
+| 2026-07-05 18:51 | v3.1.0 | feat | UI/UX Expert | rules_ui.md, master_rules.md | feat(ui): إعادة هيكلة rules_ui.md شاملة — دمج المنهجيات السبع لـ UX/UI (بحث المستخدم، مسارات التدفق، نظام التصميم الذري، مبادئ التفاعل، التصميم التفصيلي، النماذج التجريبية، قياس UX) وإضافة البنود 18-23 | local | - |
+| 2026-07-10 16:20 | v3.2.0 | feat | Senior Project Manager | .agents/AGENTS.md | feat(rules): إضافة ملف AGENTS.md لفرض التزام الوكيل تلقائياً ببروتوكولات المشروع | local | - |
+| 2026-07-10 16:30 | v3.3.0 | feat | Senior Project Manager | master_rules.md, .agents/AGENTS.md, README.md | feat(rules): إضافة قاعدة RTL الإجبارية لتغليف الردود بـ div dir="rtl" لجميع الوكلاء وتوثيقها | local | - |
