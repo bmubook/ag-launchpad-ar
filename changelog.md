@@ -37,3 +37,4 @@
 | 2026-07-10 16:30 | v3.3.0 | feat | Senior Project Manager | master_rules.md, .agents/AGENTS.md, README.md | feat(rules): إضافة قاعدة RTL الإجبارية لتغليف الردود بـ div dir="rtl" لجميع الوكلاء وتوثيقها | local | - |
 | 2026-07-10 17:59 | v3.3.1 | docs | Senior Project Manager | README.md, SETUP_GUIDE.md | docs(setup): توضيح استبدال اسم المجلد/المشروع باللغة الإنجليزية في تعليمات التثبيت | local | - |
 | 2026-07-10 18:02 | v3.3.2 | docs | Senior Project Manager | README.md | docs(setup): تحسين وضوح تعليمات التثبيت باستخدام الكلمة النائبة <your-project-name> في الأوامر | local | - |
+| 2026-07-24 21:52 | v3.3.3 | docs | Senior Project Manager | SETUP_GUIDE.md, SETUP_GUIDE.html | docs(setup): إضافة Flutter & Dart كخيار صريح لتطبيقات الجوال في ملفات الإقلاع | local | - |
