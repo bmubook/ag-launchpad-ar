@@ -62,7 +62,7 @@ ag-launchpad-ar/
 ### الطريقة السريعة (مستحسنة):
 1. حمّل المشروع (واستبدل الكلمة المحجوزة `<your-project-name>` في كلا الأمرين أدناه باسم مشروعك الجديد باللغة الإنجليزية):
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ag-launchpad-ar.git <your-project-name>
+   git clone https://github.com/bmubook/ag-launchpad-ar.git <your-project-name>
    cd <your-project-name>
    ```
    > 💡 **تنبيه:** تأكد من استبدال الكلمة المحجوزة `<your-project-name>` في كلا الأمرين بنفس الاسم الذي اخترته لمشروعك لتتمكن من إنشاء مجلد المشروع والدخول إليه بنجاح.
