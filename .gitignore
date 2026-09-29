@@ -63,3 +63,14 @@ supabase/.temp/
 .claude/settings.local.json
 CLAUDE.local.md
 .claude/agent-memory-local/
+
+# ============================================================
+# تطبيقات الجوال — ملفات التوقيع والأسرار (لا تُرفع أبداً)
+# ============================================================
+*.jks
+*.keystore
+key.properties
+env.json
+android/local.properties
+ios/Flutter/Generated.xcconfig
+.dart_tool/
