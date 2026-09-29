@@ -148,11 +148,13 @@ export function pruneOldSessions() {
 }
 
 const DOC_EXTENSIONS = /\.(md|mdx|markdown|txt)$/i;
+// إعدادات شخصية مستثناة من Git: تغييرها لا يغيّر المشروع فلا يستوجب مدخلاً في changelog
+const PERSONAL_FILES = /^\.claude\/settings\.local\.json$/;
 
-/** هل الملف "كود" يستوجب التوثيق؟ (ليس Markdown وليس من ملفات الحالة الداخلية) */
+/** هل الملف "كود" يستوجب التوثيق؟ (ليس Markdown ولا من ملفات الحالة الداخلية ولا إعدادات شخصية) */
 export function isCodeFile(relPath) {
   if (!relPath) return false;
-  if (relPath.startsWith(`${STATE_DIR}/`)) return false;
+  if (relPath.startsWith(`${STATE_DIR}/`) || PERSONAL_FILES.test(relPath)) return false;
   return !DOC_EXTENSIONS.test(relPath);
 }
 

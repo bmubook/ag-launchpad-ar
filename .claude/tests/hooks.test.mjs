@@ -211,6 +211,9 @@ runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'pe' });
 check('ST: new turn resets edits → allow', stop().out === '');
 runNode('.claude/hooks/post-edit.mjs', { session_id: 'pe', tool_input: { file_path: join(tmp, 'README.md') } });
 check('ST: docs-only edit → allow', stop().out === '');
+writeFileSync(join(tmp, '.claude', 'settings.local.json'), '{}\n');
+runNode('.claude/hooks/post-edit.mjs', { session_id: 'pe', tool_input: { file_path: join(tmp, '.claude', 'settings.local.json') } });
+check('ST: personal settings.local.json edit → allow', stop().out === '');
 check('ST: unknown session → allow', stop({ session_id: 'nobody' }).out === '');
 check('STATE: session file written under .claude/state', existsSync(join(tmp, '.claude', 'state', 'session-pe.json')));
 
