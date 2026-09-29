@@ -89,7 +89,7 @@ service cloud.firestore {
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي: مستخدم لا يقرأ بيانات غيره، وزائر لا يكتب شيئاً |
 | اختبار شامل (E2E) | Playwright — اختبار دخاني واحد: الصفحة الرئيسية تعمل |
 | أوامر | `lint`، `test`، `test:rules`، `build`، `check` في `package.json` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build |
+| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java`) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر

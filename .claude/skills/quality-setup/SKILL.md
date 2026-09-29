@@ -27,7 +27,8 @@ description: "تجهيز أساس الجودة — بعد اعتماد الـ Te
 | المدقق (Linter) | إعداد صارم معقول + أمر `lint` بلا أخطاء |
 | الاختبارات | مشغّل الاختبارات + **اختبار أول ذو معنى** (دالة مساعدة حقيقية أو عرض مكوّن رئيسي) — لا اختبار شكلي مثل `1+1` |
 | أوامر موحّدة | `lint` و `test` و `build` و `check` (يشغّل الثلاثة) — أو مكافئاتها في Flutter: `flutter analyze` و `flutter test` و `flutter build` |
-| الفحص الآلي (CI) | `.github/workflows/ci.yml`: تثبيت ← تدقيق ← اختبار ← بناء، عند `push` و `pull_request` |
+| اختبارات قواعد الأمان | إعداد `@firebase/rules-unit-testing` مع أول اختبار: المالك يقرأ بياناته، وغيره والزائر ممنوعان (القسم 6 في المخطط يحدد مكانه، ولمشاريع Flutter مجلد `tests/rules/` بـ `package.json` مستقل) |
+| الفحص الآلي (CI) | `.github/workflows/ci.yml`: تثبيت ← تدقيق ← اختبار ← بناء، عند `push` و `pull_request`؛ واختبارات القواعد في خطوة تسبقها `actions/setup-java` وتثبيت Firebase CLI |
 | Dependabot | `.github/dependabot.yml`: نظام الحزم المستخدم + `github-actions`، أسبوعياً |
 
 قواعد: لا مفاتيح في ملفات CI (استخدم GitHub Secrets عند الحاجة)، واحترم أسقف الملفات (البند 14).

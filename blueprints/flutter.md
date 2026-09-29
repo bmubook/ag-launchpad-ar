@@ -65,9 +65,9 @@ firestore.indexes.json · firebase.json
 | المدقق | `flutter analyze` مع حزمة `flutter_lints` (مفعّلة في المشاريع الجديدة) |
 | المنسّق | `dart format .` |
 | الاختبارات | `flutter test` — اختبار Widget للشاشة الرئيسية + اختبار وحدة لمنطق حقيقي |
-| اختبارات قواعد الأمان | `@firebase/rules-unit-testing` (Node) على المحاكي في مجلد `tests/rules/` |
+| اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في مجلد `tests/rules/` — وهو مشروع Node صغير مستقل بملف `package.json` خاص به، لأن مشروع Flutter نفسه لا يستخدم npm |
 | اختبار شامل | `integration_test` للمسار الرئيسي |
-| CI | `.github/workflows/ci.yml`: تثبيت Flutter ← `flutter pub get` ← `dart format --set-exit-if-changed .` ← `flutter analyze` ← `flutter test` |
+| CI | `.github/workflows/ci.yml`: تثبيت Flutter ← `flutter pub get` ← `dart format --set-exit-if-changed .` ← `flutter analyze` ← `flutter test`، ثم مهمة ثانية لاختبارات القواعد: Node + Java (`actions/setup-java`) + Firebase CLI ← `firebase emulators:exec "npm --prefix tests/rules test"` |
 | الاعتماديات | `.github/dependabot.yml` لـ `pub` و github-actions |
 
 ## 7. النشر

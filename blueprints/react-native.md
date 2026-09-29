@@ -64,7 +64,7 @@ firestore.indexes.json · firebase.json
 | الاختبارات | Jest بإعداد `jest-expo` + React Native Testing Library — اختبار عرض لشاشة رئيسية واختبار لمنطق حقيقي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في `tests/rules/` |
 | فحص الأنواع | `tsc --noEmit` ضمن أمر `check` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← فحص الأنواع ← test ← `firebase emulators:exec "npm run test:rules"` |
+| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← فحص الأنواع ← test ← `firebase emulators:exec "npm run test:rules"` — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java`) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر
