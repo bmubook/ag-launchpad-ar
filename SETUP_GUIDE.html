@@ -3,380 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antigravity 2.0 — مولّد الإقلاع الذكي</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0a1a;
-            --bg-secondary: #111128;
-            --bg-card: #161638;
-            --bg-input: #1c1c45;
-            --border: #2a2a5c;
-            --border-focus: #6c63ff;
-            --accent: #6c63ff;
-            --accent-glow: rgba(108, 99, 255, 0.3);
-            --accent-hover: #7f78ff;
-            --text-primary: #e8e6f0;
-            --text-secondary: #9895b0;
-            --text-muted: #6b6890;
-            --success: #2dd4a8;
-            --success-bg: rgba(45, 212, 168, 0.1);
-            --warning: #f59e0b;
-            --gradient-1: linear-gradient(135deg, #6c63ff 0%, #3b82f6 100%);
-            --gradient-2: linear-gradient(135deg, #0a0a1a 0%, #161638 100%);
-            --radius: 12px;
-            --radius-lg: 16px;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-            --shadow-glow: 0 0 30px rgba(108, 99, 255, 0.15);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'IBM Plex Sans Arabic', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.7;
-        }
-        body::before {
-            content: '';
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(108,99,255,0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(59,130,246,0.05) 0%, transparent 50%);
-            pointer-events: none; z-index: 0;
-        }
-        .container { max-width: 780px; margin: 0 auto; padding: 40px 24px 60px; position: relative; z-index: 1; }
-        .header { text-align: center; margin-bottom: 48px; }
-        .header-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 100px; padding: 8px 20px; font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 20px; }
-        .header h1 { font-size: 32px; font-weight: 700; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
-        .header p { font-size: 16px; color: var(--text-secondary); max-width: 550px; margin: 0 auto; }
-        .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 40px; }
-        .step { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.3s ease; }
-        .step.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 20px var(--accent-glow); }
-        .step.done { background: var(--success-bg); border-color: var(--success); color: var(--success); }
-        .step-num { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow); transition: border-color 0.3s ease; }
-        .card:hover { border-color: rgba(108,99,255,0.3); }
-        .card-design { border-color: rgba(108,99,255,0.25); background: linear-gradient(135deg, #161638 0%, #1a1645 100%); animation: fadeInDown 0.35s ease; }
-        .card-design-hidden { display: none; }
-        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
-        .card-title .icon { font-size: 22px; }
-        .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: -18px; margin-bottom: 24px; padding-right: 32px; }
-        .field { margin-bottom: 24px; }
-        .field:last-child { margin-bottom: 0; }
-        .field label { display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
-        .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-        input[type="text"], textarea, select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 15px; color: var(--text-primary); outline: none; transition: all 0.3s ease; direction: rtl; }
-        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
-        input::placeholder, textarea::placeholder { color: var(--text-muted); }
-        textarea { resize: vertical; min-height: 100px; }
-        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239895b0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 16px center; }
-        .radio-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .radio-option { position: relative; cursor: pointer; }
-        .radio-option input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .radio-label { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--bg-input); border: 2px solid var(--border); border-radius: var(--radius); transition: all 0.3s ease; }
-        .radio-option input:checked + .radio-label { border-color: var(--accent); background: rgba(108,99,255,0.08); box-shadow: 0 0 0 3px var(--accent-glow); }
-        .radio-label:hover { border-color: rgba(108,99,255,0.4); }
-        .radio-label .title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-        .radio-label .desc { font-size: 12px; color: var(--text-muted); }
-        .radio-group-3 { grid-template-columns: 1fr 1fr 1fr; }
-        .radio-group-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-        @media (max-width: 640px) {
-            .radio-group-4 { grid-template-columns: 1fr 1fr; }
-            .radio-group-3 { grid-template-columns: 1fr; }
-            .radio-group { grid-template-columns: 1fr; }
-        }
-        .color-hint-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-        .color-swatch { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
-        .color-swatch:hover { border-color: var(--accent); color: var(--text-primary); }
-        .color-swatch .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .btn-generate { width: 100%; padding: 16px 32px; background: var(--gradient-1); border: none; border-radius: var(--radius); color: #fff; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 20px var(--accent-glow); }
-        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
-        .btn-generate:active { transform: translateY(0); }
-        .output-section { display: none; animation: slideUp 0.5s ease; }
-        .output-section.visible { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
-        .output-card { background: var(--bg-card); border: 2px solid var(--success); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 30px rgba(45,212,168,0.1); }
-        .output-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--success-bg); border-bottom: 1px solid rgba(45,212,168,0.2); }
-        .output-header-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; color: var(--success); }
-        .btn-copy { display: flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--success); border: none; border-radius: 100px; color: #0a0a1a; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-        .btn-copy:hover { transform: scale(1.05); }
-        .btn-copy.copied { background: #fff; color: var(--success); }
-        .output-body { padding: 24px; }
-        .output-text { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; font-size: 14px; line-height: 2; color: var(--text-primary); white-space: pre-wrap; direction: rtl; max-height: 500px; overflow-y: auto; }
-        .output-text::-webkit-scrollbar { width: 6px; }
-        .output-text::-webkit-scrollbar-track { background: transparent; }
-        .output-text::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        .footer { text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; }
-        .field.error input, .field.error textarea, .field.error select { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
-        .error-msg { color: #ef4444; font-size: 12px; margin-top: 6px; display: none; }
-        .field.error .error-msg { display: block; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--success); color: #0a0a1a; padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 600; font-family: 'IBM Plex Sans Arabic', sans-serif; z-index: 1000; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 8px 30px rgba(45,212,168,0.3); }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-    </style>
+    <meta name="color-scheme" content="light dark">
+    <title>AG Launchpad AR — مولّد الإقلاع</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="setup-guide/tokens.css">
+    <link rel="stylesheet" href="setup-guide/styles.css">
+    <script>
+        /* تطبيق الوضع المحفوظ قبل الرسم لتفادي وميض الألوان */
+        try { const t = localStorage.getItem('ag-launchpad-ar.theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) { /* التخزين غير متاح */ }
+    </script>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <div class="header-badge">⚡ Antigravity 2.0 Template</div>
-        <h1>🚀 مولّد الإقلاع الذكي</h1>
-        <p>عبّي الحقول بالأسفل واضغط "توليد" — وبرومبت الإقلاع جاهز للنسخ بضغطة واحدة</p>
+<a class="skip-link" href="#wizard">تخطَّ إلى النموذج</a>
+
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-mark" aria-hidden="true">⚡</span>
+        <div><strong>AG Launchpad AR</strong><span class="brand-sub">مولّد الإقلاع — Claude Code و Antigravity</span></div>
     </div>
-    <div class="steps">
-        <div class="step active" id="step1"><span class="step-num">1</span> تعبئة البيانات</div>
-        <div class="step" id="step2"><span class="step-num">2</span> توليد البرومبت</div>
-        <div class="step" id="step3"><span class="step-num">3</span> نسخ وإرسال</div>
+    <button type="button" class="icon-btn" id="themeToggle" aria-label="تبديل الوضع الفاتح والداكن"><span id="themeIcon" aria-hidden="true">🌙</span></button>
+</header>
+
+<main class="container" id="wizard">
+    <div class="intro">
+        <h1>لنجهّز مشروعك في دقيقتين</h1>
+        <p>أجب عن بضعة أسئلة بسيطة، وسنكتب لك نص البداية جاهزاً للنسخ. إجاباتك تُحفظ تلقائياً على جهازك.</p>
     </div>
-    <form id="promptForm" novalidate>
 
-        <!-- بطاقة 1: معلومات المشروع -->
-        <div class="card">
-            <div class="card-title"><span class="icon">📋</span> معلومات المشروع</div>
-            <div class="field" id="field-name">
-                <label for="projectName">اسم المشروع *</label>
-                <input type="text" id="projectName" placeholder="مثال: NativePrime أو متجر راهو" required>
-                <div class="error-msg">⚠️ اسم المشروع مطلوب</div>
-            </div>
-            <div class="field" id="field-type">
-                <label>طبيعة المشروع *</label>
-                <div class="radio-group radio-group-4">
-                    <label class="radio-option">
-                        <input type="radio" name="projectType" value="تطبيق ويب متجاوب لجميع الشاشات" id="type-web">
-                        <div class="radio-label"><span class="title">🌐 تطبيق ويب</span><span class="desc">متجاوب لجميع الشاشات</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="projectType" value="تطبيق جوال Flutter و Dart" id="type-mobile-flutter">
-                        <div class="radio-label"><span class="title">📱 تطبيق جوال</span><span class="desc">Flutter & Dart</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="projectType" value="تطبيق جوال React Native" id="type-mobile-rn">
-                        <div class="radio-label"><span class="title">📱 تطبيق جوال</span><span class="desc">React Native</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="projectType" value="مشروع باك إند وقاعدة بيانات فقط" id="type-backend">
-                        <div class="radio-label"><span class="title">⚙️ باك إند</span><span class="desc">قاعدة بيانات فقط</span></div>
-                    </label>
+    <nav class="progress" aria-label="خطوات الإعداد">
+        <div class="progress-label"><span>الخطوة <strong id="stepNow">1</strong> من <strong id="stepTotal">5</strong></span><span id="stepName"></span></div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        <ol class="progress-steps" id="progressSteps"></ol>
+    </nav>
+
+    <form id="wizardForm" class="card" novalidate>
+        <!-- الخطوة 1: بيئة العمل -->
+        <section class="step" data-step="env" aria-labelledby="h-env">
+            <h2 class="step-title" id="h-env" tabindex="-1">أين ستبني مشروعك؟</h2>
+            <p class="step-lead">اختر الأداة التي ستعمل بها. يمكنك تغيير اختيارك لاحقاً.</p>
+            <fieldset class="field" data-field="env" aria-describedby="e-env">
+                <legend class="q">بيئة العمل</legend>
+                <div class="choices choices-2">
+                    <label class="choice"><input type="radio" name="env" value="claude"><span class="choice-body"><span class="choice-title">🤖 Claude Code<span class="badge">موصى به</span></span><span class="choice-desc">تطبيق Claude لسطح المكتب (تبويب Code) أو الطرفية</span></span></label>
+                    <label class="choice"><input type="radio" name="env" value="antigravity"><span class="choice-body"><span class="choice-title">⚡ Google Antigravity</span><span class="choice-desc">محرر Antigravity 2.0</span></span></label>
                 </div>
-                <div class="error-msg">⚠️ اختر طبيعة المشروع</div>
+                <p class="error" id="e-env">اختر بيئة العمل للمتابعة</p>
+            </fieldset>
+        </section>
+
+        <!-- الخطوة 2: المشروع -->
+        <section class="step" data-step="project" aria-labelledby="h-project" hidden>
+            <h2 class="step-title" id="h-project" tabindex="-1">حدّثنا عن مشروعك</h2>
+            <p class="step-lead">لا تقلق من التفاصيل التقنية — الوكيل سيسألك عنها لاحقاً في جلسة العصف الذهني.</p>
+            <div class="field" data-field="name">
+                <label class="q" for="name">اسم المشروع</label>
+                <input class="text-input" type="text" id="name" name="name" autocomplete="off" placeholder="مثال: متجر راهو" aria-describedby="e-name">
+                <p class="error" id="e-name">اكتب اسماً لمشروعك</p>
             </div>
-            <div class="field" id="field-idea">
-                <label for="projectIdea">الفكرة المبدئية *</label>
-                <textarea id="projectIdea" placeholder="اشرح فكرة مشروعك بالتفصيل... مثال: تطبيق لإدارة المواعيد الطبية يربط المرضى بالأطباء مع نظام إشعارات ودفع إلكتروني" required></textarea>
-                <div class="error-msg">⚠️ اكتب فكرة مشروعك</div>
+            <fieldset class="field" data-field="type" aria-describedby="e-type">
+                <legend class="q">ماذا ستبني؟</legend>
+                <div class="choices choices-4">
+                    <label class="choice"><input type="radio" name="type" value="web"><span class="choice-body"><span class="choice-title">🌐 تطبيق ويب</span><span class="choice-desc">يعمل في المتصفح على كل الشاشات</span></span></label>
+                    <label class="choice"><input type="radio" name="type" value="flutter"><span class="choice-body"><span class="choice-title">📱 جوال — Flutter</span><span class="choice-desc">Android و iOS بلغة Dart</span></span></label>
+                    <label class="choice"><input type="radio" name="type" value="rn"><span class="choice-body"><span class="choice-title">📱 جوال — React Native</span><span class="choice-desc">Android و iOS بلغة JavaScript</span></span></label>
+                    <label class="choice"><input type="radio" name="type" value="backend"><span class="choice-body"><span class="choice-title">⚙️ باك إند فقط</span><span class="choice-desc">خادم وقاعدة بيانات بلا واجهات</span></span></label>
+                </div>
+                <p class="error" id="e-type">اختر نوع المشروع</p>
+            </fieldset>
+            <div class="field" data-field="idea">
+                <label class="q" for="idea">ما فكرتك؟</label>
+                <textarea class="text-input" id="idea" name="idea" placeholder="مثال: تطبيق يربط المرضى بالأطباء لحجز المواعيد، مع إشعارات تذكير ودفع إلكتروني" aria-describedby="h-idea e-idea"></textarea>
+                <p class="hint" id="h-idea">💡 سطران أو ثلاثة تكفي: من المستخدم؟ ما المشكلة؟ ما الحل؟</p>
+                <p class="error" id="e-idea">اكتب فكرتك ولو في سطر واحد</p>
             </div>
+        </section>
+
+        <!-- الخطوة 3: التصميم (للويب والجوال فقط) -->
+        <section class="step" data-step="design" aria-labelledby="h-design" hidden>
+            <h2 class="step-title" id="h-design" tabindex="-1">شكل التطبيق</h2>
+            <p class="step-lead">كل الحقول هنا اختيارية — إن تركتها سيختار الوكيل الأنسب لفكرتك.</p>
+            <div class="field">
+                <label class="q" for="audience">من سيستخدم تطبيقك؟ <span class="optional">(اختياري)</span></label>
+                <textarea class="text-input" id="audience" name="audience" rows="2" placeholder="مثال: أصحاب المطاعم الصغيرة، يحتاجون إدارة الطلبات بسرعة من الجوال"></textarea>
+            </div>
+            <fieldset class="field">
+                <legend class="q">الطابع العام <span class="optional">(اختياري)</span></legend>
+                <div class="choices choices-4">
+                    <label class="choice"><input type="radio" name="style" value="احترافي تقني — خطوط نظيفة، ألوان محايدة، يعطي ثقة وجدية"><span class="choice-body"><span class="choice-title">💼 احترافي</span><span class="choice-desc">أعمال وخدمات SaaS</span></span></label>
+                    <label class="choice"><input type="radio" name="style" value="تجاري حيوي — ألوان دافئة وجذابة، يشجع على الشراء والتفاعل"><span class="choice-body"><span class="choice-title">🛒 تجاري</span><span class="choice-desc">متاجر وتسوّق</span></span></label>
+                    <label class="choice"><input type="radio" name="style" value="إبداعي جريء — تدرجات وتأثيرات بصرية، يُبهر المستخدم عند الدخول"><span class="choice-body"><span class="choice-title">✨ إبداعي</span><span class="choice-desc">تسويق ومحتوى إبداعي</span></span></label>
+                    <label class="choice"><input type="radio" name="style" value="رسمي موثوق — هادئ ومنظم، يعطي انطباع الموثوقية والرسمية"><span class="choice-body"><span class="choice-title">🏛️ رسمي</span><span class="choice-desc">حكومي وتعليمي</span></span></label>
+                </div>
+            </fieldset>
+            <fieldset class="field">
+                <legend class="q">الوضع البصري <span class="optional">(اختياري)</span></legend>
+                <div class="choices choices-2">
+                    <label class="choice"><input type="radio" name="colorMode" value="وضع فاتح (Light Mode)"><span class="choice-body"><span class="choice-title">☀️ فاتح</span><span class="choice-desc">أوضح للقراءة الطويلة</span></span></label>
+                    <label class="choice"><input type="radio" name="colorMode" value="وضع داكن (Dark Mode)"><span class="choice-body"><span class="choice-title">🌙 داكن</span><span class="choice-desc">أريح للعين في الإضاءة الخافتة</span></span></label>
+                </div>
+            </fieldset>
+            <div class="field">
+                <label class="q" for="color">لون مفضل <span class="optional">(اختياري)</span></label>
+                <input class="text-input" type="text" id="color" name="color" autocomplete="off" placeholder="مثال: أزرق / أخضر زمردي / #4f46e5">
+                <div class="chips" aria-label="ألوان مقترحة">
+                    <button type="button" class="chip" data-fill="color" data-value="أزرق ملكي #3b82f6"><span class="dot" style="background:#3b82f6"></span>أزرق</button>
+                    <button type="button" class="chip" data-fill="color" data-value="أخضر زمردي #10b981"><span class="dot" style="background:#10b981"></span>زمردي</button>
+                    <button type="button" class="chip" data-fill="color" data-value="بنفسجي #6c63ff"><span class="dot" style="background:#6c63ff"></span>بنفسجي</button>
+                    <button type="button" class="chip" data-fill="color" data-value="برتقالي دافئ #f59e0b"><span class="dot" style="background:#f59e0b"></span>برتقالي</button>
+                    <button type="button" class="chip" data-fill="color" data-value="أحمر مرجاني #ef4444"><span class="dot" style="background:#ef4444"></span>مرجاني</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- الخطوة 4: طريقة العمل -->
+        <section class="step" data-step="work" aria-labelledby="h-work" hidden>
+            <h2 class="step-title" id="h-work" tabindex="-1">كيف تحب أن نعمل معاً؟</h2>
+            <p class="step-lead">هذه الإعدادات تحدد صرامة القواعد ومستوى الشرح الذي ستحصل عليه.</p>
+            <fieldset class="field" data-field="level" aria-describedby="e-level">
+                <legend class="q">ما مستوى خبرتك البرمجية؟</legend>
+                <div class="choices choices-3">
+                    <label class="choice"><input type="radio" name="level" value="مبتدئ تماماً"><span class="choice-body"><span class="choice-title">🌱 مبتدئ تماماً</span><span class="choice-desc">لم أبرمج من قبل</span></span></label>
+                    <label class="choice"><input type="radio" name="level" value="لدي أساسيات"><span class="choice-body"><span class="choice-title">📘 لدي أساسيات</span><span class="choice-desc">أعرف المفاهيم العامة</span></span></label>
+                    <label class="choice"><input type="radio" name="level" value="مطوّر"><span class="choice-body"><span class="choice-title">🛠️ مطوّر</span><span class="choice-desc">لدي خبرة برمجية</span></span></label>
+                </div>
+                <p class="hint">🎓 للمبتدئ يُفعَّل «وضع التعلّم»: شرح مبسّط لكل قرار مهم وقاموس مصطلحات عربي.</p>
+                <p class="error" id="e-level">اختر مستوى خبرتك</p>
+            </fieldset>
+            <fieldset class="field" data-field="mode" aria-describedby="e-mode">
+                <legend class="q">ما هدفك الآن؟</legend>
+                <div class="choices choices-2">
+                    <label class="choice"><input type="radio" name="mode" value="prototype"><span class="choice-body"><span class="choice-title">🧪 تجربة سريعة (prototype)</span><span class="choice-desc">نموذج أولي لاختبار الفكرة — قواعد مخففة مع بقاء الحماية الأمنية</span></span></label>
+                    <label class="choice"><input type="radio" name="mode" value="production"><span class="choice-body"><span class="choice-title">🏭 منتج حقيقي (production)<span class="badge">موصى به</span></span><span class="choice-desc">تطبيق سيستخدمه الناس — كل القواعد والمراجعات مفعّلة</span></span></label>
+                </div>
+                <p class="error" id="e-mode">اختر هدفك</p>
+            </fieldset>
+            <div class="field" data-field="callSign">
+                <label class="q" for="callSign">بماذا يناديك الوكيل؟</label>
+                <input class="text-input" type="text" id="callSign" name="callSign" autocomplete="off" placeholder="مثال: يا مدير" aria-describedby="h-call e-call">
+                <div class="chips" aria-label="أسماء نداء مقترحة">
+                    <button type="button" class="chip" data-fill="callSign" data-value="يا مدير">يا مدير</button>
+                    <button type="button" class="chip" data-fill="callSign" data-value="يا كابتن">يا كابتن</button>
+                    <button type="button" class="chip" data-fill="callSign" data-value="يا باشمهندس">يا باشمهندس</button>
+                </div>
+                <p class="hint" id="h-call">💡 يفتتح الوكيل كل رد بهذا الاسم. إذا نسيه يوماً، فهذا يعني أنه فقد السياق — ذكّره بالقواعد.</p>
+                <p class="error" id="e-call">اكتب اسم النداء أو اختر واحداً من المقترحات</p>
+            </div>
+        </section>
+
+        <!-- الخطوة 5: المراجعة -->
+        <section class="step" data-step="review" aria-labelledby="h-review" hidden>
+            <h2 class="step-title" id="h-review" tabindex="-1">راجع إجاباتك</h2>
+            <p class="step-lead">تأكد من البيانات، ثم اضغط «توليد نص البداية».</p>
+            <div class="review" id="reviewList"></div>
+        </section>
+
+        <div class="nav-buttons">
+            <button type="button" class="btn btn-ghost" id="btnBack">→ السابق</button>
+            <button type="submit" class="btn btn-primary" id="btnNext">التالي ←</button>
         </div>
-
-        <!-- بطاقة 2: تفضيلات التصميم (تظهر للويب والجوال فقط) -->
-        <div class="card card-design card-design-hidden" id="cardDesign">
-            <div class="card-title"><span class="icon">🎨</span> تفضيلات التصميم</div>
-            <p class="card-subtitle">هذه المعلومات تُمكّن الوكيل من بناء نظام التصميم مباشرةً دون أسئلة إضافية</p>
-            <div class="field">
-                <label>المستخدم النهائي لمشروعك *</label>
-                <textarea id="targetUser" rows="2" style="min-height:70px" placeholder="مثال: أصحاب المطاعم الصغيرة من 25-45 سنة، يحتاجون لإدارة طلبات التوصيل بسرعة من الجوال"></textarea>
-                <p class="hint">💡 وصف دقيق للمستخدم يُغني عن جلسة بحث كاملة</p>
-            </div>
-            <div class="field">
-                <label>طابع التصميم المطلوب *</label>
-                <div class="radio-group radio-group-4">
-                    <label class="radio-option">
-                        <input type="radio" name="designStyle" value="احترافي تقني — خطوط نظيفة، ألوان محايدة، يعطي ثقة وجدية">
-                        <div class="radio-label"><span class="title">💼 احترافي</span><span class="desc">SaaS / أعمال</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="designStyle" value="تجاري حيوي — ألوان دافئة وجذابة، يشجع على الشراء والتفاعل">
-                        <div class="radio-label"><span class="title">🛒 تجاري</span><span class="desc">متجر / تسوّق</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="designStyle" value="إبداعي جريء — تدرجات وتأثيرات بصرية، يُبهر المستخدم عند الدخول">
-                        <div class="radio-label"><span class="title">✨ إبداعي</span><span class="desc">تسويق / إبداع</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="designStyle" value="رسمي موثوق — هادئ ومنظم، يعطي انطباع الموثوقية والرسمية">
-                        <div class="radio-label"><span class="title">🏛️ رسمي</span><span class="desc">حكومي / تعليمي</span></div>
-                    </label>
-                </div>
-            </div>
-            <div class="field">
-                <label>الوضع البصري المفضل *</label>
-                <div class="radio-group">
-                    <label class="radio-option">
-                        <input type="radio" name="colorMode" value="وضع داكن (Dark Mode)">
-                        <div class="radio-label"><span class="title">🌙 داكن</span><span class="desc">Dark Mode — أقل إرهاقاً للعين</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="colorMode" value="وضع فاتح (Light Mode)">
-                        <div class="radio-label"><span class="title">☀️ فاتح</span><span class="desc">Light Mode — أوضح للقراءة</span></div>
-                    </label>
-                </div>
-            </div>
-            <div class="field">
-                <label for="primaryColor">لون رئيسي مفضل <span style="color:var(--text-muted);font-weight:400">(اختياري)</span></label>
-                <input type="text" id="primaryColor" placeholder="مثال: أزرق / أخضر زمردي / بنفسجي / #6c63ff">
-                <div class="color-hint-row">
-                    <span style="font-size:12px;color:var(--text-muted)">اقتراحات:</span>
-                    <div class="color-swatch" onclick="setColor('أزرق ملكي #3b82f6')"><div class="dot" style="background:#3b82f6"></div> أزرق</div>
-                    <div class="color-swatch" onclick="setColor('أخضر زمردي #2dd4a8')"><div class="dot" style="background:#2dd4a8"></div> زمردي</div>
-                    <div class="color-swatch" onclick="setColor('بنفسجي #6c63ff')"><div class="dot" style="background:#6c63ff"></div> بنفسجي</div>
-                    <div class="color-swatch" onclick="setColor('برتقالي دافئ #f59e0b')"><div class="dot" style="background:#f59e0b"></div> برتقالي</div>
-                    <div class="color-swatch" onclick="setColor('أحمر مرجاني #ef4444')"><div class="dot" style="background:#ef4444"></div> مرجاني</div>
-                </div>
-                <p class="hint">💡 يُستخدم كنقطة انطلاق لبناء لوحة الألوان الكاملة</p>
-            </div>
-        </div>
-
-        <!-- بطاقة 3: إعدادات التشغيل -->
-        <div class="card">
-            <div class="card-title"><span class="icon">⚙️</span> إعدادات التشغيل</div>
-            <div class="field" id="field-mode">
-                <label>وضع التشغيل *</label>
-                <div class="radio-group">
-                    <label class="radio-option">
-                        <input type="radio" name="opMode" value="prototype">
-                        <div class="radio-label"><span class="title">🧪 Prototype</span><span class="desc">تجريب سريع — قواعد مخففة</span></div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="opMode" value="production">
-                        <div class="radio-label"><span class="title">🏭 Production</span><span class="desc">إنتاج كامل — صرامة جميع القواعد</span></div>
-                    </label>
-                </div>
-                <div class="error-msg">⚠️ اختر وضع التشغيل</div>
-            </div>
-            <div class="field" id="field-callsign">
-                <label for="callSign">اسم النداء *</label>
-                <input type="text" id="callSign" placeholder="مثال: يا مدير / يا كابتن / يا باشمهندس" required>
-                <p class="hint">💡 الوكيل يناديك بهذا الاسم في كل رد — إذا نسيه يعني فقد السياق</p>
-                <div class="error-msg">⚠️ اسم النداء مطلوب</div>
-            </div>
-        </div>
-
-        <button type="submit" class="btn-generate" id="btnGenerate">⚡ توليد البرومبت</button>
     </form>
 
-    <div class="output-section" id="outputSection">
-        <div class="output-card">
-            <div class="output-header">
-                <div class="output-header-title">✅ البرومبت جاهز — انسخه وأرسله للوكيل</div>
-                <button class="btn-copy" id="btnCopy" onclick="copyPrompt()">📋 نسخ البرومبت</button>
-            </div>
-            <div class="output-body"><div class="output-text" id="outputText"></div></div>
+    <!-- النتيجة -->
+    <section class="result card" id="result" aria-labelledby="h-result" hidden>
+        <div class="result-head">
+            <span class="result-icon" aria-hidden="true">✓</span>
+            <div><h2 class="step-title" id="h-result" tabindex="-1">نص البداية جاهز</h2><p class="step-lead" id="resultLead"></p></div>
         </div>
-    </div>
+        <div class="output" id="output" tabindex="0" aria-label="النص المولَّد"></div>
+        <div class="copy-row">
+            <button type="button" class="btn btn-primary" id="btnCopy">📋 نسخ النص</button>
+            <button type="button" class="btn btn-ghost" id="btnEdit">✏️ تعديل الإجابات</button>
+        </div>
+        <div class="next-steps"><h3>ماذا أفعل الآن؟</h3><ol id="nextSteps"></ol></div>
+        <p class="hint"><button type="button" class="btn-link" id="btnReset">🗑️ البدء من جديد بمشروع آخر</button></p>
+    </section>
+</main>
 
-    <div class="footer">Antigravity 2.0 Starter Template — مولّد الإقلاع الذكي v2.0</div>
-</div>
-<div class="toast" id="toast">✅ تم نسخ البرومبت بنجاح!</div>
+<footer class="footer">AG Launchpad AR — مولّد الإقلاع v4.0 · يعمل بالكامل على جهازك دون إرسال أي بيانات</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script>
-    const form = document.getElementById('promptForm');
-    const outputSection = document.getElementById('outputSection');
-    const outputText = document.getElementById('outputText');
-    const btnCopy = document.getElementById('btnCopy');
-    const toast = document.getElementById('toast');
-    const cardDesign = document.getElementById('cardDesign');
-
-    document.querySelectorAll('input[name="projectType"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const needsUI = (this.id === 'type-web' || this.id === 'type-mobile');
-            if (needsUI) {
-                cardDesign.classList.remove('card-design-hidden');
-            } else {
-                cardDesign.classList.add('card-design-hidden');
-                document.getElementById('targetUser').value = '';
-                document.querySelectorAll('input[name="designStyle"]').forEach(r => r.checked = false);
-                document.querySelectorAll('input[name="colorMode"]').forEach(r => r.checked = false);
-                document.getElementById('primaryColor').value = '';
-            }
-        });
-    });
-
-    function setColor(val) { document.getElementById('primaryColor').value = val; }
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('.field').forEach(f => f.classList.remove('error'));
-
-        const name     = document.getElementById('projectName').value.trim();
-        const typeEl   = document.querySelector('input[name="projectType"]:checked');
-        const idea     = document.getElementById('projectIdea').value.trim();
-        const modeEl   = document.querySelector('input[name="opMode"]:checked');
-        const callSign = document.getElementById('callSign').value.trim();
-
-        let valid = true;
-        if (!name)     { document.getElementById('field-name').classList.add('error'); valid = false; }
-        if (!typeEl)   { document.getElementById('field-type').classList.add('error'); valid = false; }
-        if (!idea)     { document.getElementById('field-idea').classList.add('error'); valid = false; }
-        if (!modeEl)   { document.getElementById('field-mode').classList.add('error'); valid = false; }
-        if (!callSign) { document.getElementById('field-callsign').classList.add('error'); valid = false; }
-        if (!valid) return;
-
-        const hasUI        = !cardDesign.classList.contains('card-design-hidden');
-        const targetUser   = document.getElementById('targetUser').value.trim();
-        const designStyle  = document.querySelector('input[name="designStyle"]:checked');
-        const colorMode    = document.querySelector('input[name="colorMode"]:checked');
-        const primaryColor = document.getElementById('primaryColor').value.trim();
-
-        const modeText = modeEl.value === 'prototype'
-            ? 'prototype للتجريب السريع وبناء النموذج الأولي'
-            : 'production للإنتاج الكامل بصرامة جميع القواعد';
-
-        let designSection = '';
-        if (hasUI) {
-            const styleText  = designStyle  ? designStyle.value  : 'لم يُحدد (استنتج من طبيعة المشروع)';
-            const modeUIText = colorMode    ? colorMode.value    : 'لم يُحدد (اختر الأنسب)';
-            const colorText  = primaryColor ? primaryColor       : 'لم يُحدد (اختر ما يناسب الطابع)';
-            const userText   = targetUser   ? targetUser         : 'لم يُحدد (استنتج من فكرة المشروع)';
-            designSection = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎨 تفضيلات التصميم (أنشئ tokens.css مباشرةً بهذه البيانات)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n9. المستخدم النهائي: ${userText}\n10. طابع التصميم: ${styleText}\n11. الوضع البصري: ${modeUIText}\n12. اللون الرئيسي المفضل: ${colorText}\n\n⚠️ تعليمات التصميم للوكيل:\n- لا تسأل عن تفضيلات التصميم — البيانات أعلاه كافية للبدء.\n- أنشئ ملف tokens.css بقيم فعلية (ليس placeholders) بناءً على الطابع والألوان أعلاه.\n- ابنِ نموذجاً تجريبياً HTML/CSS للشاشة الرئيسية واعرضه للمستخدم قبل البناء الكامل.\n- اسأل سؤالاً واحداً فقط: "هل هذا الاتجاه البصري يعكس تصورك؟" — ثم انطلق بعد الموافقة.`;
-        } else {
-            designSection = `\n9. المشروع باك إند فقط — لا واجهات مستخدم مطلوبة. عطّل مُراجع UI/UX تلقائياً وحوّل وزنه التقييمي لمُراجع الأمن والأداء.`;
-        }
-
-        const prompt =
-`السلام عليكم. أنا مستخدم Vibe Builder، وهذا المجلد يحتوي على ملفات الإدارة الأساسية في الجذر. بما أنك تعمل داخل بيئة Antigravity 2.0 وتملك صلاحيات الملفات والطرفية، نفّذ المهام التالية فوراً وبشكل تلقائي:
-
-1. اقرأ جميع الملفات الحاكمة التسعة والتزم ببروتوكول بداية الجلسة (Session Start Protocol) حسب الترتيب الإجباري: master_rules.md، rules_security.md، rules_code_quality.md، rules_workflow.md، rules_ui.md، project_map.md، وآخر 5 مدخلات في changelog.md، والأخطاء النشطة في bugs_log.md، وآخر 5 قرارات في decisions_log.md بالإضافة إلى .agents/AGENTS.md واعتبرها الدستور الحاكم الصارم لك.
-2. تأكد من استيعاب كافة القواعد والقوانين الحاكمة (اللغة العربية الفصحى، حماية الـ RLS، منع الكسل، سقف حجم الملفات لـ 200 سطر، تتبّع الهجرات SQL، وحظر فوضى الحزم).
-3. استخدم الطرفية والـ Sandbox المدمج لديك لتشغيل الفحص البيئي (Environment Audit) لمعرفة نظام تشغيلي وإصدارات (Node/Python/Git) والمنافذ المتاحة، وسجّل النتائج فوراً في قسم البيئة المحلية بملف project_map.md.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 بيانات المشروع
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-4. اسم مشروعي الجديد هو: ${name}
-5. طبيعة المشروع وهويته التقنية هي: ${typeEl.value}
-6. الفكرة المبدئية في عقلي هي: ${idea}
-7. وضع التشغيل المطلوب هو: ${modeText}
-8. اسم النداء الخاص بي هو: ${callSign}${designSection}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-بعد إنهاء الفحص البيئي وتحديث المستندات، ابدأ العصف الذهني واطرح أسئلتك حبة حبة لتفكيك الـ MVP دون أي تأخير أو كود ناقص.`;
-
-        outputText.textContent = prompt;
-        outputSection.classList.add('visible');
-        outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        document.getElementById('step1').classList.remove('active');
-        document.getElementById('step1').classList.add('done');
-        document.getElementById('step2').classList.remove('active');
-        document.getElementById('step2').classList.add('done');
-        document.getElementById('step3').classList.add('active');
-        document.getElementById('btnGenerate').innerHTML = '🔄 إعادة التوليد';
-    });
-
-    function copyPrompt() {
-        navigator.clipboard.writeText(outputText.textContent).then(() => {
-            btnCopy.innerHTML = '✅ تم النسخ!';
-            btnCopy.classList.add('copied');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
-            setTimeout(() => { btnCopy.innerHTML = '📋 نسخ البرومبت'; btnCopy.classList.remove('copied'); }, 3000);
-        });
-    }
-
-    document.querySelectorAll('input, textarea, select').forEach(el => {
-        el.addEventListener('input', function() { this.closest('.field')?.classList.remove('error'); });
-    });
-    document.querySelectorAll('input[type="radio"]').forEach(el => {
-        el.addEventListener('change', function() { this.closest('.field')?.classList.remove('error'); });
-    });
-</script>
+<script src="setup-guide/theme.js"></script>
+<script src="setup-guide/prompts.js"></script>
+<script src="setup-guide/app.js"></script>
 </body>
 </html>

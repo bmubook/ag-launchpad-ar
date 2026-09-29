@@ -1,6 +1,6 @@
 # سجل التغييرات الهندسي (Changelog)
 
-يتم تحديث هذا الجدول تلقائياً من قبل الوكيل فور نجاح فحص الكود داخل الـ Sandbox وقبل دمج التعديلات في الملفات الحية للمشروع.
+يتم تحديث هذا الجدول تلقائياً من قبل الوكيل بعد نجاح الفحص في بيئة العزل (Sandbox في Antigravity، أو الفرع المؤقت والاختبارات في Claude Code) وقبل دمج التعديلات في الملفات الحية للمشروع.
 
 ---
 
@@ -19,6 +19,7 @@
 | `refactor` | إعادة هيكلة بدون تغيير السلوك | `refactor(db): تحسين بنية استعلامات الجداول` |
 | `security` | تحسين أمني أو سد ثغرة | `security(rls): تفعيل سياسات الصف على جدول المستخدمين` |
 | `docs` | تحديث التوثيق فقط | `docs(readme): تحديث تعليمات التثبيت` |
+| `chore` | صيانة وتهيئة | `chore(init): إقلاع المشروع من القالب` |
 
 > يُستخدم **الإصدار الدلالي (Semantic Versioning)** بصيغة `vMAJOR.MINOR.PATCH`:
 > - **MAJOR** — تغيير جذري غير متوافق مع الإصدارات السابقة
@@ -39,3 +40,4 @@
 | 2026-07-10 18:02 | v3.3.2 | docs | Senior Project Manager | README.md | docs(setup): تحسين وضوح تعليمات التثبيت باستخدام الكلمة النائبة <your-project-name> في الأوامر | local | - |
 | 2026-07-24 21:52 | v3.3.3 | docs | Senior Project Manager | SETUP_GUIDE.md, SETUP_GUIDE.html | docs(setup): إضافة Flutter & Dart كخيار صريح لتطبيقات الجوال في ملفات الإقلاع | local | - |
 | 2026-07-24 22:22 | v3.3.4 | fix | Senior Project Manager | README.md, SETUP_GUIDE.md, SETUP_GUIDE.html | fix(repo): تصحيح رابط المستودع إلى bmubook وفرض قراءة جميع الملفات الحاكمة التسعة في برومبت الإقلاع | local | - |
+| 2026-09-29 13:35 | v4.0.0 | feat | Senior Project Manager | CLAUDE.md, .claude/**, blueprints/**, docs/glossary.md, master_rules.md, rules_*.md, project_map.md, README.md, SETUP_GUIDE.md, SETUP_GUIDE.html, setup-guide/**, .gitignore, .agents/AGENTS.md | feat(claude): إضافة دعم Claude Code الكامل بجانب Antigravity — CLAUDE.md، Hooks إنفاذ آلي، 3 وكلاء مراجعة فرعيون، 15 مهارة (منها /next و/explain و/blueprint و/quality-setup و/launch-check و/fix)، اقتراحات تطوير بعد كل مهمة، وضع التعلّم وقاموس المصطلحات، 4 مخططات تقنية جاهزة، سطر حالة، إعادة تصميم مولّد الإقلاع كمعالج خطوة بخطوة (وضع فاتح/داكن، مراجعة قبل التوليد، حفظ تلقائي، وصولية WCAG AA) مع حقل مستوى الخبرة، إعادة ترقيم بنود الواجهات 18–23 → 31–36 | feat/claude-code-support | - |
