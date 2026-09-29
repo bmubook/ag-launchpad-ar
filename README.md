@@ -4,7 +4,8 @@
   <img src="https://img.shields.io/badge/Antigravity_2.0-Template-6c63ff?style=for-the-badge&logo=google&logoColor=white" alt="Antigravity 2.0">
   <img src="https://img.shields.io/badge/Claude_Code-Supported-d97757?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude Code">
   <img src="https://img.shields.io/badge/العربية-أولاً-2dd4a8?style=for-the-badge" alt="Arabic First">
-  <img src="https://img.shields.io/badge/Version-4.0-f59e0b?style=for-the-badge" alt="Version 4.0">
+  <img src="https://img.shields.io/badge/Firebase-Standard-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
+  <img src="https://img.shields.io/badge/Version-4.1-f59e0b?style=for-the-badge" alt="Version 4.1">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -26,7 +27,8 @@
 **AG Launchpad AR** هو قالب إقلاع عربي جاهز (Starter Template) تضعه في مجلد مشروعك قبل ما تبدأ، فيتحوّل وكيل الذكاء الاصطناعي من مساعد عشوائي إلى **مهندس برمجيات منضبط** يلتزم بـ 37 بنداً حاكماً تغطي:
 
 - 🔒 **الأمن السيبراني** — حماية المفاتيح، منع الحقن النصي، قواعد أمان Firebase
-- 📐 **جودة الكود** — سقف حجم الملفات، UUID v7، معايير حديثة
+- 📐 **جودة الكود** — سقف حجم الملفات، اختبارات وفحص آلي من اليوم الأول، معايير حديثة
+- 🔥 **معيار تقني موحّد** — Firebase (مصادقة، قاعدة بيانات، قواعد أمان مختبرة على المحاكي) مع 4 مخططات جاهزة: ويب، Flutter، React Native، باك إند
 - 🔄 **سير العمل** — شبكة إجماع، عصف ذهني، فحص بيئي تلقائي
 - 🎨 **الواجهات** — تصميم متجاوب، وصولية WCAG 2.1، i18n عالمي
 - 📊 **التوثيق التلقائي** — سجلات التغييرات والأخطاء والقرارات التقنية
@@ -39,6 +41,18 @@
 | **Google Antigravity 2.0** | `.agents/AGENTS.md` | يعمل كما هو دون أي تغيير، ويستفيد من المخططات التقنية الجاهزة وقاموس المصطلحات |
 
 > 🌍 **لماذا عربي؟** لأن جميع القواعد والتوجيهات والتواصل مع الوكيل مكتوبة بالعربية الفصحى المباشرة. القالب مصمم لخدمة مجتمع الـ Vibe Coders العرب الذين يبنون مشاريعهم باستخدام الذكاء الاصطناعي.
+
+---
+
+## ⚡ ابدأ في 3 خطوات
+
+| # | الخطوة | كيف |
+|:-:|:-------|:----|
+| 1 | **حمّل القالب** | اضغط **Code ← Download ZIP** أعلى هذه الصفحة وفك الضغط، ثم سمِّ المجلد باسم مشروعك بالإنجليزية (أو استخدم `git clone` — [التفاصيل](#how-to-start)) |
+| 2 | **افتحه في Claude** | تطبيق Claude لسطح المكتب ← تبويب **Code** ← اختر مجلد المشروع نفسه ← وافق على «الثقة بالمجلد» |
+| 3 | **اكتب: السلام عليكم** | يعرض عليك Claude فتح مولّد الإقلاع أو طرح الأسئلة في المحادثة، ثم يقودك خطوة بخطوة حتى الإطلاق |
+
+> 📋 **المتطلبات:** اشتراك Claude مدفوع، و Node.js 18+، وعلى ويندوز Git for Windows — [التفاصيل](#requirements). تستخدم Google Antigravity؟ [مسارها هنا](#antigravity-start).
 
 ---
 
@@ -116,6 +130,8 @@
 
 ---
 
+<a id="how-to-start"></a>
+
 ## 🚀 كيف تبدأ؟
 
 ### الخطوة المشتركة: حمّل القالب
@@ -146,6 +162,8 @@ irm https://claude.ai/install.ps1 | iex
 claude
 ```
 > 🍎 على macOS/Linux اتبع دليل التثبيت الرسمي في [code.claude.com/docs](https://code.claude.com/docs).
+
+<a id="antigravity-start"></a>
 
 ### 🟣 البدء السريع — Google Antigravity 2.0
 1. افتح المجلد في **Google Antigravity 2.0**
@@ -291,6 +309,8 @@ ag-launchpad-ar/
 
 ---
 
+<a id="requirements"></a>
+
 ## 📋 المتطلبات
 
 | المتطلب | Claude Code | Google Antigravity 2.0 |
@@ -327,6 +347,18 @@ ag-launchpad-ar/
 3. نفّذ تعديلاتك واعمل Commit: `git commit -m "feat: وصف التحسين"`
 4. ارفع التعديلات: `git push origin feature/my-improvement`
 5. افتح Pull Request
+
+---
+
+<div dir="ltr">
+
+## 🌐 In English
+
+**AG Launchpad AR** is an Arabic-first starter template that turns an AI coding agent (**Claude Code** or **Google Antigravity**) into a disciplined software engineer for beginners ("vibe coders"). It ships 37 governance rules, automatic enforcement hooks (secrets protection, file-size ceilings, mandatory documentation, context checkpoints), three independent review subagents, and a guided journey: `/kickoff` → `/grill-me` → `/blueprint` → `/quality-setup` → `/next` → `/fix` → `/launch-check`. It includes a learning mode with an Arabic glossary and ready-made **Firebase** blueprints for web (Next.js), Flutter, React Native (Expo) and backend, with security rules verified on the Firebase emulator. All communication with the agent is in Arabic.
+
+**Quick start:** download the repo → open the folder in the Claude desktop app (Code tab) → say hello. MIT licensed.
+
+</div>
 
 ---
 
