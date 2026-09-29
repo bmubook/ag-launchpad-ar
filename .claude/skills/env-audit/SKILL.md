@@ -47,7 +47,7 @@ description: "الفحص البيئي (Environment Audit) — البند 10: ي�
    | React، Next.js، Vite، Express، NestJS، React Native، Expo | `node` + مدير الحزم المستخدم (`npm` أو `pnpm` أو `yarn` حسب ملف القفل) |
    | Flutter | `flutter` + `dart` |
    | Django، FastAPI، Flask | `python` |
-   | Firebase (المحاكيات والنشر) | `firebase` (Firebase CLI) + `java` للمحاكيات |
+   | Firebase (المحاكيات والنشر) | `firebase` (Firebase CLI) + `java` بالإصدار **21 أو أحدث** للمحاكيات (الأقدم يرفضه Firebase CLI) — التثبيت: https://adoptium.net |
    | Flutter + Firebase | `flutterfire` (FlutterFire CLI) |
 
    الأدوات التي لا يفحصها السكربت (مثل Docker أو Android Studio) افحصها منفردة، مثل: `docker --version`.

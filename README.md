@@ -253,7 +253,7 @@ ag-launchpad-ar/
 ├── 📁 docs/
 │   └── 📖 glossary.md         ← قاموس المصطلحات (يكبر مع مشروعك)
 ├── 🖥️ SETUP_GUIDE.html       ← مولّد الإقلاع: معالج خطوة بخطوة للبيئتين (افتحه بالنقر المزدوج)
-├── 📁 setup-guide/            ← ملفات المولّد: tokens.css، styles.css، theme.js، prompts.js، app.js
+├── 📁 setup-guide/            ← ملفات المولّد: tokens.css، styles.css، theme.js، prompts.js، ui.js، app.js
 ├── 📄 SETUP_GUIDE.md          ← دليل الإقلاع النصّي للبيئتين
 ├── 📜 master_rules.md         ← الدستور الرئيسي (فهرس + أولويات + اسم النداء + RTL)
 ├── 🔒 rules_security.md      ← قواعد الأمن السيبراني
@@ -299,6 +299,7 @@ ag-launchpad-ar/
 | **البيئة** | تطبيق Claude لسطح المكتب (تبويب Code) أو Claude Code CLI | Google Antigravity 2.0 |
 | **Node.js** | v18+ — **إلزامي** (الـ Hooks تعمل به) | v18+ |
 | **Git** | أحدث إصدار — على ويندوز: **Git for Windows إلزامي** لأن الـ Hooks تعمل عبر Git Bash | أحدث إصدار |
+| **Firebase CLI + Java** (لاحقاً — عند مرحلة البيانات) | Firebase CLI و **JDK 21 أو أحدث** لمحاكيات Firebase ([adoptium.net](https://adoptium.net)) — الأقدم يرفضه Firebase CLI، و `/env-audit` ينبّهك | نفسه |
 
 > ⚠️ لا يعمل القالب بكامل بنوده في بيئات أخرى (Cursor, Windsurf, etc.)، لأن بعض البنود تعتمد على أدوات الطرفية والبحث والملفات المتوفرة في Claude Code و Antigravity.
 

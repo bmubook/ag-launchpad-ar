@@ -28,7 +28,7 @@
 | الاستضافة | Firebase App Hosting (خطة Blaze) — أو Vercel كبديل مجاني | نشر مباشر من GitHub مع دعم كامل لـ Next.js | https://firebase.google.com/docs/app-hosting |
 
 ## 3. سياسة الإصدارات
-- المتطلبات الدنيا: Node.js بالإصدار الذي يشترطه توثيق Next.js الحالي، و Firebase CLI، و Java (للمحاكيات — راجع الإصدار المطلوب في توثيق المحاكيات). قارنها بنتيجة `/env-audit`.
+- المتطلبات الدنيا: Node.js بالإصدار الذي يشترطه توثيق Next.js الحالي، و Firebase CLI، و JDK 21 أو أحدث للمحاكيات (Firebase CLI الحالي يرفض الإصدارات الأقدم — ثبّت Eclipse Temurin 21 من https://adoptium.net). قارنها بنتيجة `/env-audit`.
 - لا تثبّت أرقام الإصدارات من هذا الملف. أنشئ المشروع بالأمر الرسمي الحالي من توثيق Next.js، واتبع دليل Firebase الرسمي للويب حرفياً في التهيئة (الواجهات البرمجية تتغير بين الإصدارات).
 
 ## 4. هيكل المجلدات
@@ -89,7 +89,7 @@ service cloud.firestore {
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي: مستخدم لا يقرأ بيانات غيره، وزائر لا يكتب شيئاً |
 | اختبار شامل (E2E) | Playwright — اختبار دخاني واحد: الصفحة الرئيسية تعمل |
 | أوامر | `lint`، `test`، `test:rules`، `build`، `check` في `package.json` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java`) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
+| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر

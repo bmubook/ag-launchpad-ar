@@ -65,9 +65,9 @@ match /notes/{noteId} {
    - مستخدم آخر لا يقرأ ولا يعدّل مستند غيره ❌
    - زائر غير مسجّل لا يقرأ ولا يكتب ❌
    - بيانات بشكل خاطئ تُرفض ❌
-3. شغّلها على المحاكي (يتطلب Firebase CLI و Java): `firebase emulators:exec "npm run test:rules"`، أو في مشاريع Flutter حيث `tests/rules/` مشروع Node مستقل: `firebase emulators:exec "npm --prefix tests/rules test"`. ثم شغّل كل اختبارات المشروع (البند 16).
+3. شغّلها على المحاكي (يتطلب Firebase CLI و JDK 21 أو أحدث): `firebase emulators:exec "npm run test:rules"`، أو في مشاريع Flutter حيث `tests/rules/` مشروع Node مستقل: `firebase emulators:exec "npm --prefix tests/rules test"`. ثم شغّل كل اختبارات المشروع (البند 16).
 4. **عند الفشل:** 3 محاولات كحد أقصى (5 في `prototype`)، ثم سجّل في `bugs_log.md` وتراجع وفق البند 15.
-5. **إذا تعذّر تشغيل المحاكي** (Java غير مثبتة مثلاً): أبلغ المستخدم بأن القواعد غير مختبرة، وأعطه رابط التثبيت الرسمي، ولا تنشرها.
+5. **إذا تعذّر تشغيل المحاكي** (Java غير مثبتة أو أقدم من 21 مثلاً — الرسالة: firebase-tools no longer supports Java version before 21): أبلغ المستخدم بأن القواعد غير مختبرة، وأعطه رابط التثبيت الرسمي، ولا تنشرها.
 
 ## 5. النشر — بموافقة صريحة فقط
 لا تنشر أبداً دون اختبار ناجح وموافقة المستخدم بأداة AskUserQuestion (header: `النشر`): `انشر الآن`، `لاحقاً`. عند الموافقة:

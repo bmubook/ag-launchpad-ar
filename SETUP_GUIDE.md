@@ -30,6 +30,7 @@
 | **Node.js** | v18 أو أحدث — **إلزامي** | تعمل به الـ Hooks وسطر الحالة. [تحميل من الموقع الرسمي](https://nodejs.org/) |
 | **Git** | أحدث إصدار | على ويندوز: **Git for Windows إلزامي** لأن الـ Hooks تعمل عبر Git Bash. [تحميل من الموقع الرسمي](https://git-scm.com/) |
 | **حساب Firebase** | لاحقاً — ليس مطلوباً عند الإقلاع | حساب Google مجاني يكفي لإنشاء مشروع Firebase على الخطة المجانية (Spark)؛ ستحتاجه عند مرحلة البيانات والمصادقة. بعض الخدمات (Cloud Functions، App Hosting، تخزين الملفات) تتطلب خطة Blaze — التفاصيل في `blueprints/README.md` |
+| **Firebase CLI + Java** | لاحقاً — عند مرحلة البيانات | Firebase CLI (`npm install -g firebase-tools`) و **JDK 21 أو أحدث** لمحاكيات Firebase من [adoptium.net](https://adoptium.net) — الإصدارات الأقدم يرفضها Firebase CLI، والفحص البيئي ينبّهك تلقائياً |
 
 **تثبيت Claude Code CLI على ويندوز** (في PowerShell — غير مطلوب إذا استخدمت تطبيق سطح المكتب):
 ```powershell
@@ -179,6 +180,7 @@ flowchart TD
 | **npm أو pnpm** | أحدث إصدار مستقر | يأتي مع Node.js أو يُثبّت بشكل مستقل |
 | **Git** | أحدث إصدار | [تحميل من الموقع الرسمي](https://git-scm.com/) |
 | **حساب Firebase** | لاحقاً — ليس مطلوباً عند الإقلاع | حساب Google مجاني يكفي لإنشاء مشروع Firebase على الخطة المجانية (Spark)؛ ستحتاجه عند مرحلة البيانات والمصادقة. بعض الخدمات (Cloud Functions، App Hosting، تخزين الملفات) تتطلب خطة Blaze — التفاصيل في `blueprints/README.md` |
+| **Firebase CLI + Java** | لاحقاً — عند مرحلة البيانات | Firebase CLI (`npm install -g firebase-tools`) و **JDK 21 أو أحدث** لمحاكيات Firebase من [adoptium.net](https://adoptium.net) — الإصدارات الأقدم يرفضها Firebase CLI، والفحص البيئي ينبّهك تلقائياً |
 
 > 💡 **نصيحة:** شغّل الأوامر التالية في الطرفية للتحقق السريع:
 > ```bash

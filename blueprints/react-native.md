@@ -27,7 +27,7 @@
 > 💡 إذا احتجت لاحقاً ميزات أصلية متقدمة (مثل الإشعارات عبر FCM) فالبديل هو React Native Firebase مع بناء مخصص (Development Build) — ناقشه كقرار موثّق عند الحاجة.
 
 ## 3. سياسة الإصدارات
-- المتطلبات الدنيا: Node.js بالإصدار الذي يشترطه توثيق Expo الحالي، وتطبيق Expo Go على جوالك، و Firebase CLI و Java للمحاكيات.
+- المتطلبات الدنيا: Node.js بالإصدار الذي يشترطه توثيق Expo الحالي، وتطبيق Expo Go على جوالك، و Firebase CLI و JDK 21 أو أحدث للمحاكيات (Firebase CLI الحالي يرفض الإصدارات الأقدم — ثبّت Eclipse Temurin 21 من https://adoptium.net).
 - ثبّت الحزم بالأمر `npx expo install <الحزمة>` ليختار الإصدار المتوافق مع نسخة Expo — لا تستخدم أرقاماً من الذاكرة (البند 19).
 - أنشئ المشروع بالأمر الرسمي الحالي من توثيق Expo، واتبع دليل Expo لـ Firebase حرفياً في التهيئة.
 
@@ -64,7 +64,7 @@ firestore.indexes.json · firebase.json
 | الاختبارات | Jest بإعداد `jest-expo` + React Native Testing Library — اختبار عرض لشاشة رئيسية واختبار لمنطق حقيقي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في `tests/rules/` |
 | فحص الأنواع | `tsc --noEmit` ضمن أمر `check` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← فحص الأنواع ← test ← `firebase emulators:exec "npm run test:rules"` — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java`) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
+| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← فحص الأنواع ← test ← `firebase emulators:exec "npm run test:rules"` — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر

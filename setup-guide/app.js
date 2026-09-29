@@ -85,30 +85,10 @@
     return missing.length === 0;
   }
 
-  /** إنشاء عنصر بنص آمن (textContent) — بيانات المستخدم لا تمر عبر innerHTML أبداً. */
-  function el(tag, className, text) {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  function reviewGroup(title, stepId, rows) {
-    const edit = el('button', 'btn-link', 'تعديل');
-    edit.type = 'button';
-    edit.setAttribute('aria-label', `تعديل ${title}`);
-    edit.addEventListener('click', () => showStep(activeSteps().findIndex((s) => s.id === stepId)));
-    const head = el('div', 'review-head');
-    head.append(el('h3', '', title), edit);
-    const dl = el('dl');
-    rows.forEach(([label, value]) => dl.append(el('dt', '', label), el('dd', '', value)));
-    const group = el('div', 'review-group');
-    group.append(head, dl);
-    return group;
-  }
-
   function renderReview() {
     const d = data();
+    const goTo = (stepId) => () => showStep(activeSteps().findIndex((s) => s.id === stepId));
+    const reviewGroup = (title, stepId, rows) => window.AGLUI.reviewGroup(title, rows, goTo(stepId));
     const auto = 'سيختاره الوكيل';
     const groups = [
       reviewGroup('بيئة العمل', 'env', [['الأداة', LABELS.env[d.env] || '—']]),
@@ -136,34 +116,6 @@
     document.querySelector('.progress').hidden = true;
     $('result').hidden = false;
     $('h-result').focus();
-  }
-
-  function showToast(message) {
-    const toast = $('toast');
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
-  }
-
-  function selectOutput() {
-    const range = document.createRange();
-    range.selectNodeContents($('output'));
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    showToast('النص محدَّد — اضغط Ctrl+C (أو ⌘+C على Mac) لنسخه');
-  }
-
-  function copyOutput() {
-    const btn = $('btnCopy');
-    if (!navigator.clipboard) { selectOutput(); return; }
-    navigator.clipboard.writeText($('output').textContent).then(() => {
-      btn.textContent = '✅ تم النسخ';
-      btn.classList.add('copied');
-      showToast('✅ تم النسخ — الصقه الآن في المحادثة');
-      setTimeout(() => { btn.textContent = '📋 نسخ النص'; btn.classList.remove('copied'); }, 3000);
-    }, selectOutput);
   }
 
   function saveDraft() {
@@ -217,7 +169,7 @@
     input.value = chip.dataset.value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }));
-  $('btnCopy').addEventListener('click', copyOutput);
+  $('btnCopy').addEventListener('click', () => window.AGLUI.copyText($('output'), $('btnCopy')));
   $('btnEdit').addEventListener('click', () => {
     $('result').hidden = true;
     form.hidden = false;

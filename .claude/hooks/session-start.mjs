@@ -67,9 +67,12 @@ function buildContext(source) {
     lines.push(...guidanceLines(state));
   }
 
-  lines.push(...section('آخر التغييرات (changelog.md)', recentChanges(), 'لا توجد مدخلات بعد'));
-  lines.push(...section('الأخطاء النشطة (bugs_log.md)', activeBugs(), 'لا أخطاء نشطة ✅'));
-  lines.push(...section('آخر القرارات (decisions_log.md)', recentDecisions(), 'لا قرارات مسجلة بعد'));
+  // قبل الإقلاع تحوي السجلات تاريخ تطوير القالب نفسه لا تاريخ مشروع المستخدم — فلا تُعرض (يعرض /kickoff تنظيفها).
+  if (state.kickedOff) {
+    lines.push(...section('آخر التغييرات (changelog.md)', recentChanges(), 'لا توجد مدخلات بعد'));
+    lines.push(...section('الأخطاء النشطة (bugs_log.md)', activeBugs(), 'لا أخطاء نشطة ✅'));
+    lines.push(...section('آخر القرارات (decisions_log.md)', recentDecisions(), 'لا قرارات مسجلة بعد'));
+  }
 
   if (missing.length) {
     lines.push(`⚠️ ملفات حاكمة مفقودة: ${missing.join('، ')} — نبّه المستخدم قبل أي عمل.`);

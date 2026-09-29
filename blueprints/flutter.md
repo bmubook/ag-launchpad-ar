@@ -26,7 +26,7 @@
 | التجربة المحلية | Firebase Local Emulator Suite | تجربة المصادقة والقاعدة والقواعد دون لمس بيانات حقيقية | https://firebase.google.com/docs/emulator-suite |
 
 ## 3. سياسة الإصدارات
-- المتطلبات الدنيا: Flutter SDK مستقر حديث (يتضمن Dart)، و Android Studio للمحاكي، و Xcode على Mac فقط لبناء iOS، و Firebase CLI + FlutterFire CLI، و Java للمحاكيات. تحقق بنتيجة `/env-audit` وبالأمر `flutter doctor`.
+- المتطلبات الدنيا: Flutter SDK مستقر حديث (يتضمن Dart)، و Android Studio للمحاكي، و Xcode على Mac فقط لبناء iOS، و Firebase CLI + FlutterFire CLI، و JDK 21 أو أحدث للمحاكيات (Firebase CLI الحالي يرفض الإصدارات الأقدم — ثبّت Eclipse Temurin 21 من https://adoptium.net). تحقق بنتيجة `/env-audit` وبالأمر `flutter doctor`.
 - أضف الحزم دائماً بالأمر `flutter pub add <الحزمة>` ليختار الإصدار المتوافق — لا تكتب أرقاماً من الذاكرة. راجع صفحة كل حزمة على pub.dev قبل إضافتها (البند 19).
 
 ## 4. هيكل المجلدات
@@ -67,7 +67,7 @@ firestore.indexes.json · firebase.json
 | الاختبارات | `flutter test` — اختبار Widget للشاشة الرئيسية + اختبار وحدة لمنطق حقيقي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في مجلد `tests/rules/` — وهو مشروع Node صغير مستقل بملف `package.json` خاص به، لأن مشروع Flutter نفسه لا يستخدم npm |
 | اختبار شامل | `integration_test` للمسار الرئيسي |
-| CI | `.github/workflows/ci.yml`: تثبيت Flutter ← `flutter pub get` ← `dart format --set-exit-if-changed .` ← `flutter analyze` ← `flutter test`، ثم مهمة ثانية لاختبارات القواعد: Node + Java (`actions/setup-java`) + Firebase CLI ← `firebase emulators:exec "npm --prefix tests/rules test"` |
+| CI | `.github/workflows/ci.yml`: تثبيت Flutter ← `flutter pub get` ← `dart format --set-exit-if-changed .` ← `flutter analyze` ← `flutter test`، ثم مهمة ثانية لاختبارات القواعد: Node + Java (`actions/setup-java` بالإصدار 21) + Firebase CLI ← `firebase emulators:exec "npm --prefix tests/rules test"` |
 | الاعتماديات | `.github/dependabot.yml` لـ `pub` و github-actions |
 
 ## 7. النشر

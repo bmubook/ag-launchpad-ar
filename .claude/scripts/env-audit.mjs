@@ -9,7 +9,7 @@ import { createServer } from 'node:net';
 import os from 'node:os';
 
 const TOOLS = [
-  { name: 'Node.js', command: 'node --version' },
+  { name: 'Node.js', command: 'node --version', min: 18 },
   { name: 'npm', command: 'npm --version' },
   { name: 'pnpm', command: 'pnpm --version' },
   { name: 'Yarn', command: 'yarn --version' },
@@ -19,7 +19,7 @@ const TOOLS = [
   { name: 'Dart', command: 'dart --version' },
   { name: 'Firebase CLI', command: 'firebase --version', timeout: 30000 },
   { name: 'FlutterFire CLI', command: 'flutterfire --version' },
-  { name: 'Java (لمحاكيات Firebase)', command: 'java -version 2>&1' },
+  { name: 'Java (لمحاكيات Firebase)', command: 'java -version 2>&1', min: 21 },
 ];
 
 /* منافذ التطوير الشائعة + منافذ محاكيات Firebase الافتراضية:
@@ -90,9 +90,19 @@ async function audit() {
     os: osDescription(),
     arch: os.arch(),
     shell: shellDescription(),
-    tools: TOOLS.map((tool) => ({ name: tool.name, version: toolVersion(tool) })),
+    tools: TOOLS.map((tool) => {
+      const version = toolVersion(tool);
+      const major = parseInt(version, 10);
+      return { name: tool.name, version, min: tool.min || null, tooOld: Boolean(tool.min && major && major < tool.min) };
+    }),
     ports,
   };
+}
+
+/** خانة الإصدار: غير مثبت، أو أقدم من الحد الأدنى الذي يتطلبه القالب (⚠️)، أو سليم. */
+function toolCell(t) {
+  if (t.version === MISSING) return `⬜ ${MISSING}`;
+  return t.tooOld ? `⚠️ \`${t.version}\` — يلزم ${t.min} أو أحدث` : `\`${t.version}\``;
 }
 
 function toMarkdown(result) {
@@ -104,7 +114,7 @@ function toMarkdown(result) {
     '',
     '| الأداة | الإصدار |',
     '| :--- | :--- |',
-    ...result.tools.map((t) => `| ${t.name} | ${t.version === MISSING ? `⬜ ${MISSING}` : `\`${t.version}\``} |`),
+    ...result.tools.map((t) => `| ${t.name} | ${toolCell(t)} |`),
     '',
     '* **منافذ التطوير الشائعة (Ports):**',
     '',
