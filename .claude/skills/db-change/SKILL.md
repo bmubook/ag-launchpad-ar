@@ -65,6 +65,7 @@ match /notes/{noteId} {
    - مستخدم آخر لا يقرأ ولا يعدّل مستند غيره ❌
    - زائر غير مسجّل لا يقرأ ولا يكتب ❌
    - بيانات بشكل خاطئ تُرفض ❌
+   - في اختبارات تدفق التطبيق بمكتبة Firebase العادية (تسجيل مستخدم عبر محاكي Auth ثم القراءة والكتابة): تحقّق من رفض الوصول برمز الخطأ `permission-denied` (مثل `expect.objectContaining({ code: 'permission-denied' })`)، لا من نص الرسالة، لأن المحاكي يكتب نصاً تفصيلياً مختلفاً.
 3. شغّلها على المحاكي (يتطلب Firebase CLI و JDK 21 أو أحدث): `firebase emulators:exec "npm run test:rules"`، أو في مشاريع Flutter حيث `tests/rules/` مشروع Node مستقل: `firebase emulators:exec "npm --prefix tests/rules test"`. ثم شغّل كل اختبارات المشروع (البند 16).
 4. **عند الفشل:** 3 محاولات كحد أقصى (5 في `prototype`)، ثم سجّل في `bugs_log.md` وتراجع وفق البند 15.
 5. **إذا تعذّر تشغيل المحاكي** (Java غير مثبتة أو أقدم من 21 مثلاً — الرسالة: firebase-tools no longer supports Java version before 21): أبلغ المستخدم بأن القواعد غير مختبرة، وأعطه رابط التثبيت الرسمي، ولا تنشرها.
