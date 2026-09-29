@@ -6,8 +6,6 @@ paths:
   - "**/locales/**"
   - "**/app/**/{page,layout}.{js,ts,jsx,tsx}"
 ---
-<div dir="rtl">
-
 
 # قواعد الواجهات — تحميل تلقائي عند العمل على ملفات الواجهات
 
@@ -15,6 +13,8 @@ paths:
 
 > [!IMPORTANT]
 > أنت تعمل الآن على ملفات واجهات. **قبل أي تعديل** اقرأ `rules_ui.md` كاملاً إن لم تكن قرأته في هذه الجلسة، والتزم بالمسار الإلزامي لبناء الواجهات بترتيبه الحتمي.
+
+<div dir="rtl">
 
 * مصدر القيم الوحيد: ملف المتغيرات المركزي (البند 32 — `tokens.css` للويب، `lib/core/theme/app_tokens.dart` لـ Flutter، `src/theme/tokens.ts` لـ React Native). لا ألوان ولا خطوط ولا تباعد مكتوبة يدوياً.
 * &rlm;RTL إلزامي: `dir="rtl"` و CSS Logical Properties (`margin-inline-start` لا `margin-left`)، و `line-height` ≥ 1.7.
