@@ -162,6 +162,12 @@ export function isRealEnvFile(filePath) {
   return /^\.env(\..+)?$/i.test(name) && !/^\.env\.(example|sample|template|dist)$/i.test(name);
 }
 
+/** ملف حساب خدمة Firebase/Google (سرّ كامل الصلاحيات) مثل <project>-firebase-adminsdk-xxxx.json. */
+export function isServiceAccountFile(filePath) {
+  const name = basename(String(filePath || '').replace(/\\/g, '/'));
+  return /(adminsdk|service[-_]?account)[^/]*\.json$/i.test(name);
+}
+
 export function emit(payload) {
   process.stdout.write(JSON.stringify(payload));
 }

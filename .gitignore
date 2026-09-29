@@ -51,9 +51,17 @@ coverage/
 *.lcov
 
 # ============================================================
-# Supabase محلي
+# Firebase — ملفات محلية وأسرار (لا تُرفع أبداً)
 # ============================================================
-supabase/.temp/
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*-firebase-adminsdk-*.json
+*service-account*.json
+serviceAccountKey.json
+functions/.env*
+!functions/.env.example
 
 # ============================================================
 # Claude Code — ملفات محلية لا تُرفع

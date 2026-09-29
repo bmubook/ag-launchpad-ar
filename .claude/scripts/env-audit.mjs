@@ -17,10 +17,14 @@ const TOOLS = [
   { name: 'Git', command: 'git --version' },
   { name: 'Flutter', command: 'flutter --version', timeout: 60000 },
   { name: 'Dart', command: 'dart --version' },
-  { name: 'Supabase CLI', command: 'supabase --version' },
+  { name: 'Firebase CLI', command: 'firebase --version', timeout: 30000 },
+  { name: 'FlutterFire CLI', command: 'flutterfire --version' },
+  { name: 'Java (لمحاكيات Firebase)', command: 'java -version 2>&1' },
 ];
 
-const DEV_PORTS = [3000, 3001, 4200, 5000, 5173, 5432, 8000, 8080, 8081, 54321, 54322];
+/* منافذ التطوير الشائعة + منافذ محاكيات Firebase الافتراضية:
+   4000 واجهة المحاكيات، 5001 Functions، 8080 Firestore، 9099 Auth، 9199 Storage. */
+const DEV_PORTS = [3000, 3001, 4000, 4200, 5000, 5001, 5173, 8000, 8080, 8081, 9099, 9199];
 const MISSING = 'غير مثبت';
 
 function run(command, timeout = 15000) {

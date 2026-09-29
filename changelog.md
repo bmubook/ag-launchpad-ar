@@ -17,7 +17,7 @@
 | `feat` | ميزة جديدة | `feat(auth): إضافة تسجيل الدخول بـ Google` |
 | `fix` | إصلاح خطأ | `fix(api): معالجة خطأ 500 عند إنشاء الحساب` |
 | `refactor` | إعادة هيكلة بدون تغيير السلوك | `refactor(db): تحسين بنية استعلامات الجداول` |
-| `security` | تحسين أمني أو سد ثغرة | `security(rls): تفعيل سياسات الصف على جدول المستخدمين` |
+| `security` | تحسين أمني أو سد ثغرة | `security(rules): إغلاق قواعد الأمان على مجموعة المستخدمين` |
 | `docs` | تحديث التوثيق فقط | `docs(readme): تحديث تعليمات التثبيت` |
 | `chore` | صيانة وتهيئة | `chore(init): إقلاع المشروع من القالب` |
 
@@ -41,3 +41,4 @@
 | 2026-07-24 21:52 | v3.3.3 | docs | Senior Project Manager | SETUP_GUIDE.md, SETUP_GUIDE.html | docs(setup): إضافة Flutter & Dart كخيار صريح لتطبيقات الجوال في ملفات الإقلاع | local | - |
 | 2026-07-24 22:22 | v3.3.4 | fix | Senior Project Manager | README.md, SETUP_GUIDE.md, SETUP_GUIDE.html | fix(repo): تصحيح رابط المستودع إلى bmubook وفرض قراءة جميع الملفات الحاكمة التسعة في برومبت الإقلاع | local | - |
 | 2026-09-29 13:35 | v4.0.0 | feat | Senior Project Manager | CLAUDE.md, .claude/**, blueprints/**, docs/glossary.md, master_rules.md, rules_*.md, project_map.md, README.md, SETUP_GUIDE.md, SETUP_GUIDE.html, setup-guide/**, .gitignore, .agents/AGENTS.md | feat(claude): إضافة دعم Claude Code الكامل بجانب Antigravity — CLAUDE.md، Hooks إنفاذ آلي، 3 وكلاء مراجعة فرعيون، 15 مهارة (منها /next و/explain و/blueprint و/quality-setup و/launch-check و/fix)، اقتراحات تطوير بعد كل مهمة، وضع التعلّم وقاموس المصطلحات، 4 مخططات تقنية جاهزة، سطر حالة، إعادة تصميم مولّد الإقلاع كمعالج خطوة بخطوة (وضع فاتح/داكن، مراجعة قبل التوليد، حفظ تلقائي، وصولية WCAG AA) مع حقل مستوى الخبرة، إعادة ترقيم بنود الواجهات 18–23 → 31–36 | feat/claude-code-support | - |
+| 2026-09-29 15:54 | v4.1.0 | feat | Backend & Security Engineer | blueprints/**, .claude/skills/db-change/**, .claude/skills/*, .claude/agents/security-critic.md, .claude/hooks/**, .claude/scripts/env-audit.mjs, .claude/settings.json, rules_*.md, .env.example, .gitignore, docs/glossary.md, README.md, SETUP_GUIDE.md, CLAUDE.md | feat(firebase): توحيد المعيار التقني على Firebase بدل Supabase لتبسيطه على المبتدئين — المخططات الأربعة، /db-change بدل /new-migration (قواعد الأمان والمحاكي)، حماية ملفات حساب الخدمة، فحص Firebase CLI و Java ومنافذ المحاكيات | main | - |

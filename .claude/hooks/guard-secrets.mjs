@@ -9,14 +9,17 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  emit, isRealEnvFile, projectDir, readStdinJson, runHook, toProjectRelative,
+  emit, isRealEnvFile, isServiceAccountFile, projectDir, readStdinJson, runHook, toProjectRelative,
 } from './lib/common.mjs';
 import {
   ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
-  SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM,
+  SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
 } from './lib/patterns.mjs';
 
 const ENV_ADVICE = 'أضف المفاتيح الجديدة بقيم فارغة إلى .env.example، واطلب من المستخدم نسخها إلى .env وتعبئتها بنفسه.';
+const FIREBASE_HINT = 'إن كانت إعدادات Firebase للعميل فهي معرّفات عامة لكنها تبقى خارج الكود: اقرأها من متغيرات NEXT_PUBLIC_FIREBASE_* أو EXPO_PUBLIC_FIREBASE_*، وفي Flutter يولّدها الأمر flutterfire configure.';
+/** ملفات إعداد Firebase للعميل التي تولّدها أدوات Firebase الرسمية — قيم apiKey فيها عامة بطبيعتها. */
+const FIREBASE_CLIENT_CONFIG_FILES = /(^|\/)(firebase_options\.dart|google-services\.json|GoogleService-Info\.plist)$/;
 const SEVERITY = { allow: 0, ask: 1, deny: 2 };
 
 function decide(permissionDecision, reason) {
@@ -37,11 +40,13 @@ function writtenText(toolName, input) {
 }
 
 function scanSecrets(text, relPath) {
-  const high = SECRET_HIGH.find((p) => p.re.test(text));
+  const isFirebaseConfig = FIREBASE_CLIENT_CONFIG_FILES.test(relPath);
+  const high = SECRET_HIGH.find((p) => p.re.test(text) && !(isFirebaseConfig && p.publicInFirebaseConfig));
   if (high) {
-    return decide('deny', `🔒 حماية الأسرار (البند 5 — rules_security.md): المحتوى المراد كتابته في ${relPath} يحتوي على ما يبدو ${high.name}. يُحظر وضع المفاتيح داخل الملفات؛ استدعِها من متغيرات البيئة. ${ENV_ADVICE}`);
+    const hint = high.publicInFirebaseConfig ? ` ${FIREBASE_HINT}` : '';
+    return decide('deny', `🔒 حماية الأسرار (البند 5 — rules_security.md): المحتوى المراد كتابته في ${relPath} يحتوي على ما يبدو ${high.name}. يُحظر وضع المفاتيح داخل الملفات؛ استدعِها من متغيرات البيئة. ${ENV_ADVICE}${hint}`);
   }
-  for (const pattern of SECRET_MEDIUM) {
+  for (const pattern of isFirebaseConfig ? [] : SECRET_MEDIUM) {
     pattern.re.lastIndex = 0;
     const matches = pattern.re.global ? [...text.matchAll(pattern.re)] : [text.match(pattern.re)].filter(Boolean);
     if (matches.some((m) => !pattern.accept || pattern.accept(m))) {
@@ -66,6 +71,9 @@ function checkFileTool(toolName, input) {
   const relPath = toProjectRelative(target) || String(target || '');
   const decisions = [];
 
+  if (target && isServiceAccountFile(target)) {
+    return decide('deny', `🔒 حماية الأسرار (البند 5): ${relPath} ملف حساب خدمة (Service Account) بصلاحيات كاملة على مشروع Firebase — لا يقرأه الوكيل ولا يعدّله. مكانه خارج مجلد المشروع، ويُشار إلى مساره فقط عبر متغير البيئة GOOGLE_APPLICATION_CREDENTIALS.`);
+  }
   if (target && isRealEnvFile(target)) {
     const exists = existsSync(resolve(projectDir(), String(target)));
     if (toolName !== 'Write' || exists) {
@@ -83,6 +91,10 @@ function checkFileTool(toolName, input) {
 function checkShellCommand(command) {
   let remaining = String(command || '');
   for (const safe of SAFE_ENV_COMMANDS) remaining = remaining.replace(safe, ' ');
+  const serviceAccounts = remaining.match(SERVICE_ACCOUNT_REFERENCE) || [];
+  if (serviceAccounts.length && READ_OR_EXFIL_COMMAND.test(remaining)) {
+    return decide('deny', `🔒 حماية الأسرار (البند 5): هذا الأمر يقرأ أو ينقل ملف حساب الخدمة (${[...new Set(serviceAccounts)].join('، ')}). عرض محتواه يسرّب مفتاحاً بصلاحيات كاملة إلى سجل المحادثة.`);
+  }
   const references = [...remaining.matchAll(ENV_REFERENCE)].map((m) => m[1]).filter(isRealEnvFile);
   if (!references.length) return null;
   const files = [...new Set(references)].join('، ');

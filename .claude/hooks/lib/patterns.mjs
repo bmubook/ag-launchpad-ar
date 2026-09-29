@@ -8,7 +8,7 @@ export const SECRET_HIGH = [
   { name: 'Stripe live key', re: /\b(?:sk|rk)_live_[0-9a-zA-Z]{20,}/ },
   { name: 'AWS access key', re: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/ },
   { name: 'GitHub token', re: /\bgh[pousr]_[A-Za-z0-9]{36,}\b|\bgithub_pat_[A-Za-z0-9_]{60,}/ },
-  { name: 'Google API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/ },
+  { name: 'Google/Firebase API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/, publicInFirebaseConfig: true },
   { name: 'Slack token', re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
   { name: 'Supabase secret key', re: /\bsb_secret_[A-Za-z0-9_-]{20,}/ },
   { name: 'Private key block', re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----/ },
@@ -56,7 +56,7 @@ export const PROTECTED_INSTRUCTION_PATHS = [
 
 /** ملفات القالب التي تحتوي عبارات الفحص نفسها كقوائم مرجعية — تأخذ سؤال الحوكمة العادي لا إنذار الحقن. */
 export const INJECTION_SCAN_EXEMPT = [
-  /^\.claude\/skills\/(import-skill|new-migration|fix|launch-check)\/SKILL\.md$/,
+  /^\.claude\/skills\/(import-skill|db-change|fix|launch-check)\/SKILL\.md$/,
   /^\.claude\/hooks\/lib\/patterns\.mjs$/,
   /^rules_security\.md$/,
 ];
@@ -72,3 +72,6 @@ export const SAFE_ENV_COMMANDS = [
   /\b(?:cp|copy|Copy-Item)(?:\s+-{1,2}[A-Za-z-]+)*\s+["']?[^\s"']*\.env\.(?:example|sample|template)["']?\s+["']?[^\s"']*\.env["']?/gi,
   /(?:\btest\s+-[efs]|\[\s+-[efs]|\bTest-Path)\s+["']?[^\s"']*\.env["']?/gi,
 ];
+
+/** إشارة إلى ملف حساب خدمة Firebase/Google داخل أمر طرفية. */
+export const SERVICE_ACCOUNT_REFERENCE = /[^\s'"]*(?:adminsdk|service[-_]?account)[^\s'"]*\.json/gi;

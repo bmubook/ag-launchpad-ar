@@ -21,7 +21,7 @@ description: "الفحص البيئي (Environment Audit) — البند 10: ي�
    | `Cannot find module` | السكربت مفقود | ملفات القالب ناقصة؛ تابع بالأوامر البديلة. |
    | خطأ آخر | — | اعرض رسالة الخطأ كما هي، وتابع بالأوامر البديلة. |
 
-3. الأوامر البديلة (كل أمر منفرداً، و"غير مثبت" لما يفشل): `node -v`، `npm -v`، `git --version`، `python --version`، `flutter --version`، `dart --version`، `supabase --version`، و`uname -a` (أو `[System.Environment]::OSVersion.VersionString` في PowerShell). المنافذ في هذه الحالة: `لم تُفحص`.
+3. الأوامر البديلة (كل أمر منفرداً، و"غير مثبت" لما يفشل): `node -v`، `npm -v`، `git --version`، `python --version`، `flutter --version`، `dart --version`، `firebase --version`، `java -version`، و`uname -a` (أو `[System.Environment]::OSVersion.VersionString` في PowerShell). المنافذ في هذه الحالة: `لم تُفحص`.
 
 ## الخطوة 2 — عرض النتيجة
 
@@ -47,16 +47,17 @@ description: "الفحص البيئي (Environment Audit) — البند 10: ي�
    | React، Next.js، Vite، Express، NestJS، React Native، Expo | `node` + مدير الحزم المستخدم (`npm` أو `pnpm` أو `yarn` حسب ملف القفل) |
    | Flutter | `flutter` + `dart` |
    | Django، FastAPI، Flask | `python` |
-   | Supabase محلياً | `supabase` + Docker |
+   | Firebase (المحاكيات والنشر) | `firebase` (Firebase CLI) + `java` للمحاكيات |
+   | Flutter + Firebase | `flutterfire` (FlutterFire CLI) |
 
-   الأدوات التي لا يفحصها السكربت (مثل Docker أو Java) افحصها منفردة: `docker --version`.
+   الأدوات التي لا يفحصها السكربت (مثل Docker أو Android Studio) افحصها منفردة، مثل: `docker --version`.
 3. استخرج الحد الأدنى للإصدار المطلوب من التوثيق الرسمي عبر WebSearch أو WebFetch (البند 4)، لا من الذاكرة.
 4. اعرض جدول `| الأداة | مطلوبة لأجل | الحد الأدنى | المثبت | الحالة |` بالحالات: `✅ متوافق`، `⚠️ أقدم من المطلوب`، `❌ غير مثبت`.
 5. المعالجة (البند 10):
    * `⚠️ أقدم من المطلوب` ← ابحث أولاً عن إصدار من المكتبة أو الإطار يعمل مع الأداة المثبتة واقترحه. إذا تغيّر الـ Stack بسبب ذلك فوثّقه في `decisions_log.md`. لا تطلب الترقية إلا إذا استحال البديل: اشرح السبب واطلب موافقة صريحة بـ AskUserQuestion (header: `ترقية`) بخيارين: `موافق على الترقية`، `ابحث عن بديل`.
    * `❌ غير مثبت` ومطلوب ← وضّح أنه ضروري لتشغيل المشروع، وأعطِ رابط التثبيت الرسمي، وانتظر تأكيد المستخدم.
    * لا تنفّذ أوامر تثبيت أو ترقية بنفسك.
-6. المنافذ: إذا كان منفذ مشغول 🔴 هو المنفذ الافتراضي للـ Stack (3000 لـ Next.js و Express، 5173 لـ Vite، 8081 لـ Metro و Expo، 8000 لـ Django و FastAPI، 5432 لـ PostgreSQL، 54321 و54322 لـ Supabase) فاقترح منفذاً بديلاً متاحاً 🟢، وأضف في القسم 6 سطراً قبل `* **البيئة النشطة محلياً:**`: `* **المنفذ البديل المعتمد:** <المنفذ> بدلاً من <المشغول>`.
+6. المنافذ: إذا كان منفذ مشغول 🔴 هو المنفذ الافتراضي للـ Stack (3000 لـ Next.js و Express، 5173 لـ Vite، 8081 لـ Metro و Expo، 8000 لـ Django و FastAPI، 4000 لواجهة محاكيات Firebase، 8080 لمحاكي Firestore، 9099 للمصادقة، 5001 لـ Functions، 9199 لـ Storage) فاقترح منفذاً بديلاً متاحاً 🟢، وأضف في القسم 6 سطراً قبل `* **البيئة النشطة محلياً:**`: `* **المنفذ البديل المعتمد:** <المنفذ> بدلاً من <المشغول>`.
 
 ## الخطوة 5 — Git Bash على Windows
 

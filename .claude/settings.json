@@ -17,6 +17,8 @@
       "Read(.env.production.local)",
       "Read(.env.staging)",
       "Read(.env.staging.local)",
+      "Read(**/*adminsdk*.json)",
+      "Read(**/*service-account*.json)",
       "Edit(.env)",
       "Edit(.env.local)",
       "Edit(.env.development)",

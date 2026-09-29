@@ -1,102 +1,110 @@
 <div dir="rtl">
 
-# ⚙️ مخطط الباك إند وقاعدة البيانات — Supabase أولاً
+# ⚙️ مخطط الباك إند وقاعدة البيانات — Firebase
 
 ## 1. متى تختار هذا المخطط / متى لا تختاره
 
 | ✅ اختره عندما | ❌ لا تختره عندما |
 |:---|:---|
 | تحتاج قاعدة بيانات و API لتطبيق موجود أو لعدة واجهات | تريد واجهة للمستخدم أيضاً — ابدأ بـ `web.md` أو مخطط جوال (يتضمن الخلفية) |
-| خدمة بيانات أو أتمتة أو تكامل بين أنظمة | معالجة بيانات ضخمة أو تعلّم آلي ثقيل — يحتاج تصميماً مخصصاً |
-
-**مساران داخل المخطط:**
-
-| المسار | متى | ماذا تبني |
-|:---|:---|:---|
-| **أ. Supabase أولاً (الافتراضي)** | معظم المشاريع: بيانات + مصادقة + منطق خفيف | جداول + RLS + دوال Edge Functions عند الحاجة |
-| **ب. API مخصص** | منطق معقد، تكاملات كثيرة، أو API عام بإصدارات | Node.js + TypeScript + Hono + Drizzle ORM فوق PostgreSQL (Supabase) |
+| خدمة بيانات أو أتمتة (إرسال بريد، معالجة ملفات، تكامل مع خدمات دفع) | معالجة بيانات ضخمة أو تعلّم آلي ثقيل — يحتاج تصميماً مخصصاً |
+| تريد خلفية بلا خوادم تديرها بنفسك (Serverless) | تقارير علاقية معقدة جداً — البديل ضمن Firebase: Data Connect (PostgreSQL مُدار) بقرار موثّق |
 
 ## 2. الحزمة التقنية
 
 | الطبقة | التقنية | لماذا | التوثيق الرسمي |
 |:---|:---|:---|:---|
-| قاعدة البيانات | PostgreSQL عبر Supabase | قاعدة حقيقية مع RLS ونسخ احتياطي | https://supabase.com/docs/guides/database/overview |
-| الهجرات والتطوير المحلي | Supabase CLI (يتطلب Docker للبيئة المحلية) | هجرات بملفات (البند 18) وتجربة محلية قبل السحابة | https://supabase.com/docs/guides/local-development |
-| المصادقة | Supabase Auth | جاهزة وآمنة ومتكاملة مع RLS | https://supabase.com/docs/guides/auth |
-| المنطق على الخادم (أ) | Supabase Edge Functions | دوال خفيفة لعمليات لا تصلح في المتصفح (دفع، إرسال بريد) | https://supabase.com/docs/guides/functions |
-| الإطار (ب) | Hono + TypeScript على Node.js | خفيف وسريع ومعايير ويب حديثة | https://hono.dev |
-| الوصول للبيانات (ب) | Drizzle ORM | استعلامات آمنة الأنواع وهجرات بملفات | https://orm.drizzle.team |
-| التحقق من البيانات | Zod | تحقق حتمي من كل طلب (البندان 23 و28) | https://zod.dev |
-| توثيق الـ API | OpenAPI (البند 25) | توثيق آلي لكل نقطة | https://www.openapis.org |
+| قاعدة البيانات | Cloud Firestore | مستندات مرنة، فهارس، تحديث فوري | https://firebase.google.com/docs/firestore |
+| المصادقة | Firebase Authentication | جاهزة وآمنة ومتكاملة مع قواعد الأمان | https://firebase.google.com/docs/auth |
+| منطق الخادم و API | Cloud Functions for Firebase (TypeScript) | دوال تُستدعى من التطبيق أو عبر HTTPS أو عند أحداث قاعدة البيانات — تتطلب خطة Blaze | https://firebase.google.com/docs/functions |
+| الوصول الإداري | Firebase Admin SDK (داخل الدوال فقط) | عمليات موثوقة تتجاوز قواعد العميل بأمان | https://firebase.google.com/docs/admin/setup |
+| تخزين الملفات | Cloud Storage for Firebase + Storage Rules | رفع الصور والملفات بصلاحيات — راجع متطلبات الخطة | https://firebase.google.com/docs/storage |
+| التحقق من البيانات | Zod | تحقق حتمي من كل طلب يصل للدوال (البندان 23 و28) | https://zod.dev |
+| التجربة المحلية | Firebase Local Emulator Suite | الدوال والقاعدة والمصادقة والقواعد محلياً | https://firebase.google.com/docs/emulator-suite |
+| البديل العلاقي | Firebase Data Connect | PostgreSQL مُدار داخل Firebase عند الحاجة لعلاقات معقدة — بقرار ADR | https://firebase.google.com/docs/data-connect |
 
 ## 3. سياسة الإصدارات
-- المتطلب الأدنى: Node.js بالإصدار الذي يشترطه التوثيق الحالي، و Supabase CLI، و Docker Desktop للبيئة المحلية (على Windows يتطلب تفعيل WSL 2 — اتبع دليل Docker الرسمي).
-- تحقق من أوامر Supabase CLI من توثيقها الحالي قبل التشغيل (البند 4)، وقارن الإصدارات بنتيجة `/env-audit`.
+- المتطلبات الدنيا: Node.js بالإصدار الذي تدعمه Cloud Functions حالياً (راجع التوثيق)، و Firebase CLI، و Java للمحاكيات. قارنها بنتيجة `/env-audit`.
+- أنشئ هيكل الدوال بالأمر الرسمي `firebase init` واختر TypeScript، ولا تعتمد على أرقام إصدارات من الذاكرة (البند 4).
 
 ## 4. هيكل المجلدات
 
 ```
-supabase/
-├── migrations/            ← كل تعديل على الجداول ملف مؤرخ (البند 18) — /new-migration
-├── functions/             ← Edge Functions (المسار أ)
-├── seed.sql               ← بيانات تجريبية للتطوير المحلي فقط
-└── config.toml
-src/                       ← المسار ب فقط
-├── routes/v1/             ← نقاط API مقسّمة حسب الميزة، بإصدار /api/v1 (البند 28)
-├── services/              ← منطق الأعمال
-├── db/                    ← مخطط Drizzle والاستعلامات (Repository)
-└── validation/            ← مخططات Zod
-tests/
+functions/
+├── src/
+│   ├── index.ts           ← تصدير الدوال فقط
+│   ├── api/v1/            ← دوال HTTPS مقسّمة حسب الميزة بإصدار v1 (البند 28)
+│   ├── triggers/          ← دوال تعمل عند أحداث Firestore أو المصادقة
+│   ├── services/          ← منطق الأعمال
+│   ├── repositories/      ← كل قراءة وكتابة لـ Firestore هنا
+│   └── validation/        ← مخططات Zod
+└── test/
+firestore.rules            ← قواعد الأمان (البند 18 — تُعدَّل عبر /db-change فقط)
+firestore.indexes.json     ← الفهارس
+storage.rules              ← قواعد تخزين الملفات
+firebase.json · .firebaserc
+scripts/migrations/        ← سكربتات تحديث شكل البيانات الموجودة، مؤرخة وتُجرَّب على المحاكي أولاً
+tests/rules/               ← اختبارات قواعد الأمان
 ```
 
 ## 5. خط الأساس الأمني
-- **RLS مغلق افتراضياً على كل جدول بلا استثناء**، ثم سياسات بأقل صلاحية:
+- **قواعد مغلقة افتراضياً** لكل مجموعة، ثم صلاحيات المالك فقط، مع التحقق من شكل البيانات المكتوبة:
 
-```sql
-alter table public.projects enable row level security;
-create policy "owners read their projects" on public.projects
-  for select to authenticated using ((select auth.uid()) = owner_id);
-create policy "owners change their projects" on public.projects
-  for update to authenticated using ((select auth.uid()) = owner_id)
-  with check ((select auth.uid()) = owner_id);
 ```
-- مفتاح `service_role` (أو المفتاح السري) يتجاوز RLS: يُستخدم على الخادم فقط، من متغيرات البيئة، ولا يُطبع في السجلات أبداً.
-- كل نقطة API: تحقق من الهوية، ثم الصلاحية، ثم المدخلات (Zod)، ثم التنفيذ — بهذا الترتيب.
-- حد للطلبات (Rate Limiting) على نقاط الدخول والعمليات المكلفة.
-- كلمات المرور تديرها Supabase Auth؛ إن اضطررت لتخزينها بنفسك فـ Argon2id أو bcrypt فقط (البند 28).
-- المعرّفات: UUID v7 — الدالة `uuidv7()` موجودة في PostgreSQL 18 فما فوق؛ تحقق من نسخة مشروعك، وإلا فولّد المعرّف في التطبيق.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /projects/{projectId} {
+      allow read, delete: if request.auth != null
+        && request.auth.uid == resource.data.ownerId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == request.resource.data.ownerId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 200;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+- **Admin SDK يتجاوز القواعد:** يُستخدم داخل Cloud Functions فقط، بعد التحقق من هوية المستدعي (`request.auth` في الدوال القابلة للاستدعاء `onCall`، أو التحقق من ID Token عبر Admin SDK في دوال HTTPS `onRequest`) ومن صلاحيته، ثم التحقق من المدخلات بـ Zod — بهذا الترتيب.
+- **ملف حساب الخدمة (Service Account) سرّ حقيقي:** لا يُرفع إلى Git ولا يُطبع في السجلات. داخل Cloud Functions لا تحتاجه أصلاً (الصلاحيات تُمنح تلقائياً).
+- **الأسرار** (مفاتيح خدمات الدفع والبريد) عبر Secret Manager في Cloud Functions، لا في الكود ولا في `.env` المرفوع.
+- حد للطلبات (Rate Limiting) و App Check على الدوال العامة والمكلفة.
+- المعرّفات: معرّفات Firestore التلقائية + حقل `createdAt` بقيمة `serverTimestamp()` (البند 28).
 
 ## 6. خط أساس الجودة (ما ينفّذه `/quality-setup`)
 | الأداة | الاختيار |
 |:---|:---|
-| المدقق والمنسّق | ESLint + Prettier (أو Deno fmt/lint لدوال Edge) |
-| الاختبارات | Vitest لمنطق الأعمال + اختبارات لنقاط API؛ واختبار سياسات RLS على البيئة المحلية (مستخدم لا يرى بيانات غيره) |
-| قاعدة البيانات | `supabase db reset` محلياً يطبّق كل الهجرات من الصفر للتحقق منها |
-| CI | `.github/workflows/ci.yml`: تثبيت ← lint ← test ← build |
+| المدقق والمنسّق | ESLint + Prettier داخل `functions/` |
+| الاختبارات | Vitest أو Jest لمنطق الأعمال + اختبار الدوال على المحاكي |
+| اختبارات قواعد الأمان | `@firebase/rules-unit-testing`: مستخدم لا يقرأ بيانات غيره، وزائر لا يكتب شيئاً |
+| CI | `.github/workflows/ci.yml`: تثبيت ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر
-1. اختبر كل الهجرات محلياً، ثم اربط المشروع السحابي وطبّقها بأوامر Supabase CLI الرسمية — لا تعديل يدوي من لوحة التحكم (البند 18).
-2. المسار أ: انشر Edge Functions بأمر النشر الرسمي، وأضف الأسرار عبر إعدادات Supabase.
-3. المسار ب: انشر الخادم على منصة تدعم Node.js، مع متغيرات البيئة في إعدادات المنصة و HTTPS إلزامي.
-4. فعّل النسخ الاحتياطي في Supabase وجرّب الاستعادة مرة واحدة.
+1. أنشئ مشروع Firebase، ورقِّه إلى خطة Blaze إذا احتجت Cloud Functions، وفعّل **تنبيه الميزانية** فوراً.
+2. اختبر كل شيء على المحاكي: `firebase emulators:start`.
+3. انشر بعد موافقتك: القواعد والفهارس `firebase deploy --only firestore:rules,firestore:indexes`، ثم الدوال `firebase deploy --only functions` — لا تعديل يدوي من لوحة التحكم (البند 18).
+4. فعّل النسخ الاحتياطي لـ Firestore (Backups أو Point-in-time recovery) وجرّب الاستعادة مرة واحدة.
 
 ## 8. أخطاء المبتدئين الشائعة وكيف يمنعها المخطط
 | الخطأ | الوقاية |
 |:---|:---|
-| جدول بلا RLS يكشف كل البيانات | قاعدة القسم 5 + `/new-migration` + `/launch-check` |
-| تعديل الجداول من لوحة التحكم فيختلف المحلي عن الإنتاج | الهجرات بالملفات فقط (البند 18) |
-| استخدام `service_role` في كود عام | القسم 5 + Hook الحارس الأمني |
-| API بلا إصدارات فيكسر العملاء عند التغيير | `/api/v1` من البداية |
-| منطق معقد داخل السياسات يصعب اختباره | منطق الأعمال في `services/` واختباراته |
+| قواعد «وضع الاختبار» تكشف كل البيانات | قواعد مغلقة افتراضياً + `/db-change` + اختبارات القواعد + `/launch-check` |
+| تعديل القواعد من لوحة التحكم فيختلف الإنتاج عن المستودع | القواعد ملفات في المستودع تُنشر بـ CLI فقط (البند 18) |
+| دالة عامة بلا تحقق من الهوية يستغلها أي شخص | ترتيب: هوية ← صلاحية ← مدخلات في كل دالة |
+| فاتورة مفاجئة من حلقة كتابة لا تنتهي في Trigger | تنبيه الميزانية + اختبار الـ Triggers على المحاكي أولاً |
+| مفاتيح خدمات خارجية داخل الكود | Secret Manager + Hook الحارس الأمني |
 
 ## 9. المراحل المقترحة
 | # | المرحلة | أهم المهام |
 |:---:|:---|:---|
-| 1 | التأسيس | العصف الذهني، اختيار المسار (أ/ب)، `/quality-setup`، البيئة المحلية |
-| 2 | مخطط البيانات والأمان | الجداول بالهجرات، RLS واختباراته، المصادقة |
-| 3 | المنطق ونقاط API | ميزة ميزة مع اختباراتها وتوثيق OpenAPI |
-| 4 | التكاملات | خدمات خارجية، Edge Functions، حدود الطلبات |
+| 1 | التأسيس | العصف الذهني، اعتماد المخطط، `/quality-setup`، المحاكيات المحلية |
+| 2 | نموذج البيانات والأمان | المجموعات، قواعد الأمان واختباراتها، المصادقة |
+| 3 | المنطق و API | الدوال ميزة ميزة مع اختباراتها وتوثيقها (البند 25) |
+| 4 | التكاملات | خدمات خارجية، Triggers، حدود الطلبات، App Check |
 | 5 | الفحص والنشر | `/launch-check`، النشر، النسخ الاحتياطي، المراقبة |
 
 </div>
