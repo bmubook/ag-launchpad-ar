@@ -64,7 +64,7 @@ firestore.indexes.json · firebase.json
 | الاختبارات | Jest بإعداد `jest-expo` + React Native Testing Library — اختبار عرض لشاشة رئيسية واختبار لمنطق حقيقي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في `tests/rules/` |
 | فحص الأنواع | `tsc --noEmit` ضمن أمر `check` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← فحص الأنواع ← test ← `firebase emulators:exec "npm run test:rules"` — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
+| CI | `.github/workflows/ci.yml`: `npm ci` ←&rlm; lint ← فحص الأنواع ← test ←&rlm; `firebase emulators:exec "npm run test:rules"` — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر
@@ -85,10 +85,10 @@ firestore.indexes.json · firebase.json
 ## 9. المراحل المقترحة
 | # | المرحلة | أهم المهام |
 |:---:|:---|:---|
-| 1 | التأسيس | العصف الذهني، اعتماد المخطط، `/quality-setup`، `tokens.ts`، تدفق الشاشات |
+| 1 | التأسيس | العصف الذهني، اعتماد المخطط، `/quality-setup`،&rlm; `tokens.ts`، تدفق الشاشات |
 | 2 | البيانات والمصادقة | مشروع Firebase، نموذج البيانات، قواعد الأمان واختباراتها، التسجيل والدخول |
 | 3 | الميزات الأساسية للـ MVP | ميزة ميزة مع اختباراتها |
 | 4 | الواجهات والتجربة | الحالات، RTL، الوصولية، أحجام الشاشات |
-| 5 | الفحص والنشر | `/launch-check`، App Check، EAS Build، الرفع للمتاجر |
+| 5 | الفحص والنشر | `/launch-check`،&rlm; App Check،&rlm; EAS Build، الرفع للمتاجر |
 
 </div>

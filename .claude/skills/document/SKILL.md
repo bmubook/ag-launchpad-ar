@@ -3,8 +3,10 @@ name: document
 description: "Post-change documentation — إجراء التوثيق الإلزامي بعد كل تعديل كودي ناجح (master_rules §2): يحدّث changelog.md و project_map.md و bugs_log.md و decisions_log.md ثم يضيف ختم التوثيق. نفّذه بنفسك قبل الانتقال لأي مهمة تالية، وفوراً عند تذكير Hook الإيقاف (Stop)."
 argument-hint: "[وصف مختصر للتعديل — اختياري]"
 ---
+<div dir="rtl">
 
-# /document — التوثيق الإلزامي بعد كل تعديل
+
+# &rlm;/document — التوثيق الإلزامي بعد كل تعديل
 
 > **المرجع:** `master_rules.md` §2 (إلزامية التوثيق + ختم التوثيق) و §3 (الهوية النشطة)، والبند 8 في `rules_workflow.md`.
 
@@ -139,3 +141,5 @@ node -e "const d=new Date(),p=n=>String(n).padStart(2,'0');console.log(d.getFull
 
 ### 10. الاقتراحات بعد المهمة المكتملة
 إذا اكتملت المهمة فعلاً (ليست `قيد التنفيذ` ولا فاشلة) و`اقتراحات التطوير` = `مفعّلة` (أو غير محددة) في `project_map.md`، فنفّذ بعد الختم مباشرةً "بروتوكول الاقتراحات" من `.claude/skills/next/SKILL.md` (القسم `## بروتوكول الاقتراحات`).
+
+</div>

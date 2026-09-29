@@ -1,3 +1,5 @@
+<div dir="rtl">
+
 # قواعد الواجهات وتجربة المستخدم والأداء (UI/UX & Performance Rules)
 
 > [!IMPORTANT]
@@ -143,7 +145,7 @@
 }
 ```
 
-> **مشاريع الجوال:** في Flutter تُنقل القيم نفسها إلى `lib/core/theme/app_tokens.dart` (`ThemeData` / `ColorScheme` + ثوابت التباعد)؛
+> **مشاريع الجوال:** في Flutter تُنقل القيم نفسها إلى `lib/core/theme/app_tokens.dart` (`ThemeData` /&rlm; `ColorScheme` + ثوابت التباعد)؛
 > وفي React Native تُنقل إلى `src/theme/tokens.ts`.
 
 **القاعدة الذهبية:** لا تُكتب قيمة لون أو خط أو تباعد يدوياً في أي ملف CSS آخر — المتغيرات دائماً. مخالفة هذا = إعادة بناء الكود عند أي تعديل في الثيم.
@@ -179,7 +181,7 @@
 | Input | `empty → focused → filled → error → disabled` |
 | Card | `default → hover → selected → loading skeleton` |
 
-**Empty State — إلزامي:** لا صفحة فارغة بيضاء أبداً. دائماً: أيقونة + نص تفسيري + زر إجراء.
+&rlm;**Empty State — إلزامي:** لا صفحة فارغة بيضاء أبداً. دائماً: أيقونة + نص تفسيري + زر إجراء.
 
 ---
 
@@ -196,7 +198,7 @@
 
 ## البند 34. التجاوب والشاشات (Responsive Design)
 
-**Mobile-First دائماً** — يُكتب الكود للجوال أولاً ثم `@media (min-width: ...)` للأكبر.
+&rlm;**Mobile-First دائماً** — يُكتب الكود للجوال أولاً ثم `@media (min-width: ...)` للأكبر.
 
 | الشاشة | العرض | الأعمدة | الهامش |
 |:-------|:------|:-------:|:------:|
@@ -207,7 +209,7 @@
 - الحد الأدنى لمنطقة اللمس: **44×44px**
 - يُحظر أي Horizontal Scroll على أي شاشة
 
-**Onboarding (3 شاشات كحد أقصى):**
+&rlm;**Onboarding (3 شاشات كحد أقصى):**
 زر "تخطي" إلزامي في كل شاشة — يُحظر إخفاؤه. CTA في آخر شاشة فقط.
 
 ---
@@ -228,10 +230,10 @@
 - [ ] جميع القيم تأتي من `tokens.css` — لا قيم يدوية
 - [ ] نفس المكون = نفس المظهر في كل الشاشات
 
-**RTL والعربية:**
+&rlm;**RTL والعربية:**
 - [ ] `<html dir="rtl" lang="ar">`
-- [ ] CSS يستخدم Logical Properties (`margin-inline-start` لا `margin-left`)
-- [ ] `line-height` ≥ 1.7، تباين ≥ 4.5:1
+- [ ] &rlm;CSS يستخدم Logical Properties (`margin-inline-start` لا `margin-left`)
+- [ ] &rlm;`line-height` ≥ 1.7، تباين ≥ 4.5:1
 
 **التجاوب:**
 - [ ] تعمل على 375px بدون Horizontal Scroll
@@ -254,27 +256,27 @@
 
 ## البند 24. الوصولية (Accessibility — WCAG 2.1 Level AA)
 
-1. `aria-label`، `aria-describedby`، `role` لجميع العناصر التفاعلية.
-2. التنقل بلوحة المفاتيح: Tab، Enter، Escape، الأسهم.
+1. &rlm;`aria-label`،&rlm; `aria-describedby`،&rlm; `role` لجميع العناصر التفاعلية.
+2. التنقل بلوحة المفاتيح: Tab،&rlm; Enter،&rlm; Escape، الأسهم.
 3. تباين النص/الخلفية ≥ 4.5:1 للنص العادي، ≥ 3:1 للنص الكبير.
-4. HTML دلالي: `<nav>`, `<main>`, `<section>`, `<button>`, `<label>` — لا `<div>` بدون سبب.
+4. &rlm;HTML دلالي: `<nav>`,&rlm; `<main>`,&rlm; `<section>`,&rlm; `<button>`,&rlm; `<label>` — لا `<div>` بدون سبب.
 
 ---
 
 ## البند 25. التوثيق التلقائي (Automatic Documentation)
 
-1. JSDoc أو OpenAPI/Swagger لكل Endpoint.
-2. `README.md` شامل: وصف، متطلبات، تشغيل، هيكل، متغيرات البيئة.
+1. &rlm;JSDoc أو OpenAPI/Swagger لكل Endpoint.
+2. &rlm;`README.md` شامل: وصف، متطلبات، تشغيل، هيكل، متغيرات البيئة.
 3. يُحدَّث عند كل تعديل بنيوي.
 
 ---
 
 ## البند 26. الأداء (Performance)
 
-1. **Lazy Loading** للمكونات والصور غير المرئية.
-2. **Code Splitting** — يُحظر حزمة واحدة > 250KB.
-3. **Caching** — HTTP Cache Headers للموارد الثابتة.
-4. **Tree Shaking** — إزالة الاعتماديات غير المستخدمة.
+1. &rlm;**Lazy Loading** للمكونات والصور غير المرئية.
+2. &rlm;**Code Splitting** — يُحظر حزمة واحدة > 250KB.
+3. &rlm;**Caching** — HTTP Cache Headers للموارد الثابتة.
+4. &rlm;**Tree Shaking** — إزالة الاعتماديات غير المستخدمة.
 
 ---
 
@@ -282,7 +284,7 @@
 
 **فصل النصوص:** يُحظر Hardcoded Strings. جميع النصوص في `locales/ar.json`.
 
-**Logical Properties إلزامية في CSS:**
+&rlm;**Logical Properties إلزامية في CSS:**
 
 | ❌ يكسر RTL | ✅ يدعم RTL |
 |:-----------|:----------|
@@ -297,3 +299,5 @@
 
 > [!CAUTION]
 > كل بند ملزم. أي استثناء يحتاج موافقة صريحة من المستخدم وتوثيقاً في `decisions_log.md`.
+
+</div>

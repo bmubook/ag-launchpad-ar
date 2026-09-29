@@ -10,7 +10,7 @@
 | تحتاج SEO (ظهور في محركات البحث) وسرعة تحميل | تطبيق جوال أصلي هو المطلوب — استخدم `flutter.md` أو `react-native.md` |
 | تريد تحديثاً فورياً للبيانات (دردشة، طلبات، إشعارات) دون برمجة خادم | تقارير مالية معقدة تحتاج استعلامات علاقية كثيرة — ناقش البديل في العصف الذهني |
 
-**البديل الأبسط:** أداة داخلية صغيرة بلا SEO ← Vite + React (صفحة واحدة) مع Firebase ونشر على Firebase Hosting المجاني.
+**البديل الأبسط:** أداة داخلية صغيرة بلا SEO ←&rlm; Vite + React (صفحة واحدة) مع Firebase ونشر على Firebase Hosting المجاني.
 
 ## 2. الحزمة التقنية
 
@@ -18,7 +18,7 @@
 |:---|:---|:---|:---|
 | الإطار | Next.js (App Router) + TypeScript | واجهة وخادم معاً، وعرض من الخادم لسرعة و SEO | https://nextjs.org/docs |
 | قاعدة البيانات | Cloud Firestore | مستندات مرنة بلا SQL، وتحديث فوري للواجهة | https://firebase.google.com/docs/firestore |
-| المصادقة | Firebase Authentication | بريد وكلمة مرور، Google، Apple — جاهزة وآمنة | https://firebase.google.com/docs/auth |
+| المصادقة | Firebase Authentication | بريد وكلمة مرور، Google،&rlm; Apple — جاهزة وآمنة | https://firebase.google.com/docs/auth |
 | الحماية | Firestore Security Rules + App Check | القواعد تحدد من يقرأ ويكتب ماذا؛ App Check يمنع الطلبات من غير تطبيقك | https://firebase.google.com/docs/firestore/security/get-started |
 | كود الخادم | Firebase Admin SDK (في Server Actions و Route Handlers فقط) | عمليات الخادم الموثوقة والتحقق من الجلسات | https://firebase.google.com/docs/admin/setup |
 | التحقق من البيانات | Zod | تحقق حتمي من كل مدخل على الخادم (البندان 23 و28) | https://zod.dev |
@@ -77,7 +77,7 @@ service cloud.firestore {
 ```
 - **التحقق على الخادم:** كل Server Action يتحقق من هوية المستخدم وصلاحيته (جلسة httpOnly عبر Admin SDK — Session Cookies)، ومن المدخلات بـ Zod. لا تثق بأي قيمة قادمة من المتصفح.
 - **الجلسات:** يدير Firebase Auth جلسة المتصفح بنفسه؛ لا تخزّن التوكنز يدوياً في `localStorage`. للصفحات المحمية من الخادم استخدم Session Cookies بـ httpOnly (البند 28): https://firebase.google.com/docs/auth/admin/manage-cookies
-- **App Check:** فعّله قبل الإطلاق لمنع الطلبات من خارج تطبيقك: https://firebase.google.com/docs/app-check
+- &rlm;**App Check:** فعّله قبل الإطلاق لمنع الطلبات من خارج تطبيقك: https://firebase.google.com/docs/app-check
 - **المعرّفات:** معرّفات Firestore التلقائية للمستندات + حقل `createdAt` بقيمة `serverTimestamp()` للترتيب الزمني (البند 28).
 
 ## 6. خط أساس الجودة (ما ينفّذه `/quality-setup`)
@@ -88,14 +88,14 @@ service cloud.firestore {
 | اختبارات الوحدة | Vitest + React Testing Library |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي: مستخدم لا يقرأ بيانات غيره، وزائر لا يكتب شيئاً |
 | اختبار شامل (E2E) | Playwright — اختبار دخاني واحد: الصفحة الرئيسية تعمل |
-| أوامر | `lint`، `test`، `test:rules`، `build`، `check` في `package.json` |
-| CI | `.github/workflows/ci.yml`: `npm ci` ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
+| أوامر | `lint`،&rlm; `test`،&rlm; `test:rules`،&rlm; `build`،&rlm; `check` في `package.json` |
+| CI | `.github/workflows/ci.yml`: `npm ci` ←&rlm; lint ←&rlm; test ←&rlm; `firebase emulators:exec "npm run test:rules"` ←&rlm; build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر
 1. أنشئ مشروع Firebase من https://console.firebase.google.com ، وفعّل المصادقة و Firestore.
 2. انشر قواعد الأمان والفهارس بعد اختبارها على المحاكي وموافقتك: `firebase deploy --only firestore:rules,firestore:indexes`.
-3. **Firebase App Hosting (موحّد مع Firebase):** اربط مستودع GitHub من لوحة التحكم؛ يتطلب خطة Blaze — فعّل تنبيه الميزانية فوراً. المتغيرات السرية عبر Secret Manager لا في الكود.
+3. &rlm;**Firebase App Hosting (موحّد مع Firebase):** اربط مستودع GitHub من لوحة التحكم؛ يتطلب خطة Blaze — فعّل تنبيه الميزانية فوراً. المتغيرات السرية عبر Secret Manager لا في الكود.
 4. **بديل مجاني:** Vercel — اربط المستودع وأضف متغيرات `NEXT_PUBLIC_FIREBASE_*` في إعداداته.
 5. أضف نطاق موقعك إلى **Authorized domains** في إعدادات المصادقة.
 
@@ -115,6 +115,6 @@ service cloud.firestore {
 | 2 | البيانات والمصادقة | مشروع Firebase، نموذج البيانات، قواعد الأمان واختباراتها، التسجيل والدخول والخروج |
 | 3 | الميزات الأساسية للـ MVP | ميزة ميزة مع اختباراتها |
 | 4 | الواجهات والتجاوب | المكونات الذرية، 375px، الوصولية، RTL |
-| 5 | الفحص والإطلاق | `/launch-check`، App Check، النشر، المراقبة |
+| 5 | الفحص والإطلاق | `/launch-check`،&rlm; App Check، النشر، المراقبة |
 
 </div>

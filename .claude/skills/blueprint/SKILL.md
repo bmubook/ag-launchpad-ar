@@ -3,8 +3,10 @@ name: blueprint
 description: "المخطط التقني الجاهز — يعرض الحزمة التقنية الموصى بها لطبيعة المشروع من مجلد blueprints/ ويقارنها باحتياجاته ويعتمدها بعد الموافقة (tech stack, blueprint, architecture)."
 argument-hint: "[web | flutter | react-native | backend]"
 ---
+<div dir="rtl">
 
-# /blueprint — اختيار الحزمة التقنية من مخطط جاهز
+
+# &rlm;/blueprint — اختيار الحزمة التقنية من مخطط جاهز
 
 > **الهدف:** أن يبدأ المبتدئ بتقنيات مجرّبة وآمنة بدل الارتجال. المخطط توصية افتراضية؛ أي انحراف عنه يحتاج سبباً مكتوباً في ADR. هذه المهارة **لا تثبّت أي شيء** — التثبيت يتم في `/quality-setup` وأثناء بناء الميزات.
 
@@ -43,3 +45,5 @@ argument-hint: "[web | flutter | react-native | backend]"
 | `changelog.md` | صف `docs(planning)` عبر `/document` |
 
 ثم اختم بختم التوثيق، واقترح الخطوة التالية مباشرة: `/quality-setup` (عادةً ضمن متابعة `/grill-me`).
+
+</div>

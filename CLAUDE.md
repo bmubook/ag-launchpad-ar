@@ -1,4 +1,4 @@
-# CLAUDE.md — دستور التشغيل في Claude Code (AG Launchpad AR)
+# &rlm;CLAUDE.md — دستور التشغيل في Claude Code (AG Launchpad AR)
 
 <!--
 للمشرفين (تحذف Claude Code هذا التعليق قبل التحميل): أبقِ هذا الملف ≤ 130 سطراً؛ الإجراءات التفصيلية مكانها المهارات في .claude/skills/.
@@ -14,8 +14,10 @@
 @rules_code_quality.md
 @rules_workflow.md
 
-* `master_rules.md` هو السلطة العليا، وهذا الملف تشغيلي تابع له.
-* `rules_ui.md` يُحمَّل عبر `.claude/rules/ui-rules.md`، ويجب قراءته **كاملاً** قبل أي عمل على الواجهات.
+<div dir="rtl">
+
+* &rlm;`master_rules.md` هو السلطة العليا، وهذا الملف تشغيلي تابع له.
+* &rlm;`rules_ui.md` يُحمَّل عبر `.claude/rules/ui-rules.md`، ويجب قراءته **كاملاً** قبل أي عمل على الواجهات.
 
 ## 2. بداية الجلسة
 
@@ -107,3 +109,5 @@
 | أي خطأ أو سلوك غير متوقع | `/fix` |
 | قبل النشر أو الإطلاق | `/launch-check` |
 | اختيار الـ Tech Stack أو تغييره | `/blueprint` |
+
+</div>

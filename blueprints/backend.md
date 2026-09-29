@@ -68,7 +68,7 @@ service cloud.firestore {
   }
 }
 ```
-- **Admin SDK يتجاوز القواعد:** يُستخدم داخل Cloud Functions فقط، بعد التحقق من هوية المستدعي (`request.auth` في الدوال القابلة للاستدعاء `onCall`، أو التحقق من ID Token عبر Admin SDK في دوال HTTPS `onRequest`) ومن صلاحيته، ثم التحقق من المدخلات بـ Zod — بهذا الترتيب.
+- &rlm;**Admin SDK يتجاوز القواعد:** يُستخدم داخل Cloud Functions فقط، بعد التحقق من هوية المستدعي (`request.auth` في الدوال القابلة للاستدعاء `onCall`، أو التحقق من ID Token عبر Admin SDK في دوال HTTPS `onRequest`) ومن صلاحيته، ثم التحقق من المدخلات بـ Zod — بهذا الترتيب.
 - **ملف حساب الخدمة (Service Account) سرّ حقيقي:** لا يُرفع إلى Git ولا يُطبع في السجلات. داخل Cloud Functions لا تحتاجه أصلاً (الصلاحيات تُمنح تلقائياً).
 - **الأسرار** (مفاتيح خدمات الدفع والبريد) عبر Secret Manager في Cloud Functions، لا في الكود ولا في `.env` المرفوع.
 - حد للطلبات (Rate Limiting) و App Check على الدوال العامة والمكلفة.
@@ -80,7 +80,7 @@ service cloud.firestore {
 | المدقق والمنسّق | ESLint + Prettier داخل `functions/` |
 | الاختبارات | Vitest أو Jest لمنطق الأعمال + اختبار الدوال على المحاكي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing`: مستخدم لا يقرأ بيانات غيره، وزائر لا يكتب شيئاً |
-| CI | `.github/workflows/ci.yml`: تثبيت ← lint ← test ← `firebase emulators:exec "npm run test:rules"` ← build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
+| CI | `.github/workflows/ci.yml`: تثبيت ← lint ←&rlm; test ←&rlm; `firebase emulators:exec "npm run test:rules"` ←&rlm; build — خطوة اختبارات القواعد في CI تحتاج تثبيت Java (`actions/setup-java` بالإصدار 21) و Firebase CLI (`npm install -g firebase-tools`) على المشغّل قبلها |
 | الاعتماديات | `.github/dependabot.yml` لـ npm و github-actions |
 
 ## 7. النشر

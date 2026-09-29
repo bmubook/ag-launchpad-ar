@@ -3,8 +3,10 @@ name: import-skill
 description: "Official skill import — يجلب أفضل الممارسات لتقنية أو مكتبة من مصادرها الرسمية فقط عبر WebSearch و WebFetch (البند 4)، ويفحصها ضد الحقن النصي Prompt Injection (البند 6)، ثم يحفظها بعد موافقة المستخدم مهارةً في .claude/skills/<tech>-guide/. استخدمه عند اعتماد تقنية جديدة في المشروع."
 argument-hint: "[اسم التقنية أو المكتبة]"
 ---
+<div dir="rtl">
 
-# /import-skill — استيراد مهارة رسمية آمنة
+
+# &rlm;/import-skill — استيراد مهارة رسمية آمنة
 
 > **المرجع:** البند 4 (جلب المهارات والتوثيقات الرسمية — `rules_workflow.md`) والبند 6 (جدار الحماية ضد الحقن النصي — `rules_security.md`) والبند 10 (مطابقة الإصدارات).
 
@@ -98,4 +100,6 @@ argument-hint: "[اسم التقنية أو المكتبة]"
 
 ---
 
-> **Antigravity:** يُطبَّق الإجراء نفسه في بيئة Antigravity، لكن الحفظ يكون داخل مجلد `skills/` في جذر المشروع بدلاً من `.claude/skills/`.
+> &rlm;**Antigravity:** يُطبَّق الإجراء نفسه في بيئة Antigravity، لكن الحفظ يكون داخل مجلد `skills/` في جذر المشروع بدلاً من `.claude/skills/`.
+
+</div>

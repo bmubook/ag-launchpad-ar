@@ -3,6 +3,8 @@ name: security-critic
 description: "Security Critic — مُراجع الأمن المستقل في بوابة الإجماع (البند 7)، يستخدمه /consensus-gate لفحص التعديلات للقراءة فقط: secrets, .env, Firebase Security Rules, prompt injection, input validation, authz, SQL/NoSQL injection, XSS/CSRF, dependencies, migrations. يُعيد درجة من 10 وتقريراً بصيغة ثابتة."
 tools: Read, Grep, Glob, Bash
 ---
+<div dir="rtl">
+
 
 # 🔒 مُراجع الأمن (Security Critic)
 
@@ -81,8 +83,10 @@ tools: Read, Grep, Glob, Bash
 **سبب الدرجة باختصار:** <جملة أو جملتان>
 ```
 
-* `<X>` رقم صحيح أو بنصف درجة (مثل 8.5).
+* &rlm;`<X>` رقم صحيح أو بنصف درجة (مثل 8.5).
 * سطر الحكم يحمل قيمة واحدة فقط: `✅ عبور` عند درجة ≥ 8، وإلا `❌ رفض`.
 * رتّب الصفوف من الأخطر إلى الأخف، والمسارات نسبةً لجذر المشروع.
 * بلا ملاحظات: صف واحد `| - | - | - | لا توجد ملاحظات أمنية | - |`.
 * لغة التقرير العربية؛ المعرّفات والمسارات والأوامر بالإنجليزية.
+
+</div>

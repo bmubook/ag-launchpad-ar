@@ -8,7 +8,7 @@
 |:---|:---|
 | تطبيق جوال لـ Android و iOS بكود واحد وأداء سلس وواجهات مخصصة | تحتاج موقع ويب قابلاً للبحث في Google — استخدم `web.md` |
 | تريد أقوى تكامل مع Firebase (كلاهما من Google، مع أداة إعداد رسمية) | تعرف JavaScript وتريد مشاركة الكود مع موقع ويب — فكّر في `react-native.md` |
-| لا يزعجك تعلّم لغة Dart (سهلة ومنظمة) | جهازك لا يتسع لأدوات Android Studio / Xcode المطلوبة للتجربة |
+| لا يزعجك تعلّم لغة Dart (سهلة ومنظمة) | جهازك لا يتسع لأدوات Android Studio /&rlm; Xcode المطلوبة للتجربة |
 
 ## 2. الحزمة التقنية
 
@@ -16,7 +16,7 @@
 |:---|:---|:---|:---|
 | الإطار | Flutter + Dart | كود واحد للمنصتين، ومكونات Material جاهزة | https://docs.flutter.dev |
 | ربط Firebase | FlutterFire (`firebase_core`) + أداة `flutterfire configure` | إعداد رسمي بأمر واحد يولّد `lib/firebase_options.dart` | https://firebase.google.com/docs/flutter/setup |
-| المصادقة | `firebase_auth` | بريد، Google، Apple — مع حفظ الجلسة تلقائياً | https://firebase.google.com/docs/auth/flutter/start |
+| المصادقة | `firebase_auth` | بريد، Google،&rlm; Apple — مع حفظ الجلسة تلقائياً | https://firebase.google.com/docs/auth/flutter/start |
 | قاعدة البيانات | `cloud_firestore` | مستندات مرنة، تحديث فوري، وعمل دون اتصال | https://firebase.google.com/docs/firestore/quickstart |
 | إدارة الحالة | Riverpod (`flutter_riverpod`) | فصل واضح بين المنطق والواجهة، وسهل الاختبار | https://riverpod.dev |
 | التنقل | `go_router` | مسارات واضحة وروابط عميقة، مدعوم من فريق Flutter | https://pub.dev/packages/go_router |
@@ -57,7 +57,7 @@ firestore.indexes.json · firebase.json
 - العمليات الحساسة (دفع، صلاحيات إدارية) تُنفَّذ على الخادم عبر Cloud Functions، لا داخل التطبيق.
 - فعّل **App Check** (`firebase_app_check`) قبل الإطلاق.
 - خزّن أي أسرار إضافية بـ `flutter_secure_storage` لا بـ SharedPreferences.
-- **لا ترفع ملفات التوقيع** (`*.jks`، `key.properties`) إلى Git أبداً — القالب يستثنيها في `.gitignore`.
+- **لا ترفع ملفات التوقيع** (`*.jks`،&rlm; `key.properties`) إلى Git أبداً — القالب يستثنيها في `.gitignore`.
 
 ## 6. خط أساس الجودة (ما ينفّذه `/quality-setup`)
 | الأداة | الاختيار |
@@ -67,14 +67,14 @@ firestore.indexes.json · firebase.json
 | الاختبارات | `flutter test` — اختبار Widget للشاشة الرئيسية + اختبار وحدة لمنطق حقيقي |
 | اختبارات قواعد الأمان | `@firebase/rules-unit-testing` على المحاكي في مجلد `tests/rules/` — وهو مشروع Node صغير مستقل بملف `package.json` خاص به، لأن مشروع Flutter نفسه لا يستخدم npm |
 | اختبار شامل | `integration_test` للمسار الرئيسي |
-| CI | `.github/workflows/ci.yml`: تثبيت Flutter ← `flutter pub get` ← `dart format --set-exit-if-changed .` ← `flutter analyze` ← `flutter test`، ثم مهمة ثانية لاختبارات القواعد: Node + Java (`actions/setup-java` بالإصدار 21) + Firebase CLI ← `firebase emulators:exec "npm --prefix tests/rules test"` |
+| CI | `.github/workflows/ci.yml`: تثبيت Flutter ←&rlm; `flutter pub get` ←&rlm; `dart format --set-exit-if-changed .` ←&rlm; `flutter analyze` ←&rlm; `flutter test`، ثم مهمة ثانية لاختبارات القواعد: Node + Java (`actions/setup-java` بالإصدار 21) + Firebase CLI ←&rlm; `firebase emulators:exec "npm --prefix tests/rules test"` |
 | الاعتماديات | `.github/dependabot.yml` لـ `pub` و github-actions |
 
 ## 7. النشر
 1. أنشئ مشروع Firebase وفعّل المصادقة و Firestore، ثم نفّذ `flutterfire configure` في جذر المشروع.
 2. انشر القواعد والفهارس بعد اختبارها وموافقتك: `firebase deploy --only firestore:rules,firestore:indexes`.
-3. Android: `flutter build appbundle` ثم الرفع إلى Google Play Console (حساب مطوّر مطلوب).
-4. iOS: يتطلب جهاز Mac و Xcode وحساب Apple Developer، ثم `flutter build ipa` والرفع عبر App Store Connect.
+3. &rlm;Android: `flutter build appbundle` ثم الرفع إلى Google Play Console (حساب مطوّر مطلوب).
+4. &rlm;iOS: يتطلب جهاز Mac و Xcode وحساب Apple Developer، ثم `flutter build ipa` والرفع عبر App Store Connect.
 5. اتبع دليل Flutter الرسمي للنشر لكل منصة خطوة بخطوة (التوقيع، الأيقونات، الأذونات).
 
 ## 8. أخطاء المبتدئين الشائعة وكيف يمنعها المخطط
@@ -89,10 +89,10 @@ firestore.indexes.json · firebase.json
 ## 9. المراحل المقترحة
 | # | المرحلة | أهم المهام |
 |:---:|:---|:---|
-| 1 | التأسيس | العصف الذهني، اعتماد المخطط، `/quality-setup`، `app_tokens.dart`، تدفق الشاشات |
+| 1 | التأسيس | العصف الذهني، اعتماد المخطط، `/quality-setup`،&rlm; `app_tokens.dart`، تدفق الشاشات |
 | 2 | البيانات والمصادقة | مشروع Firebase و `flutterfire configure`، نموذج البيانات، قواعد الأمان واختباراتها، التسجيل والدخول |
 | 3 | الميزات الأساسية للـ MVP | ميزة ميزة مع اختباراتها |
 | 4 | الواجهات والتجربة | الحالات (تحميل/فارغ/خطأ)، RTL، الوصولية، أحجام الشاشات |
-| 5 | الفحص والنشر | `/launch-check`، App Check، البناء والتوقيع، الرفع للمتجر |
+| 5 | الفحص والنشر | `/launch-check`،&rlm; App Check، البناء والتوقيع، الرفع للمتجر |
 
 </div>
