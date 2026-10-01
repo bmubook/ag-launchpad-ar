@@ -123,9 +123,10 @@ export function loadSession(sessionId) {
       prompts: Number(data.prompts) || 0,
       edited: Array.isArray(data.edited) ? data.edited : [],
       warned: data.warned && typeof data.warned === 'object' ? data.warned : {},
+      shortcuts: data.shortcuts && typeof data.shortcuts === 'object' ? data.shortcuts : {},
     };
   } catch {
-    return { prompts: 0, edited: [], warned: {} };
+    return { prompts: 0, edited: [], warned: {}, shortcuts: {} };
   }
 }
 

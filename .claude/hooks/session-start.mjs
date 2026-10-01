@@ -10,6 +10,7 @@ import {
   GOVERNANCE_FILES, addContext, projectDir, pruneOldSessions, readProjectFile,
   readProjectState, readStdinJson, runHook, tableRows, truncate,
 } from './lib/common.mjs';
+import { gateStatus, loadQuality } from './lib/quality.mjs';
 
 const RECENT_LIMIT = 5;
 
@@ -44,6 +45,19 @@ function guidanceLines(state) {
   return lines;
 }
 
+/** حالة بوابة الإثبات عبر الجلسات: ما فُحص وما لم يُفحص منذ آخر جلسة. */
+function gateLines(mode) {
+  const gate = gateStatus(mode);
+  const { verify, pending } = loadQuality();
+  const run = 'node .claude/scripts/verify.mjs';
+  if (gate === 'green') return [`• 🧪 بوابة الإثبات: آخر فحص ناجح ✅${Number.isFinite(verify.tests) ? ` (${verify.tests} اختباراً)` : ''}. بعد أي تعديل كودي شغّل ${run} قبل إنهاء الرد.`];
+  if (gate === 'red') return [`• 🔴 بوابة الإثبات: آخر فحص فاشل عند «${verify.failedLabel || verify.failed}». الاستقرار يسبق الميزات (البند 0): أبلغ المستخدم في ردك الأول وأصلحه عبر /fix قبل أي ميزة جديدة.`];
+  if (gate === 'stale') return [`• 🟠 بوابة الإثبات: ${pending.files.length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح (${truncate(pending.files.join('، '), 160)}). شغّل ${run} قبل البناء فوقها.`];
+  if (gate === 'partial') return [`• 🟠 بوابة الإثبات: آخر فحص سريع دون البناء. شغّل ${run} (الفحص الكامل) قبل أي ميزة جديدة.`];
+  if (gate === 'never') return [`• 🧪 بوابة الإثبات: لم يُشغَّل فحص المشروع بعد. شغّل ${run} قبل أول تعديل لتعرف نقطة البداية.`];
+  return [];
+}
+
 function section(title, items, emptyText) {
   return [`• ${title}:`, ...(items.length ? items : [`  - ${emptyText}`])];
 }
@@ -65,6 +79,7 @@ function buildContext(source) {
     lines.push(`• اسم النداء: ${state.callSign ? `«${state.callSign}» — افتتح به كل رد` : 'غير محدد (تخطَّ البند)'}`);
     lines.push(`• وضع التشغيل: ${state.mode} | المرحلة النشطة: ${state.phase || 'غير محددة'}`);
     lines.push(...guidanceLines(state));
+    lines.push(...gateLines(state.mode));
   }
 
   // قبل الإقلاع تحوي السجلات تاريخ تطوير القالب نفسه لا تاريخ مشروع المستخدم — فلا تُعرض (يعرض /kickoff تنظيفها).
@@ -77,7 +92,7 @@ function buildContext(source) {
   if (missing.length) {
     lines.push(`⚠️ ملفات حاكمة مفقودة: ${missing.join('، ')} — نبّه المستخدم قبل أي عمل.`);
   }
-  lines.push('• تذكير: الإنفاذ الآلي مفعّل (حماية .env، أسقف الملفات، التوثيق الإلزامي). وثّق بعد كل تعديل ناجح عبر /document.');
+  lines.push('• تذكير: الإنفاذ الآلي مفعّل (حماية .env، أسقف الملفات، كاشف الاختصارات، بوابة الإثبات، التوثيق الإلزامي). بعد كل تعديل كودي: افحص ثم وثّق عبر /document.');
   return lines.join('\n');
 }
 

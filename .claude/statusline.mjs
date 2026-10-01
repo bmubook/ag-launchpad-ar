@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * سطر الحالة في Claude Code: اسم النداء │ وضع التشغيل │ المرحلة النشطة │ النموذج.
+ * سطر الحالة في Claude Code: اسم النداء │ وضع التشغيل │ المرحلة النشطة │ حالة الفحص │ النموذج.
  * يقرأ project_map.md من مجلد المشروع الوارد في بيانات Claude Code (أو المجلد الحالي).
  */
 import { readFileSync } from 'node:fs';
@@ -16,7 +16,20 @@ function anchor(map, label) {
   return !value || value.startsWith('[') ? null : value;
 }
 
-function main() {
+/** شارة بوابة الإثبات: تُظهر للمستخدم حالة الفحص الفعلية مهما قال الوكيل. */
+async function gateBadge(root, mode) {
+  try {
+    const { gateStatus, loadQuality } = await import('./hooks/lib/quality.mjs');
+    const gate = gateStatus(mode, root);
+    if (gate === 'green') return '✅ مفحوص';
+    if (gate === 'red') return '🔴 الفحص فاشل';
+    if (gate === 'partial') return '🟠 فحص سريع فقط';
+    if (gate === 'stale') return `🟠 غير مفحوص (${loadQuality(root).pending.files.length})`;
+  } catch { /* الشارة اختيارية */ }
+  return '';
+}
+
+async function main() {
   const input = readInput();
   const root = input.workspace?.project_dir || process.env.CLAUDE_PROJECT_DIR || process.cwd();
   let map = '';
@@ -31,12 +44,14 @@ function main() {
     return;
   }
   const callSign = anchor(map, 'اسم النداء \\(Call Sign\\)');
-  const mode = /prototype/i.test(anchor(map, 'وضع التشغيل النشط') || '') ? '🧪 prototype' : '🏭 production';
+  const isPrototype = /prototype/i.test(anchor(map, 'وضع التشغيل النشط') || '');
+  const mode = isPrototype ? '🧪 prototype' : '🏭 production';
   const phase = anchor(map, 'المرحلة النشطة حالياً');
   const learning = (anchor(map, 'وضع التعلّم') || '').replace(/[ً-ْ]/g, '');
   const learningBadge = /مفعل/.test(learning) && !/معطل/.test(learning) ? '🎓' : '';
-  const parts = [callSign ? `🎯 ${callSign}` : '', mode, phase ? `▶ ${phase}` : '', learningBadge, ...tail].filter(Boolean);
+  const gate = await gateBadge(root, isPrototype ? 'prototype' : 'production');
+  const parts = [callSign ? `🎯 ${callSign}` : '', mode, phase ? `▶ ${phase}` : '', gate, learningBadge, ...tail].filter(Boolean);
   process.stdout.write(parts.join(' │ '));
 }
 
-try { main(); } catch { process.stdout.write('AG Launchpad AR'); }
+main().catch(() => process.stdout.write('AG Launchpad AR'));

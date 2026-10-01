@@ -2,14 +2,10 @@
 // التشغيل من جذر المشروع: node .claude/tests/hooks.test.mjs
 // Fake secrets are assembled by concatenation so this file itself never contains a key-shaped literal.
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const REPO = process.argv[2] || fileURLToPath(new URL('../..', import.meta.url));
-const results = [];
-let tmp;
+import { REPO, check, ctx, decision, freshProject, reason, report, runNode, tmp } from './helpers.mjs';
 
 const FAKE = {
   anthropic: 'sk-' + 'ant-api03-' + 'AbCdEfGhIjKlMnOpQrStUvWx',
@@ -20,53 +16,6 @@ const FAKE = {
   generic: 'a8f5f167f44f4964' + 'e6c998dee827110c',
 };
 
-function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [] } = {}) {
-  if (tmp) rmSync(tmp, { recursive: true, force: true });
-  tmp = mkdtempSync(join(tmpdir(), 'aglp-'));
-  cpSync(join(REPO, '.claude'), join(tmp, '.claude'), { recursive: true, filter: (s) => !s.includes(join('.claude', 'state')) && !s.endsWith('settings.local.json') });
-  for (const f of ['master_rules.md', 'rules_security.md', 'rules_code_quality.md', 'rules_workflow.md', 'rules_ui.md', 'decisions_log.md']) {
-    if (!missing.includes(f)) writeFileSync(join(tmp, f), `# ${f}\n`);
-  }
-  const map = [
-    '<div dir="rtl">', '', '## 1. بيانات المشروع الأساسية:',
-    `* **اسم المشروع:** ${kicked ? 'متجر راهو' : '[يُملأ من المستخدم]'}`,
-    `* **طبيعة المشروع:** ${kicked ? 'تطبيق ويب متجاوب' : '[يُملأ من المستخدم]'}`,
-    `* **اسم النداء (Call Sign):** ${kicked ? 'يا مدير' : '[يُملأ من المستخدم — مثال: "يا مدير"]'}`,
-    `* **وضع التشغيل النشط:** ${mode} (افتراضي)`,
-    `* **مستوى الخبرة:** ${kicked ? 'مبتدئ تماماً' : '[يُحدَّد عند الإقلاع]'}`,
-    `* **وضع التعلّم:** ${learning ?? '[يُحدَّد عند الإقلاع]'}`,
-    `* **اقتراحات التطوير:** ${suggestions ?? '[يُحدَّد عند الإقلاع]'}`,
-    '> ▶ **المرحلة النشطة حالياً:** المرحلة 2', '',
-    '## 12. أفكار التطوير المستقبلية (Backlog):', '', '| # | الفكرة | التصنيف | الأولوية | المصدر | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-- |',
-    ...(backlog.length ? backlog : ['| - | لا توجد أفكار بعد | - | - | - | - |']), '', '</div>',
-  ].join('\n');
-  writeFileSync(join(tmp, 'project_map.md'), map);
-  const rows = Array.from({ length: 3 + extraChangelogRows }, (_, i) =>
-    `| 2026-09-${String(i + 1).padStart(2, '0')} 10:00 | v1.${i}.0 | feat | PM | a.js | feat(x): تغيير رقم ${i + 1} | main | - |`);
-  writeFileSync(join(tmp, 'changelog.md'), ['# سجل', '', '## جدول التغييرات', '',
-    '| التاريخ | الإصدار | النوع | الهوية | الملفات | الوصف | Git | Score |',
-    '| :--- | :---: | :---: | :--- | :--- | :--- | :--- | :--- |', ...rows, ''].join('\n'));
-  const bugRows = bugs.length ? bugs : ['| - | - | - | - | لا توجد أخطاء مسجلة حتى الآن | ✅ نظيف |'];
-  if (!missing.includes('bugs_log.md')) {
-    writeFileSync(join(tmp, 'bugs_log.md'), ['# الأخطاء', '', '## ملخص الأخطاء النشطة (Active Bugs Summary)', '',
-      '| # | التاريخ | الأولوية | الملف المتسبب | وصف مختصر للمشكلة | الحالة |', '| :--- | :--- | :---: | :--- | :--- | :--- |', ...bugRows, '', '---'].join('\n'));
-  }
-  return tmp;
-}
-
-function runNode(script, input, { args = [] } = {}) {
-  const r = spawnSync('node', [join(tmp, script), ...args], {
-    input: typeof input === 'string' ? input : JSON.stringify(input), encoding: 'utf8',
-    env: { ...process.env, CLAUDE_PROJECT_DIR: tmp.replace(/\\/g, '/') }, timeout: 90000,
-  });
-  let json = null; try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* plain */ }
-  return { code: r.status, out: r.stdout, err: r.stderr, json };
-}
-
-function check(name, cond, detail = '') { results.push({ name, ok: Boolean(cond), detail: cond ? '' : detail }); }
-const decision = (r) => r.json?.hookSpecificOutput?.permissionDecision || null;
-const reason = (r) => r.json?.hookSpecificOutput?.permissionDecisionReason || '';
-const ctx = (r) => r.json?.hookSpecificOutput?.additionalContext || '';
 const guard = (tool_name, tool_input) => runNode('.claude/hooks/guard-secrets.mjs', { session_id: 's1', hook_event_name: 'PreToolUse', tool_name, tool_input });
 
 // ---------- session-start
@@ -187,7 +136,8 @@ mkdirSync(join(tmp, 'tests'), { recursive: true });
 const lines = (n) => Array.from({ length: n }, (_, i) => `const v${i} = ${i};`).join('\n') + '\n';
 const post = (file) => runNode('.claude/hooks/post-edit.mjs', { session_id: 'pe', tool_name: 'Write', tool_input: { file_path: join(tmp, file) } });
 writeFileSync(join(tmp, 'src/small.js'), lines(50));
-check('PE: small file → silent', post('src/small.js').out === '');
+check('PE: small file, project has no checks yet → one-time no-gate note', ctx(post('src/small.js')).includes('لا توجد بوابة فحص'));
+check('PE: small file again → silent', post('src/small.js').out === '');
 writeFileSync(join(tmp, 'src/mid.js'), lines(210));
 r = post('src/mid.js');
 check('PE: 210-line JS → ⚠️ soft', ctx(r).includes('⚠️') && ctx(r).includes('210'), r.out);
@@ -201,7 +151,7 @@ writeFileSync(join(tmp, 'vite.config.js'), lines(900));
 check('PE: config file → uncapped', post('vite.config.js').out === '');
 writeFileSync(join(tmp, 'src/w.dart'), lines(380));
 check('PE: 380-line Dart → ⚠️ template ceiling', ctx(post('src/w.dart')).includes('⚠️'));
-const stop = (extra = {}) => runNode('.claude/hooks/stop-docs-check.mjs', { session_id: 'pe', hook_event_name: 'Stop', stop_hook_active: false, ...extra });
+const stop = (extra = {}) => runNode('.claude/hooks/stop-gate.mjs', { session_id: 'pe', hook_event_name: 'Stop', stop_hook_active: false, ...extra });
 r = stop();
 check('ST: code edited, no changelog → block', r.json?.decision === 'block' && r.json.reason.includes('/document'), r.out);
 check('ST: stop_hook_active → allow', stop({ stop_hook_active: true }).out === '');
@@ -258,8 +208,7 @@ check('BASH: settings.json SessionStart command runs via bash', bash.status === 
 const sl = spawnSync('bash', ['-c', settings.statusLine.command], { cwd: tmp, input: '{}', encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: '' } });
 check('BASH: statusLine works without CLAUDE_PROJECT_DIR (cwd fallback)', sl.status === 0 && sl.stdout.includes('🎯'), sl.stderr + sl.stdout);
 
-rmSync(tmp, { recursive: true, force: true });
-const failed = results.filter((x) => !x.ok);
-for (const x of results) console.log(`${x.ok ? 'PASS' : 'FAIL'}  ${x.name}${x.ok ? '' : `\n      → ${String(x.detail).slice(0, 400)}`}`);
-console.log(`\n${results.length - failed.length}/${results.length} passed`);
-process.exit(failed.length ? 1 : 0);
+// ---------- بوابة الإثبات وكاشف الاختصارات (ملف مستقل ليبقى كل ملف دون سقف الحجم)
+await import('./quality.test.mjs');
+
+report();

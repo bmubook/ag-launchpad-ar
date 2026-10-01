@@ -24,6 +24,6 @@ runHook(async () => {
   const input = await readStdinJson();
   const session = loadSession(input.session_id);
   const prompts = session.prompts + 1;
-  saveSession(input.session_id, { ...session, prompts, edited: [] });
+  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {} });
   if (prompts % CHECKPOINT_EVERY === 0) addContext('UserPromptSubmit', checkpointContext(prompts));
 });

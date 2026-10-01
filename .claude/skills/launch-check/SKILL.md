@@ -16,7 +16,8 @@ description: "فحص ما قبل الإطلاق — تدقيق شامل قبل �
 ## 2. الفحوص الآلية (شغّلها فعلياً وسجّل النتيجة)
 | الفحص | الأمر |
 |:---|:---|
-| الاختبارات والتدقيق والبناء | أوامر `check` أو `lint` و `test` و `build` من `/quality-setup` (أو `flutter analyze` و `flutter test`) |
+| الاختبارات والتدقيق والبناء وقواعد الأمان | `node .claude/scripts/verify.mjs --rules` — الفحص الكامل عبر بوابة الإثبات (أي فشل = ❌ في الاستقرار) |
+| صحة المشروع | `node .claude/scripts/health-report.mjs --audit` — الاختصارات، الملفات غير المختبرة، ثغرات الحزم. إن لم يُنفَّذ `/health-check` للمرحلة الأخيرة فنفّذه أولاً |
 | أحجام الملفات | `node .claude/scripts/size-report.mjs` |
 | ثغرات الاعتماديات | `npm audit --omit=dev` (أو ما يعادله لمدير الحزم) / `flutter pub outdated` |
 | أسرار متتبَّعة في Git | `git ls-files` بلا أي ملف `.env` حقيقي ولا ملف حساب خدمة (`*adminsdk*.json`)، ثم `git grep -n -I -e sk_live_ -e "PRIVATE KEY" -e service_account` على الفرع الحالي |

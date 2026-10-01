@@ -4,6 +4,7 @@
     "allow": [
       "Bash(node .claude/scripts/env-audit.mjs:*)",
       "Bash(node .claude/scripts/size-report.mjs:*)",
+      "Bash(node .claude/scripts/health-report.mjs:*)",
       "Bash(node .claude/scripts/open-setup.mjs:*)"
     ],
     "deny": [
@@ -77,7 +78,7 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-docs-check.mjs\"", "timeout": 10 }
+          { "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-gate.mjs\"", "timeout": 15 }
         ]
       }
     ]

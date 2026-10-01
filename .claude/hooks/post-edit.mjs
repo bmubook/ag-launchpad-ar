@@ -1,36 +1,29 @@
 #!/usr/bin/env node
 /**
  * Hook ما بعد التعديل (PostToolUse):
- * 1) يسجّل الملف المعدّل في قائمة الجولة الحالية (يستخدمها stop-docs-check.mjs).
+ * 1) يسجّل الملف المعدّل في قائمة الجولة الحالية (يستخدمها stop-gate.mjs).
  * 2) يراقب سقف حجم الملف حسب نوعه (البند 14 — rules_code_quality.md) ويُنبّه الوكيل.
+ * 3) يكشف الاختصارات في النص المضاف (البند 11): TODO، اختبار معطّل، خطأ مكتوم، فحص معطّل، بيانات وهمية...
+ * 4) يسجّل التعديل «غير مفحوص» لبوابة الإثبات، وينبّه عند بلوغ حد الخطوة (البند 8).
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  addContext, loadSession, projectDir, readStdinJson, runHook, saveSession, toProjectRelative,
+  addContext, loadSession, projectDir, readProjectState, readStdinJson, runHook, saveSession, toProjectRelative,
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
+import { detectChecks, needsVerification, recordPendingEdit } from './lib/quality.mjs';
+import { NO_ASSERTION, isAssertionlessTest, scanShortcuts } from './lib/shortcuts.mjs';
 
-/** يسجّل التعديل ويعيد true إذا كانت حالة السقف جديدة لهذا الملف (منعاً لتكرار التنبيه نفسه). */
-function recordEdit(sessionId, relPath, status) {
-  const session = loadSession(sessionId);
-  if (!session.edited.includes(relPath)) session.edited.push(relPath);
-  const isNewStatus = Boolean(status) && session.warned[relPath] !== status;
-  if (status) session.warned[relPath] = status;
-  else delete session.warned[relPath];
-  saveSession(sessionId, session);
-  return isNewStatus;
+function readFile(relPath) {
+  try { return readFileSync(resolve(projectDir(), relPath), 'utf8'); } catch { return ''; }
 }
 
-function currentStatus(relPath) {
+function currentStatus(relPath, fullText) {
   const rule = ceilingFor(relPath);
-  if (!rule) return { rule: null, lines: 0, status: null };
-  try {
-    const lines = countLines(readFileSync(resolve(projectDir(), relPath), 'utf8'));
-    return { rule, lines, status: ceilingStatus(lines, rule) };
-  } catch {
-    return { rule, lines: 0, status: null };
-  }
+  if (!rule || !fullText) return { rule, lines: 0, status: null };
+  const lines = countLines(fullText);
+  return { rule, lines, status: ceilingStatus(lines, rule) };
 }
 
 function ceilingMessage(relPath, lines, rule, status) {
@@ -43,14 +36,62 @@ function ceilingMessage(relPath, lines, rule, status) {
     + 'خطّط للتقسيم إذا كان التعديل القادم سيضيف منطقاً جديداً لهذا الملف.';
 }
 
+/** النص الذي أضافه هذا التعديل (Write: المحتوى كله، Edit/MultiEdit: النصوص الجديدة فقط). */
+function addedText(toolInput) {
+  if (typeof toolInput.content === 'string') return toolInput.content;
+  if (Array.isArray(toolInput.edits)) return toolInput.edits.map((e) => e.new_string || '').join('\n');
+  return toolInput.new_string || toolInput.new_source || '';
+}
+
+function shortcutMessage(relPath, found) {
+  return `🚩 اختصار مرصود (البند 11) في ${relPath}: ${found.map((f) => f.label).join('؛ ')}. `
+    + 'أصلحه الآن بالحل الصحيح. إن كان ضرورياً فعلاً فاذكره للمستخدم صراحةً في ردك تحت «🚩 اختصارات مؤقتة» مع سببه وموعد إزالته، ولا تخفِه.';
+}
+
+function stepLimitMessage(pending) {
+  return `⏸️ حد الخطوة (البند 8): عدّلت ${pending.files.length} ملفاً (نحو ${pending.lines} سطراً) منذ آخر فحص ناجح. `
+    + 'توقف عن إضافة كود جديد وشغّل الآن: node .claude/scripts/verify.mjs --quick — الأخطاء المتراكمة فوق بعضها أصعب تشخيصاً من خطأ واحد حديث.';
+}
+
+const NO_GATE_MESSAGE = 'ℹ️ لا توجد بوابة فحص بعد: المشروع بلا أوامر lint/test، فهذا الكود لن يُفحص آلياً. '
+  + 'نفّذ /quality-setup قبل بناء الميزات (البنود 13 و 16)، ونبّه المستخدم إن اختار التأجيل.';
+
 runHook(async () => {
   const input = await readStdinJson();
   const toolInput = input.tool_input || {};
-  const target = toolInput.file_path || toolInput.notebook_path;
-  const relPath = toProjectRelative(target);
+  const relPath = toProjectRelative(toolInput.file_path || toolInput.notebook_path);
   if (!relPath) return;
 
-  const { rule, lines, status } = currentStatus(relPath);
-  const shouldWarn = recordEdit(input.session_id, relPath, status);
-  if (shouldWarn || status === 'hard') addContext('PostToolUse', ceilingMessage(relPath, lines, rule, status));
+  const fullText = readFile(relPath);
+  const added = addedText(toolInput);
+  const { rule, lines, status } = currentStatus(relPath, fullText);
+  const messages = [];
+
+  const session = loadSession(input.session_id);
+  if (!session.edited.includes(relPath)) session.edited.push(relPath);
+  const newCeilingStatus = Boolean(status) && session.warned[relPath] !== status;
+  if (status) session.warned[relPath] = status;
+  else delete session.warned[relPath];
+  if (newCeilingStatus || status === 'hard') messages.push(ceilingMessage(relPath, lines, rule, status));
+
+  if (needsVerification(relPath)) {
+    const found = scanShortcuts(relPath, added);
+    if (isAssertionlessTest(relPath, fullText)) found.push(NO_ASSERTION);
+    if (found.length) {
+      session.shortcuts[relPath] = [...new Set([...(session.shortcuts[relPath] || []), ...found.map((f) => f.kind)])];
+      messages.push(shortcutMessage(relPath, found));
+    }
+
+    const state = readProjectState();
+    const { shouldWarn, pending } = recordPendingEdit(relPath, countLines(added), state.mode === 'prototype' ? 2 : 1);
+    if (detectChecks().length) {
+      if (shouldWarn) messages.push(stepLimitMessage(pending));
+    } else if (state.kickedOff && rule && !session.warned['#no-gate']) {
+      session.warned['#no-gate'] = 'shown';
+      messages.push(NO_GATE_MESSAGE);
+    }
+  }
+
+  saveSession(input.session_id, session);
+  if (messages.length) addContext('PostToolUse', messages.join('\n\n'));
 });
