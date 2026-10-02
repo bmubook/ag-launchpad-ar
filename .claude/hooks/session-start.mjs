@@ -92,7 +92,7 @@ function buildContext(source) {
     lines.push(...gateLines(state.mode));
   }
 
-  // قبل الإقلاع تحوي السجلات تاريخ تطوير القالب نفسه لا تاريخ مشروع المستخدم — فلا تُعرض (يعرض /kickoff تنظيفها).
+  // قبل الإقلاع لا تاريخ لمشروع المستخدم بعد (تاريخ القالب في docs/template-changelog.md) — فلا تُعرض السجلات.
   if (state.kickedOff) {
     lines.push(...section('آخر التغييرات (changelog.md)', recentChanges(), 'لا توجد مدخلات بعد'));
     lines.push(...section('الأخطاء النشطة (bugs_log.md)', activeBugs(), 'لا أخطاء نشطة ✅'));

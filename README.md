@@ -314,6 +314,7 @@ ag-launchpad-ar/
 │   └── 🗄️ backend.md          ← باك إند وقاعدة بيانات فقط
 ├── 📁 docs/
 │   ├── 📖 glossary.md         ← قاموس المصطلحات (يكبر مع مشروعك)
+│   ├── 🕘 template-changelog.md ← سجل تطوير القالب نفسه (سجل مشروعك يبقى نظيفاً)
 │   └── 🖼️ images/             ← صور الصفحة
 ├── 🖥️ SETUP_GUIDE.html       ← مولّد الإقلاع: معالج خطوة بخطوة للبيئتين (افتحه بالنقر المزدوج)
 ├── 📁 setup-guide/            ← ملفات المولّد: tokens.css، styles.css، theme.js، prompts.js، ui.js، app.js
@@ -324,7 +325,7 @@ ag-launchpad-ar/
 ├── 🔄 rules_workflow.md       ← سير العمل + وعي معماري + استشعار نمو
 ├── 🎨 rules_ui.md             ← واجهات + أداء + i18n + توطين ثقافي
 ├── 📊 project_map.md          ← خريطة المشروع (12 قسماً، آخرها أفكار التطوير Backlog)
-├── 📝 changelog.md            ← سجل التغييرات (Conventional Commits)
+├── 📝 changelog.md            ← سجل تغييرات مشروعك (Conventional Commits) — يصل فارغاً ويبدأ من الإقلاع
 ├── 🐛 bugs_log.md             ← سجل الأخطاء (مع أولويات ومحاولات)
 ├── 💡 decisions_log.md        ← سجل القرارات التقنية (ADR)
 ├── 🔑 .env.example            ← قالب المتغيرات البيئية
