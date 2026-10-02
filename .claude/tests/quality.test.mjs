@@ -88,6 +88,8 @@ check('D: needsVerification excludes template and docs files', JSON.stringify(pr
 // ---------- بوابة التوقف
 freshProject({ kicked: true });
 nodeProject();
+const coverA = "import { a } from '../src/a';\nit('a', () => { expect(a).toBeGreaterThan(0); });\n";
+write('tests/a.test.ts', coverA);
 check('G: clean edit in project with checks → silent', post('src/a.ts', 'export const a = 1;\n').out === '');
 r = stop();
 check('G: code edited, never verified → block names verify.mjs and /document', blockReason(r).includes('بوابة الإثبات') && blockReason(r).includes('node .claude/scripts/verify.mjs') && blockReason(r).includes('/document'), r.out);
@@ -97,7 +99,7 @@ check('G: quick verify in production → block asks for full', blockReason(stop(
 verify();
 check('G: full green, changelog missing → only docs problem', blockReason(stop()).includes('التوثيق الإلزامي') && !blockReason(stop()).includes('بوابة الإثبات'), stop().out);
 runNode('.claude/hooks/post-edit.mjs', { session_id: 'q', tool_input: { file_path: join(tmp, 'changelog.md') } });
-check('G: verified + documented → allow', stop().out === '');
+check('G: verified + documented → allow', stop().out === '', stop().out);
 post('src/a.ts', 'export const a = 2;\n');
 check('G: edit after green → stale → block', blockReason(stop()).includes('لم يُشغَّل فحص المشروع بعد آخر تعديل'), stop().out);
 setCfg({ tests: 3, fail: 'test' }); verify();
@@ -112,11 +114,12 @@ check('G: template file edit → docs required, no verify demand', blockReason(s
 
 freshProject({ kicked: true, mode: 'prototype' });
 nodeProject();
+write('tests/a.test.ts', coverA);
 post('src/a.ts', 'export const a = 1;\n', 'p');
 check('G: prototype → block suggests --quick', blockReason(stop('p')).includes('verify.mjs --quick'), stop('p').out);
 verify('--quick');
 runNode('.claude/hooks/post-edit.mjs', { session_id: 'p', tool_input: { file_path: join(tmp, 'changelog.md') } });
-check('G: prototype accepts quick verify', stop('p').out === '');
+check('G: prototype accepts quick verify', stop('p').out === '', stop('p').out);
 
 // ---------- حد الخطوة
 freshProject({ kicked: true });

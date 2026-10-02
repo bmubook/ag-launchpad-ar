@@ -210,5 +210,6 @@ check('BASH: statusLine works without CLAUDE_PROJECT_DIR (cwd fallback)', sl.sta
 
 // ---------- بوابة الإثبات وكاشف الاختصارات (ملف مستقل ليبقى كل ملف دون سقف الحجم)
 await import('./quality.test.mjs');
+await import('./gate.test.mjs');
 
 report();

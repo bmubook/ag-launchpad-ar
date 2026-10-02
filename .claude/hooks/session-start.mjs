@@ -10,7 +10,7 @@ import {
   GOVERNANCE_FILES, addContext, projectDir, pruneOldSessions, readProjectFile,
   readProjectState, readStdinJson, runHook, tableRows, truncate,
 } from './lib/common.mjs';
-import { gateStatus, loadQuality } from './lib/quality.mjs';
+import { gateStatus, loadQuality, unverifiedFiles, verifyCommand } from './lib/quality.mjs';
 
 const RECENT_LIMIT = 5;
 
@@ -48,12 +48,22 @@ function guidanceLines(state) {
 /** حالة بوابة الإثبات عبر الجلسات: ما فُحص وما لم يُفحص منذ آخر جلسة. */
 function gateLines(mode) {
   const gate = gateStatus(mode);
-  const { verify, pending } = loadQuality();
-  const run = 'node .claude/scripts/verify.mjs';
+  const quality = loadQuality();
+  const { verify } = quality;
+  const run = verifyCommand(mode);
+  const open = Object.keys(quality.shortcuts);
+  const shortcutsLine = open.length ? [`• 🚩 اختصارات مفتوحة (البند 11) في ${open.length} ملفاً: ${truncate(open.join('، '), 160)}. أزلها أو صرّح بها للمستخدم قبل البناء فوقها.`] : [];
+  return [...gateLine(gate, verify, quality, run, mode), ...shortcutsLine];
+}
+
+function gateLine(gate, verify, quality, run, mode) {
   if (gate === 'green') return [`• 🧪 بوابة الإثبات: آخر فحص ناجح ✅${Number.isFinite(verify.tests) ? ` (${verify.tests} اختباراً)` : ''}. بعد أي تعديل كودي شغّل ${run} قبل إنهاء الرد.`];
   if (gate === 'red') return [`• 🔴 بوابة الإثبات: آخر فحص فاشل عند «${verify.failedLabel || verify.failed}». الاستقرار يسبق الميزات (البند 0): أبلغ المستخدم في ردك الأول وأصلحه عبر /fix قبل أي ميزة جديدة.`];
-  if (gate === 'stale') return [`• 🟠 بوابة الإثبات: ${pending.files.length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح (${truncate(pending.files.join('، '), 160)}). شغّل ${run} قبل البناء فوقها.`];
-  if (gate === 'partial') return [`• 🟠 بوابة الإثبات: آخر فحص سريع دون البناء. شغّل ${run} (الفحص الكامل) قبل أي ميزة جديدة.`];
+  if (gate === 'stale') {
+    const files = unverifiedFiles(undefined, quality);
+    return [`• 🟠 بوابة الإثبات: ${files.length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح (${truncate(files.join('، '), 160)}). شغّل ${run} قبل البناء فوقها.`];
+  }
+  if (gate === 'partial') return [`• 🟠 بوابة الإثبات: آخر فحص سريع دون البناء. شغّل ${verifyCommand(mode)} (الفحص الكامل) قبل أي ميزة جديدة.`];
   if (gate === 'never') return [`• 🧪 بوابة الإثبات: لم يُشغَّل فحص المشروع بعد. شغّل ${run} قبل أول تعديل لتعرف نقطة البداية.`];
   return [];
 }

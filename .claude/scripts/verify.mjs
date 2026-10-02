@@ -10,7 +10,7 @@
 import { spawnSync } from 'node:child_process';
 import { relative } from 'node:path';
 import { projectDir, readProjectState } from '../hooks/lib/common.mjs';
-import { gateStatus, isRulesFile, loadQuality, planChecks, recordVerifyRun } from '../hooks/lib/quality.mjs';
+import { gateStatus, isRulesFile, loadQuality, planChecks, recordVerifyRun, unverifiedFiles } from '../hooks/lib/quality.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = projectDir();
@@ -45,17 +45,27 @@ function runStep(step) {
   return { ...step, ok: result.status === 0 && !result.error, ms: Date.now() - started, output, timedOut };
 }
 
+/**
+ * فشل يخص الاختبارات: خطوة الاختبار نفسها، أو خطوة الأنواع حين يفشل ملف اختبار (اختبار كُتب قبل الكود
+ * يستورد وحدة لم تُكتب بعد، فيتوقف في TypeScript قبل أن يصل إلى مشغّل الاختبارات).
+ */
+const TEST_PATH = /(^|[\s/\\(])(tests?|__tests__|spec)[\\/]\S*\.[a-z]+|\.(test|spec)\.[a-z]+/i;
+function isTestFailure(step) {
+  if (/(^|:)(test|rules)$/.test(step.name)) return true;
+  return /(^|:)types$/.test(step.name) && TEST_PATH.test(step.output);
+}
+
 const seconds = (ms) => `${(ms / 1000).toFixed(1)} ث`;
 
 function statusLine(quality, mode) {
-  const { verify, pending } = quality;
+  const { verify } = quality;
   const gate = gateStatus(mode, root);
   const labels = {
     none: 'لا توجد أوامر فحص في المشروع بعد — نفّذ /quality-setup.',
     never: 'لم يُشغَّل الفحص بعد.',
     green: '✅ آخر فحص ناجح ولا تعديلات بعده.',
     red: `🔴 آخر فحص فاشل عند «${verify?.failedLabel || verify?.failed || '؟'}».`,
-    stale: `🟠 ${pending.files.length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح.`,
+    stale: `🟠 ${unverifiedFiles(root, quality).length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح.`,
     partial: '🟠 آخر فحص سريع (دون البناء)، ووضع production يتطلب الفحص الكامل.',
   };
   return { gate, text: labels[gate] };
@@ -77,8 +87,13 @@ function toMarkdown(run, steps, notes) {
   const failed = steps.find((s) => !s.ok);
   if (failed) {
     const tail = failed.output.trim().split(/\r?\n/).slice(-TAIL_LINES).join('\n');
-    lines.push(`### آخر ${TAIL_LINES} سطراً من مخرجات «${failed.label}»`, '', '```', tail, '```', '',
-      'أصلح السبب الجذري ثم أعد التشغيل (البند 22). لا تعطّل الفحص ولا تحذف الاختبار لتمريره (البند 11). بعد 3 محاولات فاشلة طبّق البند 8.');
+    lines.push(`### آخر ${TAIL_LINES} سطراً من مخرجات «${failed.label}»`, '', '```', tail, '```', '');
+    // فشل التنسيق وحده لا يعني خللاً في المنطق: إصلاحه أمر واحد ولا يُحسب محاولة تصحيح
+    if (/(^|:)format$/.test(failed.name) && failed.fix) {
+      lines.push(`🎨 فشل التنسيق فقط: شغّل \`${failed.fix}\` ثم أعد الفحص. هذا لا يُحسب من محاولات التصحيح الثلاث (البند 8).`);
+    } else {
+      lines.push('أصلح السبب الجذري ثم أعد التشغيل (البند 22). لا تعطّل الفحص ولا تحذف الاختبار لتمريره (البند 11). بعد 3 محاولات فاشلة طبّق البند 8.');
+    }
   }
   return `${lines.join('\n')}\n`;
 }
@@ -87,7 +102,7 @@ function main() {
   if (args.has('--status')) return printStatus();
 
   const before = loadQuality(root);
-  const rules = args.has('--rules') || before.pending.files.some(isRulesFile);
+  const rules = args.has('--rules') || unverifiedFiles(root, before).some(isRulesFile);
   const plan = planChecks({ quick: args.has('--quick'), rules }, root);
   if (!plan.steps.length) {
     process.stdout.write('⚠️ لا توجد أوامر فحص في المشروع (لا package.json بأوامر lint/test/build ولا pubspec.yaml). نفّذ /quality-setup لتجهيز أساس الجودة.\n');
@@ -109,6 +124,7 @@ function main() {
     failed: failed?.name || null, failedLabel: failed?.label || null,
     tests: testOutput ? parsePassedTests(testOutput) : null,
     steps: done.map(({ name, ok, ms }) => ({ name, ok, ms })),
+    testRed: Boolean(failed) && isTestFailure(failed),
   };
   const { redFirst, previousTests } = recordVerifyRun(run, root);
 

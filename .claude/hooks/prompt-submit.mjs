@@ -24,6 +24,7 @@ runHook(async () => {
   const input = await readStdinJson();
   const session = loadSession(input.session_id);
   const prompts = session.prompts + 1;
-  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {} });
+  // turnStartedAt: يكشف به Hook التوقف ما عُدّل في هذه الجولة بأوامر الطرفية
+  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {}, turnStartedAt: Date.now() });
   if (prompts % CHECKPOINT_EVERY === 0) addContext('UserPromptSubmit', checkpointContext(prompts));
 });

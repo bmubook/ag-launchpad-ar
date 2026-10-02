@@ -12,8 +12,8 @@ import {
   addContext, loadSession, projectDir, readProjectState, readStdinJson, runHook, saveSession, toProjectRelative,
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
-import { detectChecks, needsVerification, recordPendingEdit } from './lib/quality.mjs';
-import { NO_ASSERTION, isAssertionlessTest, scanShortcuts } from './lib/shortcuts.mjs';
+import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts } from './lib/quality.mjs';
+import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
 
 function readFile(relPath) {
   try { return readFileSync(resolve(projectDir(), relPath), 'utf8'); } catch { return ''; }
@@ -81,6 +81,8 @@ runHook(async () => {
       session.shortcuts[relPath] = [...new Set([...(session.shortcuts[relPath] || []), ...found.map((f) => f.kind)])];
       messages.push(shortcutMessage(relPath, found));
     }
+    // سجل دائم بين الجولات: يبقى ظاهراً في سطر الحالة حتى يُزال الاختصار فعلاً من الملف
+    setOpenShortcuts({ [relPath]: scanFile(relPath, fullText).map((f) => f.kind) });
 
     const state = readProjectState();
     const { shouldWarn, pending } = recordPendingEdit(relPath, countLines(added), state.mode === 'prototype' ? 2 : 1);

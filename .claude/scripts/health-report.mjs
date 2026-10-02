@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * تقرير صحة المشروع (البنود 11، 13، 16، 29): مؤشرات تُحسب آلياً لكشف الديون التقنية قبل أن تتراكم.
- * للقراءة فقط — لا يعدّل أي ملف ولا يشغّل فحص المشروع (ذلك عمل verify.mjs).
+ * لا يعدّل ملفات المشروع ولا يشغّل فحصه (ذلك عمل verify.mjs)؛ يحدّث فقط سجل الاختصارات في .claude/state.
  * الاستخدام: node .claude/scripts/health-report.mjs [--audit] [--json]
  *   --audit  يضيف فحص ثغرات الحزم عبر npm audit (يتطلب اتصالاً بالإنترنت)
  */
@@ -10,50 +10,41 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { projectDir, readProjectFile, readProjectState, tableRows } from '../hooks/lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from '../hooks/lib/ceilings.mjs';
-import { readText, walkFiles } from '../hooks/lib/files.mjs';
-import { gateStatus, loadQuality, needsVerification } from '../hooks/lib/quality.mjs';
+import { collectTests, isCovered, isLogicFile } from '../hooks/lib/coverage.mjs';
+import { needsVerification, readText, walkFiles } from '../hooks/lib/files.mjs';
+import { gateStatus, loadQuality, setOpenShortcuts } from '../hooks/lib/quality.mjs';
 import { isTestFile, scanFile } from '../hooks/lib/shortcuts.mjs';
 
 const root = projectDir();
 const args = new Set(process.argv.slice(2));
 const SEVERE_SHORTCUTS = new Set(['open-rules', 'config-loosened', 'test-skip', 'no-assertion', 'test-branch']);
-const NOT_LOGIC = /(^|\/)(index|types?|constants?|config|env)\.[a-z]+$|\.d\.ts$|\.config\.[a-z0-9]+$|(^|\/)(tools|scripts)\//i;
-const DART_LOGIC_DIR = /(^|\/)(services?|repositories|providers?|data|domain|utils?|models?)\//i;
-
-const stem = (path) => path.split('/').pop().replace(/\.(test|spec)(\.[a-z0-9]+)$/i, '$2').replace(/^test_|_test(?=\.)/i, '').replace(/\.[a-z0-9]+$/i, '').toLowerCase();
 
 function scanProject() {
   const sizes = { soft: 0, hard: 0 };
   const shortcuts = [];
   const logic = [];
-  const testStems = new Set();
-  let testText = '';
   let rulesFiles = 0;
   let rulesTested = false;
   for (const rel of walkFiles(root)) {
     if (!needsVerification(rel)) continue;
     const text = readText(root, rel);
     if (text === null) continue;
-    const rule = ceilingFor(rel);
     const lines = countLines(text);
-    const status = ceilingStatus(lines, rule);
+    const status = ceilingStatus(lines, ceilingFor(rel));
     if (status) sizes[status] += 1;
     for (const found of scanFile(rel, text)) shortcuts.push({ file: rel, ...found });
-    if (/\.rules$/i.test(rel)) rulesFiles += 1;
-    if (isTestFile(rel)) {
-      testStems.add(stem(rel));
-      testText += `${text}
-`;
-      if (/rules/i.test(rel) || text.includes('rules-unit-testing')) rulesTested = true;
-    } else if (!NOT_LOGIC.test(rel) && (rule?.kind === 'logic' || (/\.dart$/i.test(rel) && DART_LOGIC_DIR.test(rel)))) {
-      logic.push({ file: rel, lines });
-    }
+    if (/.rules$/i.test(rel)) rulesFiles += 1;
+    if (isTestFile(rel) && (/rules/i.test(rel) || text.includes('rules-unit-testing'))) rulesTested = true;
+    if (isLogicFile(rel)) logic.push({ file: rel, lines });
   }
-  // «مُختبَر» = له ملف اختبار بالاسم نفسه، أو يستورده أحد ملفات الاختبار
-  const lowerTests = testText.toLowerCase();
-  const imported = (name) => [`/${name}'`, `/${name}"`, `/${name}.`, `'${name}'`, `"${name}"`].some((needle) => lowerTests.includes(needle));
-  const untested = logic.filter((f) => !testStems.has(stem(f.file)) && !imported(stem(f.file))).sort((a, b) => b.lines - a.lines);
-  return { sizes, shortcuts, logicCount: logic.length, untested, tests: testStems.size, rulesFiles, rulesTested };
+  const tests = collectTests(root);
+  const untested = logic.filter((f) => !isCovered(f.file, tests)).sort((a, b) => b.lines - a.lines);
+  // مزامنة سجل الاختصارات الدائم (سطر الحالة وبداية الجلسة) مع ما في المشروع فعلاً
+  const byFile = {};
+  for (const s of shortcuts) (byFile[s.file] ||= []).push(s.kind);
+  const known = loadQuality(root).shortcuts;
+  setOpenShortcuts({ ...Object.fromEntries(Object.keys(known).map((rel) => [rel, []])), ...byFile }, root);
+  return { sizes, shortcuts, logicCount: logic.length, untested, tests: tests.count, rulesFiles, rulesTested };
 }
 
 function auditDependencies() {

@@ -16,17 +16,20 @@ function anchor(map, label) {
   return !value || value.startsWith('[') ? null : value;
 }
 
-/** شارة بوابة الإثبات: تُظهر للمستخدم حالة الفحص الفعلية مهما قال الوكيل. */
-async function gateBadge(root, mode) {
+/** شارتا بوابة الإثبات والاختصارات المفتوحة: تُظهران للمستخدم الحالة الفعلية مهما قال الوكيل. */
+async function gateBadges(root, mode) {
   try {
-    const { gateStatus, loadQuality } = await import('./hooks/lib/quality.mjs');
+    const { gateStatus, loadQuality, unverifiedFiles } = await import('./hooks/lib/quality.mjs');
+    const quality = loadQuality(root);
     const gate = gateStatus(mode, root);
-    if (gate === 'green') return '✅ مفحوص';
-    if (gate === 'red') return '🔴 الفحص فاشل';
-    if (gate === 'partial') return '🟠 فحص سريع فقط';
-    if (gate === 'stale') return `🟠 غير مفحوص (${loadQuality(root).pending.files.length})`;
-  } catch { /* الشارة اختيارية */ }
-  return '';
+    const badge = {
+      green: '✅ مفحوص', red: '🔴 الفحص فاشل', partial: '🟠 فحص سريع فقط',
+      stale: () => `🟠 غير مفحوص (${unverifiedFiles(root, quality).length})`,
+    }[gate];
+    const open = Object.keys(quality.shortcuts).length;
+    return [typeof badge === 'function' ? badge() : badge || '', open ? `🚩 ${open}` : ''].filter(Boolean);
+  } catch { /* الشارات اختيارية */ }
+  return [];
 }
 
 async function main() {
@@ -49,8 +52,8 @@ async function main() {
   const phase = anchor(map, 'المرحلة النشطة حالياً');
   const learning = (anchor(map, 'وضع التعلّم') || '').replace(/[ً-ْ]/g, '');
   const learningBadge = /مفعل/.test(learning) && !/معطل/.test(learning) ? '🎓' : '';
-  const gate = await gateBadge(root, isPrototype ? 'prototype' : 'production');
-  const parts = [callSign ? `🎯 ${callSign}` : '', mode, phase ? `▶ ${phase}` : '', gate, learningBadge, ...tail].filter(Boolean);
+  const gate = await gateBadges(root, isPrototype ? 'prototype' : 'production');
+  const parts = [callSign ? `🎯 ${callSign}` : '', mode, phase ? `▶ ${phase}` : '', ...gate, learningBadge, ...tail].filter(Boolean);
   process.stdout.write(parts.join(' │ '));
 }
 
