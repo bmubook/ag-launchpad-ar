@@ -5,7 +5,8 @@
       "Bash(node .claude/scripts/env-audit.mjs:*)",
       "Bash(node .claude/scripts/size-report.mjs:*)",
       "Bash(node .claude/scripts/health-report.mjs:*)",
-      "Bash(node .claude/scripts/open-setup.mjs:*)"
+      "Bash(node .claude/scripts/open-setup.mjs:*)",
+      "Bash(node .claude/scripts/verify.mjs --status)"
     ],
     "deny": [
       "Read(.env)",
