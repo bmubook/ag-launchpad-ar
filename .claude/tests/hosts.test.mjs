@@ -68,6 +68,14 @@ check('HOST: a cursor_version key inside tool input does not silence the guard i
 r = claudeGuard('Write', { file_path: join(tmp, 'src/a.js'), content: `{"cursor_version": "3.12.17"} ${FAKE.anthropic}` });
 check('HOST: written content mentioning cursor_version does not silence it either', r.json?.hookSpecificOutput?.permissionDecision === 'deny', r.out + r.err);
 
+// ---------- بحث يستهدف ملفات البيئة بنمط glob (ما فعله وكيل Cursor في تجربة القبول): الأسماء مسموحة والمحتوى ممنوع
+check('CUR guard: Grep listing env file names only → silent', silent(pre('Grep', { pattern: '', file_path: tmp, glob: '**/.env*', output_mode: 'files_with_matches' })));
+r = pre('Grep', { pattern: 'KEY', file_path: tmp, glob: '**/.env*', output_mode: 'content' });
+check('CUR guard: Grep printing env file content through a glob → deny', r.json?.permission === 'deny' && r.json.agent_message.includes('حماية الأسرار'), r.out + r.err);
+r = claudeGuard('Grep', { pattern: 'KEY', path: tmp, glob: '.env.local', output_mode: 'content' });
+check('HOST: the same glob protection holds in Claude Code', r.json?.hookSpecificOutput?.permissionDecision === 'deny', r.out + r.err);
+check('CUR guard: Grep over the env template stays allowed', silent(pre('Grep', { pattern: 'KEY', file_path: tmp, glob: '.env.example', output_mode: 'content' })));
+
 // ---------- إرسال الرسالة: ملخص الحالة مع أول رسالة لأن Cursor لا يوصل سياق بداية الجلسة
 freshProject({ kicked: true });
 r = prompt();

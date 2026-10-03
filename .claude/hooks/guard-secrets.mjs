@@ -12,7 +12,7 @@ import {
   emit, isRealEnvFile, isServiceAccountFile, projectDir, readStdinJson, runHook, toProjectRelative,
 } from './lib/common.mjs';
 import {
-  ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
+  ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
   SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
 } from './lib/patterns.mjs';
 
@@ -74,6 +74,10 @@ function checkFileTool(toolName, input) {
 
   if (target && isServiceAccountFile(target)) {
     return decide('deny', `🔒 حماية الأسرار (البند 5): ${relPath} ملف حساب خدمة (Service Account) بصلاحيات كاملة على مشروع Firebase — لا يقرأه الوكيل ولا يعدّله. مكانه خارج مجلد المشروع، ويُشار إلى مساره فقط عبر متغير البيئة GOOGLE_APPLICATION_CREDENTIALS.`);
+  }
+  // بحث بنمط glob يطابق ملفات البيئة: سرد الأسماء أو العدّ لا يكشف شيئاً، وعرض الأسطر المطابقة يكشف القيم
+  if (toolName === 'Grep' && ENV_GLOB.test(input.glob || '') && !['files_with_matches', 'count'].includes(input.output_mode)) {
+    return decide('deny', `🔒 حماية الأسرار (البند 5): هذا البحث يعرض محتوى ملفات البيئة الحقيقية (${input.glob}). ${ENV_ADVICE}`);
   }
   if (target && isRealEnvFile(target)) {
     const exists = existsSync(resolve(projectDir(), String(target)));

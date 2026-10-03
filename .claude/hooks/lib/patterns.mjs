@@ -66,6 +66,9 @@ export const INJECTION_SCAN_EXEMPT = [
 /** مرجع لملف بيئة داخل أمر طرفية (يلتقط .env و .env.local و config/.env ...). */
 export const ENV_REFERENCE = /(?:^|[\s'"=/\\(<>|;&:@,])(\.env(?:\.[A-Za-z0-9_-]+)*)(?=$|[\s'";|&)<>])/g;
 
+// نمط glob في أداة البحث يستهدف ملفات بيئة حقيقية (مثل .env* أو .env.local في أي مجلد)، لا القوالب العامة.
+export const ENV_GLOB = /(?:^|[\\/{,*])\.env(?!\.(?:example|sample|template|dist)(?![\w.-]))/i;
+
 /** أوامر تقرأ محتوى الملف أو تنقله للخارج — رفض مباشر عند استهداف ملف بيئة حقيقي. */
 export const READ_OR_EXFIL_COMMAND = /(?:^|[\s;|&(`$])(?:cat|type|more|less|head|tail|bat|nl|od|xxd|hexdump|strings|grep|egrep|fgrep|rg|findstr|awk|sed|cut|sort|uniq|diff|base64|openssl|Get-Content|gc|Select-String|sls|curl|wget|iwr|Invoke-WebRequest|Invoke-RestMethod|scp|rsync|git\s+(?:add|show|diff|stash))(?=\s|$)/i;
 
