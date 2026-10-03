@@ -15,7 +15,7 @@
     { id: 'review', title: 'المراجعة', required: [] },
   ];
   const LABELS = {
-    env: { claude: 'Claude Code', antigravity: 'Google Antigravity' },
+    env: { claude: 'Claude Code', antigravity: 'Google Antigravity', cursor: 'Cursor' },
     type: { web: '🌐 تطبيق ويب', flutter: '📱 جوال — Flutter', rn: '📱 جوال — React Native', backend: '⚙️ باك إند فقط' },
     mode: { prototype: '🧪 تجربة سريعة (prototype)', production: '🏭 منتج حقيقي (production)' },
   };
@@ -106,12 +106,10 @@
 
   function generate() {
     const d = data();
-    const isClaude = d.env === 'claude';
-    $('output').textContent = isClaude ? window.AGL.claude(d) : window.AGL.antigravity(d);
-    $('resultLead').textContent = isClaude
-      ? 'انسخه والصقه في Claude Code داخل جذر مجلد المشروع. إذا لم يبدأ الإقلاع تلقائياً فاكتب ⁦/kickoff⁩ ثم الصق النص.'
-      : 'انسخه وأرسله للوكيل في محادثة جديدة داخل Antigravity.';
-    $('nextSteps').innerHTML = window.AGL.NEXT_STEPS[d.env].map((s) => `<li>${s}</li>`).join('');
+    const env = window.AGL.NEXT_STEPS[d.env] ? d.env : 'antigravity';
+    $('output').textContent = window.AGL[env](d);
+    $('resultLead').textContent = window.AGL.RESULT_LEADS[env];
+    $('nextSteps').innerHTML = window.AGL.NEXT_STEPS[env].map((s) => `<li>${s}</li>`).join('');
     form.hidden = true;
     document.querySelector('.progress').hidden = true;
     $('result').hidden = false;

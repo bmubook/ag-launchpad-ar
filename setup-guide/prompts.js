@@ -34,6 +34,11 @@
     return lines.join('\n');
   }
 
+  /* Cursor: البيانات نفسها، لكن المهارة تُقرأ من ملفها لأن قائمة أوامر Cursor قد لا تعرضها. */
+  function cursor(d) {
+    return claude(d).replace('/kickoff', 'نفّذ أمر kickoff: اقرأ الملف .claude/skills/kickoff/SKILL.md ونفّذه كاملاً بالبيانات التالية:');
+  }
+
   /* Antigravity: برومبت إقلاع كامل لأن البيئة لا تملك مهارة /kickoff. */
   function antigravity(d) {
     const modeText = d.mode === 'prototype' ? 'prototype للتجريب السريع وبناء النموذج الأولي' : 'production للإنتاج الكامل بصرامة جميع القواعد';
@@ -78,7 +83,20 @@ ${SEP}
       'الصق النص واضغط إرسال.',
       'أجب عن أسئلة العصف الذهني حبة حبة حتى يكتمل تصور الـ MVP.',
     ],
+    cursor: [
+      'افتح <strong>مجلد المشروع نفسه</strong> في Cursor (الجذر الذي يحتوي هذا الملف)، ووافق على «الثقة بالمجلد».',
+      'افتح محادثة جديدة مع الوكيل في وضع <strong>Agent</strong>.',
+      'الصق النص واضغط إرسال.',
+      'للأوامر لاحقاً اكتب اسمها للوكيل، مثل: «نفّذ next» لمعرفة الخطوة التالية.',
+    ],
   };
 
-  window.AGL = { TYPES, claude, antigravity, NEXT_STEPS };
+  /* نص الإرشاد فوق الناتج لكل بيئة. */
+  const RESULT_LEADS = {
+    claude: 'انسخه والصقه في Claude Code داخل جذر مجلد المشروع. إذا لم يبدأ الإقلاع تلقائياً فاكتب ⁦/kickoff⁩ ثم الصق النص.',
+    antigravity: 'انسخه وأرسله للوكيل في محادثة جديدة داخل Antigravity.',
+    cursor: 'انسخه وأرسله للوكيل في محادثة جديدة داخل Cursor، من جذر مجلد المشروع.',
+  };
+
+  window.AGL = { TYPES, claude, antigravity, cursor, NEXT_STEPS, RESULT_LEADS };
 })();
