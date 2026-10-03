@@ -63,7 +63,8 @@ function checkInstructionFile(text, relPath) {
   if (injected) {
     return decide('ask', `[تنبيه أمني: محاولة حقن نصي محتملة] النص المراد كتابته في ${relPath} يحتوي عبارة تشبه أوامر تخريبية أو إعادة توجيه للوكيل (البند 6). راجع المحتوى قبل الموافقة.`);
   }
-  return decide('ask', `🛡️ ${relPath} من ملفات الحوكمة/طبقة الإنفاذ؛ تعديله يغيّر سلوك الوكيل ويحتاج موافقتك الصريحة.`);
+  // soft: سؤال حوكمة عادي بلا اشتباه؛ في أداة بلا نافذة موافقة يمرّ ويُبلَّغ عنه بعد التعديل (post-edit.mjs)
+  return { ...decide('ask', `🛡️ ${relPath} من ملفات الحوكمة/طبقة الإنفاذ؛ تعديله يغيّر سلوك الوكيل ويحتاج موافقتك الصريحة.`), soft: true };
 }
 
 function checkFileTool(toolName, input) {
@@ -111,7 +112,7 @@ runHook(async () => {
   const result = toolName === 'Bash' || toolName === 'PowerShell'
     ? checkShellCommand(toolInput.command)
     : checkFileTool(toolName, toolInput);
-  if (!result) return;
+  if (!result || (result.soft && input.host)) return;
   emit({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',

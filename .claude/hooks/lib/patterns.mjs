@@ -50,6 +50,8 @@ export const PROTECTED_INSTRUCTION_PATHS = [
   /^\.claude\/(settings\.json|statusline\.mjs)$/,
   /^skills\//,
   /^\.agents\//,
+  /^\.cursor\//,
+  /^\.cursorignore$/,
   /(^|\/)(CLAUDE|AGENTS)\.md$/,
   /^(master_rules|rules_security|rules_code_quality|rules_workflow|rules_ui)\.md$/,
 ];

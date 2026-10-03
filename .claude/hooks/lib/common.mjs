@@ -5,6 +5,7 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { join, resolve, relative, basename } from 'node:path';
+import { parseHookInput, toHostOutput } from './host.mjs';
 
 export const GOVERNANCE_FILES = [
   'master_rules.md', 'rules_security.md', 'rules_code_quality.md', 'rules_workflow.md',
@@ -13,9 +14,19 @@ export const GOVERNANCE_FILES = [
 
 const STATE_DIR = '.claude/state';
 const STATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// الأداة التي استدعت الـ Hook (claude افتراضياً)؛ تحددها المدخلات وتُترجم المخرجات إلى صيغتها
+let activeHost = 'claude';
 
 export function projectDir() {
   return resolve(process.env.CLAUDE_PROJECT_DIR || process.cwd());
+}
+
+/** يوحّد المدخلات عبر طبقة المضيف (lib/host.mjs). استدعاء مكرر من أداة أخرى يخرج صامتاً. */
+function acceptInput(raw) {
+  const { host, skip, input } = parseHookInput(raw);
+  if (skip) process.exit(0);
+  activeHost = host;
+  return input;
 }
 
 export function readStdinJson() {
@@ -23,9 +34,7 @@ export function readStdinJson() {
     let raw = '';
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', (chunk) => { raw += chunk; });
-    process.stdin.on('end', () => {
-      try { done(raw.trim() ? JSON.parse(raw) : {}); } catch { done({}); }
-    });
+    process.stdin.on('end', () => done(acceptInput(raw)));
     process.stdin.on('error', () => done({}));
   });
 }
@@ -124,10 +133,11 @@ export function loadSession(sessionId) {
       edited: Array.isArray(data.edited) ? data.edited : [],
       warned: data.warned && typeof data.warned === 'object' ? data.warned : {},
       shortcuts: data.shortcuts && typeof data.shortcuts === 'object' ? data.shortcuts : {},
+      sizes: data.sizes && typeof data.sizes === 'object' ? data.sizes : {},
       turnStartedAt: Number(data.turnStartedAt) || 0,
     };
   } catch {
-    return { prompts: 0, edited: [], warned: {}, shortcuts: {}, turnStartedAt: 0 };
+    return { prompts: 0, edited: [], warned: {}, shortcuts: {}, sizes: {}, turnStartedAt: 0 };
   }
 }
 
@@ -173,7 +183,7 @@ export function isServiceAccountFile(filePath) {
 }
 
 export function emit(payload) {
-  process.stdout.write(JSON.stringify(payload));
+  process.stdout.write(JSON.stringify(toHostOutput(payload, activeHost)));
 }
 
 export function addContext(hookEventName, additionalContext) {

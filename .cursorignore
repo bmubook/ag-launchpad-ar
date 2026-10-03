@@ -1,0 +1,10 @@
+# ملفات الأسرار — لا يقرؤها وكيل Cursor ولا يفهرسها (البند 5 — rules_security.md).
+# يقابل قائمة المنع في .claude/settings.json؛ و Hook الحماية يمنع الوصول إليها عبر الطرفية أيضاً.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*adminsdk*.json
+*service-account*.json
+serviceAccountKey.json

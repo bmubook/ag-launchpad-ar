@@ -15,8 +15,8 @@ const MAX_SCAN = 5000;
 
 // ملفات لا يغطيها فحص المشروع: القالب نفسه، وإعدادات لا تُبنى ولا تُختبر، وملفات تولّدها الأدوات
 const NOT_VERIFIABLE = [
-  /^\.(claude|agents|github|vscode|idea)\//, /^(setup-guide|blueprints|docs)\//, /^SETUP_GUIDE\.html$/,
-  /(^|\/)\.(gitignore|gitattributes|editorconfig|npmrc|nvmrc|firebaserc|prettierignore|eslintignore|dockerignore|env\.[a-z]+)$/,
+  /^\.(claude|agents|cursor|github|vscode|idea)\//, /^(setup-guide|blueprints|docs)\//, /^SETUP_GUIDE\.html$/,
+  /(^|\/)\.(gitignore|gitattributes|editorconfig|npmrc|nvmrc|firebaserc|prettierignore|eslintignore|dockerignore|cursorignore|env\.[a-z]+)$/,
   /(^|\/)LICENSE$/i, /\.(png|jpe?g|gif|webp|avif|svg|ico|pdf|lock|log|tsbuildinfo)$/i, /(^|\/)next-env\.d\.ts$/,
 ];
 

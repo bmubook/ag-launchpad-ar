@@ -12,6 +12,7 @@ import {
   addContext, loadSession, projectDir, readProjectState, readStdinJson, runHook, saveSession, toProjectRelative,
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
+import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts } from './lib/quality.mjs';
 import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
 
@@ -56,6 +57,24 @@ function stepLimitMessage(pending) {
 const NO_GATE_MESSAGE = 'ℹ️ لا توجد بوابة فحص بعد: المشروع بلا أوامر lint/test، فهذا الكود لن يُفحص آلياً. '
   + 'نفّذ /quality-setup قبل بناء الميزات (البنود 13 و 16)، ونبّه المستخدم إن اختار التأجيل.';
 
+/** في أداة بلا نافذة موافقة مسبقة (input.host) يمرّ تعديل ملف الحوكمة، فيُلزَم الوكيل بإبلاغ المستخدم به. */
+function governanceMessage(relPath) {
+  return `🛡️ عدّلت ${relPath} وهو من ملفات الحوكمة/طبقة الإنفاذ (البند 6). هذه البيئة لا تطلب موافقة المستخدم قبل التعديل، `
+    + 'فأخبره صراحةً في ردك بما غيّرته في هذا الملف ولماذا.';
+}
+
+/**
+ * أسطر هذا التعديل لحد الخطوة. أداة ترسل محتوى الملف كاملاً حتى عند تغيير سطر واحد (Cursor)
+ * يُحسب لها الفرق عن آخر حجم معروف للملف في الجلسة، لا الملف كله في كل مرة.
+ */
+function editedLines(input, session, relPath, added, fullText) {
+  if (!input.host || typeof input.tool_input?.content !== 'string') return countLines(added);
+  const total = countLines(fullText);
+  const previous = session.sizes[relPath];
+  session.sizes[relPath] = total;
+  return previous === undefined ? total : Math.max(1, Math.abs(total - previous));
+}
+
 runHook(async () => {
   const input = await readStdinJson();
   const toolInput = input.tool_input || {};
@@ -73,6 +92,7 @@ runHook(async () => {
   if (status) session.warned[relPath] = status;
   else delete session.warned[relPath];
   if (newCeilingStatus || status === 'hard') messages.push(ceilingMessage(relPath, lines, rule, status));
+  if (input.host && PROTECTED_INSTRUCTION_PATHS.some((re) => re.test(relPath))) messages.push(governanceMessage(relPath));
 
   if (needsVerification(relPath)) {
     const found = scanShortcuts(relPath, added);
@@ -85,7 +105,8 @@ runHook(async () => {
     setOpenShortcuts({ [relPath]: scanFile(relPath, fullText).map((f) => f.kind) });
 
     const state = readProjectState();
-    const { shouldWarn, pending } = recordPendingEdit(relPath, countLines(added), state.mode === 'prototype' ? 2 : 1);
+    const changed = editedLines(input, session, relPath, added, fullText);
+    const { shouldWarn, pending } = recordPendingEdit(relPath, changed, state.mode === 'prototype' ? 2 : 1);
     if (detectChecks().length) {
       if (shouldWarn) messages.push(stepLimitMessage(pending));
     } else if (state.kickedOff && rule && !session.warned['#no-gate']) {
