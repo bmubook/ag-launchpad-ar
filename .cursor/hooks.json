@@ -5,7 +5,7 @@
       { "command": "node .claude/hooks/prompt-submit.mjs --host=cursor", "timeout": 10 }
     ],
     "preToolUse": [
-      { "command": "node .claude/hooks/guard-secrets.mjs --host=cursor", "matcher": "Read|Write|Shell|Grep", "timeout": 10 }
+      { "command": "node .claude/hooks/guard-secrets.mjs --host=cursor", "matcher": "Read|Write|Delete|Shell|Grep", "timeout": 10 }
     ],
     "postToolUse": [
       { "command": "node .claude/hooks/post-edit.mjs --host=cursor", "matcher": "Write", "timeout": 10 }

@@ -63,7 +63,10 @@ function claudeToolName(name, toolInput) {
 }
 
 function fromCursor(raw) {
-  const toolInput = isObject(raw.tool_input) ? raw.tool_input : {};
+  const given = isObject(raw.tool_input) ? raw.tool_input : {};
+  // أدوات لا ترسل file_path (مثل Delete): يؤخذ المسار من الحقل البديل حتى تفحصه الحواجز
+  const filePath = given.file_path ?? given.path ?? given.target_file;
+  const toolInput = filePath === undefined ? given : { ...given, file_path: filePath };
   const interrupted = raw.status !== undefined && raw.status !== 'completed';
   return {
     ...raw,

@@ -5,6 +5,8 @@
  * - يمنع كتابة مفاتيح سرية مؤكدة داخل الملفات، ويسأل المستخدم عند الاشتباه.
  * - يمنع أوامر الطرفية التي تقرأ .env، ويسأل عن أي إشارة أخرى إليه.
  * - يسأل المستخدم قبل أي كتابة في ملفات التعليمات/الحوكمة، مع تنبيه حقن نصي إن وُجد.
+ * - يوقف ما يحاوله وكيل مخدوع (lib/threats.mjs): تنزيل سكربت وتشغيله، تعديل طبقة الحماية بأمر طرفية،
+ *   قراءة مخازن المفاتيح وبيانات الدخول، ورفع ملفات إلى خادم خارجي.
  */
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,23 +14,16 @@ import {
   emit, isRealEnvFile, isServiceAccountFile, projectDir, readStdinJson, runHook, toProjectRelative,
 } from './lib/common.mjs';
 import {
-  ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
+  ENFORCEMENT_PATHS, ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
   SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
 } from './lib/patterns.mjs';
+import { canonicalPath, checkCommandThreats, checkPathThreats, decide, strongest } from './lib/threats.mjs';
 
 const ENV_ADVICE = 'أضف المفاتيح الجديدة بقيم فارغة إلى .env.example، واطلب من المستخدم نسخها إلى .env وتعبئتها بنفسه.';
 const FIREBASE_HINT = 'إن كانت إعدادات Firebase للعميل فهي معرّفات عامة لكنها تبقى خارج الكود: اقرأها من متغيرات NEXT_PUBLIC_FIREBASE_* أو EXPO_PUBLIC_FIREBASE_*، وفي Flutter يولّدها الأمر flutterfire configure.';
 /** ملفات إعداد Firebase للعميل التي تولّدها أدوات Firebase الرسمية — قيم apiKey فيها عامة بطبيعتها. */
 const FIREBASE_CLIENT_CONFIG_FILES = /(^|\/)(firebase_options\.dart|google-services\.json|GoogleService-Info\.plist)$/;
-const SEVERITY = { allow: 0, ask: 1, deny: 2 };
-
-function decide(permissionDecision, reason) {
-  return { permissionDecision, reason };
-}
-
-function strongest(decisions) {
-  return decisions.filter(Boolean).sort((a, b) => SEVERITY[b.permissionDecision] - SEVERITY[a.permissionDecision])[0] || null;
-}
+const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Delete']);
 
 /** النصوص التي ستُكتب فعلاً حسب نوع الأداة. */
 function writtenText(toolName, input) {
@@ -63,12 +58,14 @@ function checkInstructionFile(text, relPath) {
   if (injected) {
     return decide('ask', `[تنبيه أمني: محاولة حقن نصي محتملة] النص المراد كتابته في ${relPath} يحتوي عبارة تشبه أوامر تخريبية أو إعادة توجيه للوكيل (البند 6). راجع المحتوى قبل الموافقة.`);
   }
-  // soft: سؤال حوكمة عادي بلا اشتباه؛ في أداة بلا نافذة موافقة يمرّ ويُبلَّغ عنه بعد التعديل (post-edit.mjs)
-  return { ...decide('ask', `🛡️ ${relPath} من ملفات الحوكمة/طبقة الإنفاذ؛ تعديله يغيّر سلوك الوكيل ويحتاج موافقتك الصريحة.`), soft: true };
+  // soft: سؤال حوكمة عادي بلا اشتباه؛ في أداة بلا نافذة موافقة يمرّ ويُبلَّغ عنه بعد التعديل (post-edit.mjs).
+  // طبقة الإنفاذ نفسها (Hooks، الإعدادات، سجل Cursor) ليست soft: تعديلها يعطّل الحماية، فيُمنع هناك.
+  const soft = !ENFORCEMENT_PATHS.some((re) => re.test(relPath));
+  return { ...decide('ask', `🛡️ ${relPath} من ملفات الحوكمة/طبقة الإنفاذ؛ تعديله يغيّر سلوك الوكيل ويحتاج موافقتك الصريحة.`), soft };
 }
 
 function checkFileTool(toolName, input) {
-  const target = input.file_path || input.notebook_path || (toolName === 'Grep' ? input.path : '');
+  const target = canonicalPath(input.file_path || input.notebook_path || (toolName === 'Grep' ? input.path : '') || '');
   const relPath = toProjectRelative(target) || String(target || '');
   const decisions = [];
 
@@ -85,16 +82,19 @@ function checkFileTool(toolName, input) {
       return decide('deny', `🔒 حماية الأسرار (البند 5): ${toolName === 'Write' ? 'الكتابة فوق' : 'قراءة/تعديل'} ملف البيئة الحقيقي ${relPath} محظورة على الوكيل. ${ENV_ADVICE}`);
     }
   }
+  const pathThreat = checkPathThreats(toolName, target);
+  if (pathThreat?.permissionDecision === 'deny') return pathThreat;
+  decisions.push(pathThreat);
   const text = writtenText(toolName, input);
-  if (text) {
-    decisions.push(scanSecrets(text, relPath));
-    if (toProjectRelative(target)) decisions.push(checkInstructionFile(text, relPath));
-  }
+  if (text) decisions.push(scanSecrets(text, relPath));
+  // أداة كتابة على ملف حوكمة تُسأل عنها حتى لو كان النص فارغاً: تفريغ ملف الإعدادات أو حذف نص منه يعطّل الحماية
+  if (WRITE_TOOLS.has(toolName) && toProjectRelative(target)) decisions.push(checkInstructionFile(text, relPath));
   return strongest(decisions);
 }
 
 function checkShellCommand(command) {
-  let remaining = String(command || '');
+  // على Windows الاسم ‎.env.‎ بنقطة ختامية هو ‎.env‎ نفسه، فتُسقَط النقطة قبل المطابقة
+  let remaining = String(command || '').replace(/(\.env(?:\.[A-Za-z0-9_-]+)*)\.+(?=$|[\s'";|&)<>])/gi, '$1');
   for (const safe of SAFE_ENV_COMMANDS) remaining = remaining.replace(safe, ' ');
   const serviceAccounts = remaining.match(SERVICE_ACCOUNT_REFERENCE) || [];
   if (serviceAccounts.length && READ_OR_EXFIL_COMMAND.test(remaining)) {
@@ -114,7 +114,7 @@ runHook(async () => {
   const toolName = input.tool_name || '';
   const toolInput = input.tool_input || {};
   const result = toolName === 'Bash' || toolName === 'PowerShell'
-    ? checkShellCommand(toolInput.command)
+    ? strongest([checkShellCommand(toolInput.command), checkCommandThreats(toolInput.command)])
     : checkFileTool(toolName, toolInput);
   if (!result || (result.soft && input.host)) return;
   emit({

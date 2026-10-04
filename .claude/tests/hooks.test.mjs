@@ -212,5 +212,6 @@ check('BASH: statusLine works without CLAUDE_PROJECT_DIR (cwd fallback)', sl.sta
 await import('./quality.test.mjs');
 await import('./gate.test.mjs');
 await import('./hosts.test.mjs');
+await import('./attacks.test.mjs');
 
 report();
