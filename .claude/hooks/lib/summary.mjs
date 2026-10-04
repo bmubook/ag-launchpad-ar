@@ -33,6 +33,9 @@ function recentDecisions() {
 function guidanceLines(state) {
   const lines = [];
   if (state.experience) lines.push(`• مستوى خبرة المستخدم: ${state.experience}`);
+  if (/مبتدئ|أساسيات/.test(state.experience || '')) {
+    lines.push('• ✂️ المستخدم غير مبرمج: اجعل ردودك قصيرة وبسيطة — الخلاصة أولاً، بلا مصطلح تقني غير مشروح، وخياران أو ثلاثة كحد أقصى (master_rules.md §2).');
+  }
   if (state.learning) {
     lines.push('• 🎓 وضع التعلّم مفعّل: بعد كل قرار أو تعديل مهم أضف كتلة «🎓 تعلّم:» (سطران أو ثلاثة بلغة بسيطة)، واشرح أي مصطلح تقني عند أول ظهور، وأضف الجديد إلى docs/glossary.md.');
   }

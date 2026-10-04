@@ -90,8 +90,7 @@ function mutates(segment, targets, insideProtected) {
 
 function tamperAsk(targets) {
   const names = targets.length ? [...new Set(targets)].join('، ') : 'ملفات داخل مجلد محمي';
-  return decide('ask', `🛡️ هذا الأمر يعدّل أو يحذف ${names} وهو من ملفات الحوكمة/طبقة الإنفاذ (البند 6). `
-    + 'تعديله يغيّر سلوك الوكيل أو يعطّل الحماية، ويحتاج موافقتك الصريحة. تعديل المهارات يكون بأداة التعديل لا بالطرفية.');
+  return decide('ask', `🛡️ هذا الأمر يغيّر ملفات الحماية في القالب (${names}). وافق فقط إذا طلبتَ أنت هذا التغيير.`);
 }
 
 function tamperDecision(segment, insideProtected) {
@@ -120,12 +119,12 @@ function secretsDecision(segment) {
   if (stores.length) {
     const names = [...new Set(stores)].join('، ');
     return reads
-      ? decide('deny', `🔒 حماية الأسرار (البند 5): ${names} مخزن مفاتيح أو بيانات دخول (مفاتيح SSH، حسابات سحابية، رموز نشر، ملفات توقيع). لا يقرؤه الوكيل ولا ينقله.`)
-      : decide('ask', `🔒 هذا الأمر يمسّ ${names} وهو مخزن مفاتيح أو بيانات دخول. وافق فقط إذا طلبتَ أنت هذه العملية وتعرف أثرها.`);
+      ? decide('deny', `🔒 حماية الأسرار: ${names} ملف مفاتيح سرية، فلا يقرؤه الوكيل ولا ينقله.`)
+      : decide('ask', `🔒 هذا الأمر يمسّ ملف مفاتيح سرية (${names}). وافق فقط إذا طلبتَ أنت ذلك.`);
   }
   const keys = tokens.filter((token) => KEY_MATERIAL.test(token));
   if (keys.length && reads) {
-    return decide('ask', `🔒 ${[...new Set(keys)].join('، ')} يبدو ملف مفتاح خاص، وهذا الأمر يعرض محتواه. وافق فقط إذا كان شهادة عامة غير سرية.`);
+    return decide('ask', `🔒 ${[...new Set(keys)].join('، ')} قد يكون مفتاحاً سرياً. وافق على عرضه فقط إذا كنت متأكداً أنه غير سري.`);
   }
   return null;
 }
@@ -141,8 +140,7 @@ function downloadsThenRuns(command) {
 
 function remoteExecDecision(command) {
   if (!any(REMOTE_EXEC, command) && !downloadsThenRuns(command)) return null;
-  return decide('ask', '🌐 تنزيل وتشغيل مباشر (البند 6): هذا الأمر يجلب سكربتاً من الإنترنت وينفّذه فوراً دون أن يراه أحد. '
-    + 'وافق فقط إذا طلبتَ أنت تثبيت هذه الأداة ومن موقعها الرسمي.');
+  return decide('ask', '🌐 هذا الأمر ينزّل برنامجاً من الإنترنت ويشغّله فوراً. وافق فقط إذا طلبتَ أنت تثبيته.');
 }
 
 function uploadDecision(command) {
@@ -150,7 +148,7 @@ function uploadDecision(command) {
   const hosts = [...command.matchAll(URL_HOST)].map((match) => match[1]);
   if (hosts.length && hosts.every((host) => LOCAL_HOST.test(host))) return null;
   const destination = hosts.length ? [...new Set(hosts)].join('، ') : 'خادم خارجي';
-  return decide('ask', `📤 رفع ملف إلى الخارج (البند 6): هذا الأمر يرسل ملفاً من جهازك إلى ${destination}. وافق فقط إذا طلبتَ أنت هذا الإرسال وتعرف الوجهة.`);
+  return decide('ask', `📤 هذا الأمر يرسل ملفاً من جهازك إلى الإنترنت (${destination}). وافق فقط إذا طلبتَ أنت إرساله.`);
 }
 
 /** يفحص أمر طرفية. يعيد أشد قرار ({ permissionDecision, reason }) أو null إذا لم يُرصد شيء. */
@@ -176,14 +174,14 @@ export function checkPathThreats(toolName, filePath) {
   if (!filePath) return null;
   const path = slashes(filePath);
   if (isSecretStore(path) || isHomeNpmrc(filePath)) {
-    return decide('deny', `🔒 حماية الأسرار (البند 5): ${path} مخزن مفاتيح أو بيانات دخول (مفاتيح SSH، حسابات سحابية، رموز نشر). لا يقرؤه الوكيل ولا يعدّله.`);
+    return decide('deny', `🔒 حماية الأسرار: ${path} ملف مفاتيح سرية، فلا يقرؤه الوكيل ولا يعدّله.`);
   }
   if (isProjectKeyFile(path)) {
     const firstWrite = toolName === 'Write' && !existsSync(resolve(projectDir(), String(filePath)));
-    return firstWrite ? null : decide('deny', `🔒 حماية الأسرار (البند 5): ${path} ملف توقيع يحوي مفاتيح أو كلمات مرور. لا يقرؤه الوكيل ولا يعدّله؛ يملؤه المستخدم بنفسه.`);
+    return firstWrite ? null : decide('deny', `🔒 حماية الأسرار: ${path} ملف توقيع فيه كلمات مرور، فلا يقرؤه الوكيل ولا يعدّله. املأه أنت بنفسك.`);
   }
   if (KEY_MATERIAL.test(path) && !isPublicKey(path) && !WRITE_TOOLS.has(toolName)) {
-    return decide('ask', `🔒 ${path} يبدو ملف مفتاح خاص. وافق على قراءته فقط إذا كان شهادة عامة غير سرية.`);
+    return decide('ask', `🔒 ${path} قد يكون مفتاحاً سرياً. وافق على قراءته فقط إذا كنت متأكداً أنه غير سري.`);
   }
   return null;
 }

@@ -34,6 +34,9 @@ check('SS: call sign + prototype + phase', c.includes('«يا مدير»') && c.
 check('SS: compact → checkpoint order', c.includes('تم ضغط السياق'), c);
 check('SS: only last 5 changelog rows', !c.includes('تغيير رقم 2 ') && !c.includes('تغيير رقم 2\n') && c.includes('تغيير رقم 3') && c.includes('تغيير رقم 7'), c);
 check('SS: only active bugs', c.includes('انهيار عند الدفع') && !c.includes('خطأ محلول قديم'), c);
+check('SS: beginner level → reminder to keep replies short and simple', c.includes('ردودك قصيرة'), c);
+writeFileSync(join(tmp, 'project_map.md'), readFileSync(join(tmp, 'project_map.md'), 'utf8').replace('مبتدئ تماماً', 'مطوّر'));
+check('SS: developer level → no such reminder', !ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' })).includes('ردودك قصيرة'));
 
 freshProject({ missing: ['rules_ui.md', 'bugs_log.md'] });
 r = runNode('.claude/hooks/session-start.mjs', { source: 'startup' });

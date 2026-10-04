@@ -60,6 +60,11 @@ for (const [name, command, expected] of COMMAND_ATTACKS) {
   check(`ATK ${name} → ${expected}`, verdict(checkCommandThreats(command)) === expected, `${command} → ${verdict(checkCommandThreats(command))}`);
 }
 
+// رسائل الحواجز يقرؤها المبتدئ في نافذة الموافقة: جملة أو جملتان بسيطتان، بلا أرقام بنود
+const reasons = COMMAND_ATTACKS.map(([, command]) => checkCommandThreats(command)?.reason || '');
+const tooHeavy = (text) => text.length > 190 || /البند/.test(text);
+check('MSG: guard messages stay short and free of rule numbers', !reasons.some(tooHeavy), reasons.find(tooHeavy));
+
 // ---------- أوامر مشروعة يجب أن تمرّ: الحاجز الذي يوقف العمل اليومي يُعطَّل، فلا يحمي أحداً
 const LEGIT_COMMANDS = [
   'node .claude/scripts/verify.mjs --quick',
