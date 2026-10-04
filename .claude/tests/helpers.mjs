@@ -9,7 +9,7 @@ export const REPO = process.argv[2] || fileURLToPath(new URL('../..', import.met
 export const results = [];
 export let tmp;
 
-export function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [] } = {}) {
+export function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [], flows = [] } = {}) {
   if (tmp) rmSync(tmp, { recursive: true, force: true });
   tmp = mkdtempSync(join(tmpdir(), 'aglp-'));
   cpSync(join(REPO, '.claude'), join(tmp, '.claude'), { recursive: true, filter: (s) => !s.includes(join('.claude', 'state')) && !s.endsWith('settings.local.json') });
@@ -27,7 +27,9 @@ export function freshProject({ kicked = false, mode = 'production', extraChangel
     `* **اقتراحات التطوير:** ${suggestions ?? '[يُحدَّد عند الإقلاع]'}`,
     '> ▶ **المرحلة النشطة حالياً:** المرحلة 2', '',
     '## 12. أفكار التطوير المستقبلية (Backlog):', '', '| # | الفكرة | التصنيف | الأولوية | المصدر | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-- |',
-    ...(backlog.length ? backlog : ['| - | لا توجد أفكار بعد | - | - | - | - |']), '', '</div>',
+    ...(backlog.length ? backlog : ['| - | لا توجد أفكار بعد | - | - | - | - |']), '',
+    '## 13. فهرس التدفقات (Flow Index):', '', '| # | التدفق | رحلة المستخدم (من ← إلى) | المرحلة | الاختبار | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-: |',
+    ...(flows.length ? flows : ['| - | لا توجد تدفقات بعد | - | - | - | - |']), '', '</div>',
   ].join('\n');
   writeFileSync(join(tmp, 'project_map.md'), map);
   const rows = Array.from({ length: 3 + extraChangelogRows }, (_, i) =>

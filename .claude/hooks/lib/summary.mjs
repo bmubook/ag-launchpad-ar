@@ -69,6 +69,23 @@ function gateLine(gate, verify, quality, run, mode) {
   return [];
 }
 
+/** فهرس التدفقات (project_map.md §13): تدفق واحد في كل مرة، والمقفل لا يُفتح إلا بفشل اختباره أو بطلب المستخدم. */
+function flowLines() {
+  const rows = tableRows(readProjectFile('project_map.md'), /فهرس التدفقات/);
+  if (!rows.length) return [];
+  const named = (mark) => rows.filter((cells) => (cells[cells.length - 1] || '').includes(mark)).map((cells) => `«${truncate(cells[1], 40)}»`);
+  const [locked, open, broken, waiting] = ['🔒', '🟡', '🔴', '⬜'].map(named);
+  const parts = [`🔒 ${locked.length} مقفل`];
+  if (open.length) parts.push(`🟡 قيد العمل: ${open.join('، ')}`);
+  if (broken.length) parts.push(`🔴 مكسور: ${broken.join('، ')}`);
+  parts.push(`⬜ ${waiting.length} لم يبدأ`);
+  let advice = 'ابدأ التدفق التالي عبر /next.';
+  if (broken.length) advice = `أصلح ${broken[0]} عبر /fix قبل أي تدفق آخر.`;
+  else if (open.length) advice = `أكمل ${open[0]} قبل فتح تدفق آخر.`;
+  const lock = locked.length ? ' لا تعدّل تدفقاً مقفلاً إلا إذا فشل اختباره أو طلب المستخدم ذلك.' : '';
+  return [`• 🧩 التدفقات (project_map.md §13): ${parts.join(' | ')}. ${advice}${lock}`];
+}
+
 function section(title, items, emptyText) {
   return [`• ${title}:`, ...(items.length ? items : [`  - ${emptyText}`])];
 }
@@ -97,6 +114,7 @@ export function buildSessionContext(source, host) {
     lines.push(`• اسم النداء: ${state.callSign ? `«${state.callSign}» — افتتح به كل رد` : 'غير محدد (تخطَّ البند)'}`);
     lines.push(`• وضع التشغيل: ${state.mode} | المرحلة النشطة: ${state.phase || 'غير محددة'}`);
     lines.push(...guidanceLines(state));
+    lines.push(...flowLines());
     lines.push(...gateLines(state.mode));
   }
 

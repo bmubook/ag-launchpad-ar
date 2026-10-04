@@ -38,6 +38,20 @@ check('SS: beginner level → reminder to keep replies short and simple', c.incl
 writeFileSync(join(tmp, 'project_map.md'), readFileSync(join(tmp, 'project_map.md'), 'utf8').replace('مبتدئ تماماً', 'مطوّر'));
 check('SS: developer level → no such reminder', !ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' })).includes('ردودك قصيرة'));
 
+// فهرس التدفقات (القسم 13): تدفق واحد في كل مرة، والمقفل لا يُفتح إلا بفشل اختباره أو بطلب المستخدم
+check('SS: no flows registered → no flows line', !c.includes('التدفقات'), c);
+freshProject({ kicked: true, flows: [
+  '| 1 | إنشاء حساب | صفحة التسجيل ← لوحة التحكم | 3 | tests/signup.test.ts | 🔒 مقفل |',
+  '| 2 | الدفع | السلة ← صفحة الشكر | 3 | — | 🟡 قيد العمل |',
+  '| 3 | تتبع الطلب | طلباتي ← حالة الطلب | 4 | — | ⬜ لم يبدأ |',
+] });
+let flowsLine = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+check('SS: flows line counts locked, open and waiting flows', flowsLine.includes('🔒 1') && flowsLine.includes('⬜ 1') && flowsLine.includes('«الدفع»'), flowsLine);
+check('SS: an open flow is finished before another is opened', flowsLine.includes('أكمل «الدفع»') && flowsLine.includes('مقفلاً'), flowsLine);
+freshProject({ kicked: true, flows: ['| 1 | الدفع | السلة ← صفحة الشكر | 3 | tests/pay.test.ts | 🔴 مكسور |', '| 2 | الطلبات | طلباتي ← التفاصيل | 3 | — | 🟡 قيد العمل |'] });
+flowsLine = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+check('SS: a broken flow is repaired before anything else', flowsLine.includes('أصلح «الدفع»') && !flowsLine.includes('أكمل «الطلبات»'), flowsLine);
+
 freshProject({ missing: ['rules_ui.md', 'bugs_log.md'] });
 r = runNode('.claude/hooks/session-start.mjs', { source: 'startup' });
 check('SS: missing governance files warned', ctx(r).includes('rules_ui.md') && ctx(r).includes('bugs_log.md'), ctx(r));
