@@ -61,8 +61,14 @@ function untestedProblem(files) {
     + 'إن كان الملف لا يحتاج اختباراً فعلاً (تهيئة أو ربط بلا منطق) فاذكر ذلك للمستخدم في ردك مع السبب.';
 }
 
-function docsProblem(codeFiles) {
-  return `📋 التوثيق الإلزامي (master_rules.md §2): عدّلت ملفات كود في هذه الجولة (${list(codeFiles)}) دون تحديث changelog.md. `
+/**
+ * سجلات التغييرات المقبولة. في مستودع القالب نفسه (قبل الإقلاع) السجل هو docs/template-changelog.md،
+ * لأن changelog.md يُشحن فارغاً لمشروع المستخدم؛ وبعد الإقلاع لا يُقبل إلا changelog.md.
+ */
+const acceptedLogs = (kickedOff) => (kickedOff ? ['changelog.md'] : ['docs/template-changelog.md', 'changelog.md']);
+
+function docsProblem(codeFiles, logs) {
+  return `📋 التوثيق الإلزامي (master_rules.md §2): عدّلت ملفات كود في هذه الجولة (${list(codeFiles)}) دون تحديث ${logs[0]}. `
     + 'نفّذ إجراء التوثيق الآن (مهارة /document): سجّل التعديل بصيغة Conventional Commits، وحدّث project_map.md و bugs_log.md و decisions_log.md عند الحاجة، '
     + 'ثم أنهِ ردك بختم التوثيق. استثناء وحيد: إذا كان التعديل لم يكتمل بعد (عمل جارٍ لم يعبر الفحص) أو أُلغي بالكامل، '
     + 'فلا تضف مدخلاً ناقصاً — اذكر ذلك صراحةً في الختم: ⬜ changelog (قيد التنفيذ — يُوثَّق عند الاكتمال).';
@@ -97,8 +103,9 @@ runHook(async () => {
     }
   }
 
-  const documented = session.edited.includes('changelog.md')
-    || (session.turnStartedAt && modifiedAt(root, 'changelog.md') > session.turnStartedAt);
-  if (!documented) problems.push(docsProblem(codeFiles));
+  const logs = acceptedLogs(readProjectState().kickedOff);
+  const documented = logs.some((file) => session.edited.includes(file)
+    || (session.turnStartedAt && modifiedAt(root, file) > session.turnStartedAt));
+  if (!documented) problems.push(docsProblem(codeFiles, logs));
   if (problems.length) emit({ decision: 'block', reason: problems.join('\n\n') });
 });

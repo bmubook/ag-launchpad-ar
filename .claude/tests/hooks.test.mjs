@@ -182,7 +182,28 @@ writeFileSync(join(tmp, '.claude', 'settings.local.json'), '{}\n');
 runNode('.claude/hooks/post-edit.mjs', { session_id: 'pe', tool_input: { file_path: join(tmp, '.claude', 'settings.local.json') } });
 check('ST: personal settings.local.json edit → allow', stop().out === '');
 check('ST: unknown session → allow', stop({ session_id: 'nobody' }).out === '');
+
 check('STATE: session file written under .claude/state', existsSync(join(tmp, '.claude', 'state', 'session-pe.json')));
+
+// مستودع القالب نفسه (قبل الإقلاع) يوثَّق في docs/template-changelog.md، لأن changelog.md يُشحن فارغاً لمشروع المستخدم
+const editAs = (session, file) => runNode('.claude/hooks/post-edit.mjs', { session_id: session, tool_input: { file_path: join(tmp, file) } });
+const stopAs = (session) => runNode('.claude/hooks/stop-gate.mjs', { session_id: session, hook_event_name: 'Stop', stop_hook_active: false });
+const seedTemplateWork = () => {
+  mkdirSync(join(tmp, 'src'), { recursive: true }); mkdirSync(join(tmp, 'docs'), { recursive: true });
+  writeFileSync(join(tmp, 'src/t.js'), 'export const t = 1;\n'); writeFileSync(join(tmp, 'docs/template-changelog.md'), '| صف |\n');
+};
+freshProject();
+seedTemplateWork();
+editAs('tpl', 'src/t.js');
+r = stopAs('tpl');
+check('ST: template repo, code edited, no log → block names the template log', r.json?.decision === 'block' && r.json.reason.includes('docs/template-changelog.md'), r.out);
+editAs('tpl', 'docs/template-changelog.md');
+check('ST: template repo, template log updated → allow', stopAs('tpl').out === '');
+freshProject({ kicked: true });
+seedTemplateWork();
+editAs('usr', 'src/t.js'); editAs('usr', 'docs/template-changelog.md');
+r = stopAs('usr');
+check('ST: user project, the template log does not count → block', r.json?.decision === 'block' && r.json.reason.includes('دون تحديث changelog.md'), r.out);
 
 // ---------- statusline
 freshProject();
