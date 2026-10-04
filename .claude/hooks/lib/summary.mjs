@@ -69,19 +69,26 @@ function gateLine(gate, verify, quality, run, mode) {
   return [];
 }
 
-/** فهرس التدفقات (project_map.md §13): تدفق واحد في كل مرة، والمقفل لا يُفتح إلا بفشل اختباره أو بطلب المستخدم. */
+const BLANK_CELL = /^[-—–\s]*$/;
+const flowName = (cells) => `«${truncate(cells[1], 40)}»`;
+/** جمل العقد هي الخانات بين اسم التدفق والأعمدة الثلاثة الأخيرة (المرحلة، الاختبار، الحالة)؛ خانة فارغة = جملة لم تُكتب. */
+const contractIncomplete = (cells) => cells.slice(2, -3).some((cell) => BLANK_CELL.test(cell));
+
+/** فهرس التدفقات (project_map.md §13): تدفق واحد في كل مرة بعقد مكتوب، والمقفل لا يُفتح إلا بفشل اختباره أو بطلب المستخدم. */
 function flowLines() {
   const rows = tableRows(readProjectFile('project_map.md'), /فهرس التدفقات/);
   if (!rows.length) return [];
-  const named = (mark) => rows.filter((cells) => (cells[cells.length - 1] || '').includes(mark)).map((cells) => `«${truncate(cells[1], 40)}»`);
-  const [locked, open, broken, waiting] = ['🔒', '🟡', '🔴', '⬜'].map(named);
+  const withStatus = (mark) => rows.filter((cells) => (cells[cells.length - 1] || '').includes(mark));
+  const [locked, open, broken, waiting] = ['🔒', '🟡', '🔴', '⬜'].map(withStatus);
   const parts = [`🔒 ${locked.length} مقفل`];
-  if (open.length) parts.push(`🟡 قيد العمل: ${open.join('، ')}`);
-  if (broken.length) parts.push(`🔴 مكسور: ${broken.join('، ')}`);
+  if (open.length) parts.push(`🟡 قيد العمل: ${open.map(flowName).join('، ')}`);
+  if (broken.length) parts.push(`🔴 مكسور: ${broken.map(flowName).join('، ')}`);
   parts.push(`⬜ ${waiting.length} لم يبدأ`);
+  const unwritten = open.find(contractIncomplete);
   let advice = 'ابدأ التدفق التالي عبر /next.';
-  if (broken.length) advice = `أصلح ${broken[0]} عبر /fix قبل أي تدفق آخر.`;
-  else if (open.length) advice = `أكمل ${open[0]} قبل فتح تدفق آخر.`;
+  if (broken.length) advice = `أصلح ${flowName(broken[0])} عبر /fix قبل أي تدفق آخر.`;
+  else if (unwritten) advice = `عقد ${flowName(unwritten)} ناقص: اكتب جمله الأربع في صفه قبل أي كود، واسأل المستخدم عن الجملة التي لا تعرف جوابها.`;
+  else if (open.length) advice = `أكمل ${flowName(open[0])} قبل فتح تدفق آخر.`;
   const lock = locked.length ? ' لا تعدّل تدفقاً مقفلاً إلا إذا فشل اختباره أو طلب المستخدم ذلك.' : '';
   return [`• 🧩 التدفقات (project_map.md §13): ${parts.join(' | ')}. ${advice}${lock}`];
 }

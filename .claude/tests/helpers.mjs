@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 export const REPO = process.argv[2] || fileURLToPath(new URL('../..', import.meta.url));
 export const results = [];
 export let tmp;
+/** ترويسة فهرس التدفقات كما تُشحن في project_map.md: جمل العقد الأربع بين اسم التدفق والأعمدة الثلاثة الأخيرة. */
+export const FLOW_HEADER = '| # | التدفق | من يبدأ | النتيجة المحفوظة | من يحق له التغيير | ما يرفضه الاختبار | المرحلة | الاختبار | الحالة |';
 
 export function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [], flows = [] } = {}) {
   if (tmp) rmSync(tmp, { recursive: true, force: true });
@@ -28,8 +30,8 @@ export function freshProject({ kicked = false, mode = 'production', extraChangel
     '> ▶ **المرحلة النشطة حالياً:** المرحلة 2', '',
     '## 12. أفكار التطوير المستقبلية (Backlog):', '', '| # | الفكرة | التصنيف | الأولوية | المصدر | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-- |',
     ...(backlog.length ? backlog : ['| - | لا توجد أفكار بعد | - | - | - | - |']), '',
-    '## 13. فهرس التدفقات (Flow Index):', '', '| # | التدفق | رحلة المستخدم (من ← إلى) | المرحلة | الاختبار | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-: |',
-    ...(flows.length ? flows : ['| - | لا توجد تدفقات بعد | - | - | - | - |']), '', '</div>',
+    '## 13. فهرس التدفقات (Flow Index):', '', FLOW_HEADER, '| :---: | :--- | :--- | :--- | :--- | :--- | :---: | :--- | :---: |',
+    ...(flows.length ? flows : ['| - | لا توجد تدفقات بعد | - | - | - | - | - | - | - |']), '', '</div>',
   ].join('\n');
   writeFileSync(join(tmp, 'project_map.md'), map);
   const rows = Array.from({ length: 3 + extraChangelogRows }, (_, i) =>

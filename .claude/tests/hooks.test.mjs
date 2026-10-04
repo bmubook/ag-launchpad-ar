@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { REPO, check, ctx, decision, freshProject, reason, report, runNode, tmp } from './helpers.mjs';
+import { FLOW_HEADER, REPO, check, ctx, decision, freshProject, reason, report, runNode, tmp } from './helpers.mjs';
 
 const FAKE = {
   anthropic: 'sk-' + 'ant-api03-' + 'AbCdEfGhIjKlMnOpQrStUvWx',
@@ -41,16 +41,33 @@ check('SS: developer level → no such reminder', !ctx(runNode('.claude/hooks/se
 // فهرس التدفقات (القسم 13): تدفق واحد في كل مرة، والمقفل لا يُفتح إلا بفشل اختباره أو بطلب المستخدم
 check('SS: no flows registered → no flows line', !c.includes('التدفقات'), c);
 freshProject({ kicked: true, flows: [
-  '| 1 | إنشاء حساب | صفحة التسجيل ← لوحة التحكم | 3 | tests/signup.test.ts | 🔒 مقفل |',
-  '| 2 | الدفع | السلة ← صفحة الشكر | 3 | — | 🟡 قيد العمل |',
-  '| 3 | تتبع الطلب | طلباتي ← حالة الطلب | 4 | — | ⬜ لم يبدأ |',
+  '| 1 | إنشاء حساب | الزائر | حساب جديد | صاحب الحساب | بريد مسجَّل من قبل | 3 | tests/signup.test.ts | 🔒 مقفل |',
+  '| 2 | الدفع | العميل | طلب مدفوع أو مرفوض | لا أحد بعد الدفع | بطاقة مرفوضة تُنشئ طلباً | 3 | — | 🟡 قيد العمل |',
+  '| 3 | إلغاء الطلب | العميل | طلب ملغى | — | — | 4 | — | ⬜ لم يبدأ |',
 ] });
-let flowsLine = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+const flowsOf = () => ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+let flowsLine = flowsOf();
 check('SS: flows line counts locked, open and waiting flows', flowsLine.includes('🔒 1') && flowsLine.includes('⬜ 1') && flowsLine.includes('«الدفع»'), flowsLine);
 check('SS: an open flow is finished before another is opened', flowsLine.includes('أكمل «الدفع»') && flowsLine.includes('مقفلاً'), flowsLine);
-freshProject({ kicked: true, flows: ['| 1 | الدفع | السلة ← صفحة الشكر | 3 | tests/pay.test.ts | 🔴 مكسور |', '| 2 | الطلبات | طلباتي ← التفاصيل | 3 | — | 🟡 قيد العمل |'] });
-flowsLine = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
-check('SS: a broken flow is repaired before anything else', flowsLine.includes('أصلح «الدفع»') && !flowsLine.includes('أكمل «الطلبات»'), flowsLine);
+check('SS: a written contract, or a flow not started yet → no contract reminder', !flowsLine.includes('ناقص'), flowsLine);
+check('TPL: test fixture uses the flow index header', readFileSync(join(tmp, 'project_map.md'), 'utf8').includes(FLOW_HEADER));
+freshProject({ kicked: true, flows: ['| 1 | الدفع | العميل | طلب مدفوع أو مرفوض | — | - | 3 | — | 🟡 قيد العمل |'] });
+flowsLine = flowsOf();
+check('SS: an open flow with an unwritten contract → contract first, before any code', flowsLine.includes('عقد «الدفع» ناقص') && flowsLine.includes('قبل أي كود') && !flowsLine.includes('أكمل «الدفع» قبل فتح'), flowsLine);
+freshProject({ kicked: true, flows: ['| 1 | إنشاء حساب | صفحة التسجيل ← لوحة التحكم | 3 | tests/signup.test.ts | 🔒 مقفل |', '| 2 | الدفع | السلة ← صفحة الشكر | 3 | — | 🟡 قيد العمل |'] });
+flowsLine = flowsOf();
+check('SS: a v4.6.0 index without contract columns is still summarised', flowsLine.includes('🔒 1') && flowsLine.includes('أكمل «الدفع»') && !flowsLine.includes('ناقص'), flowsLine);
+freshProject({ kicked: true, flows: ['| 1 | الدفع | العميل | طلب مدفوع أو مرفوض | — | — | 3 | tests/pay.test.ts | 🔴 مكسور |', '| 2 | إلغاء الطلب | العميل | طلب ملغى | — | — | 3 | — | 🟡 قيد العمل |'] });
+flowsLine = flowsOf();
+check('SS: a broken flow is repaired before anything else', flowsLine.includes('أصلح «الدفع»') && !flowsLine.includes('أكمل «إلغاء الطلب»') && !flowsLine.includes('ناقص:'), flowsLine);
+
+// القالب المشحون: جمل العقد الأربع في فهرس التدفقات، وعقد التدفق في /next يراعي مستويات الخبرة الثلاثة
+const shippedHeader = readFileSync(join(REPO, 'project_map.md'), 'utf8').split(/\r?\n/).find((line) => line.startsWith('| # | التدفق |')) || '';
+check('TPL: shipped flow index = flow name second, four contract sentences, then phase, test and status', shippedHeader.trim() === FLOW_HEADER, shippedHeader);
+const nextSkill = readFileSync(join(REPO, '.claude/skills/next/SKILL.md'), 'utf8');
+const contractStep = nextSkill.slice(nextSkill.indexOf('## الخطوة 2.ب'), nextSkill.indexOf('## الخطوة 3'));
+check('SKILL next: flow contract step names its four sentences', ['من يبدأ', 'النتيجة المحفوظة', 'من يحق له التغيير', 'ما يرفضه الاختبار'].every((name) => contractStep.includes(name)), contractStep.slice(0, 200));
+check('SKILL next: the contract is worded for each of the three experience levels', ['مبتدئ تماماً', 'لدي أساسيات', 'مطوّر'].every((level) => contractStep.includes(`\`${level}\``)), contractStep.slice(0, 200));
 
 freshProject({ missing: ['rules_ui.md', 'bugs_log.md'] });
 r = runNode('.claude/hooks/session-start.mjs', { source: 'startup' });
