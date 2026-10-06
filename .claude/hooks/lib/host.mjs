@@ -8,6 +8,9 @@
  * - لا يرسل stop_hook_active؛ يرسل loop_count و status. والتعديل يصل باسم الأداة Write.
  * - يحمّل .claude/settings.json أيضاً؛ فاستدعاء بصيغة Claude دون --host=cursor يُتجاهل حتى لا يعمل كل Hook مرتين.
  * - قرار ask غير مطبّق فيه، وسياق بداية الجلسة لا يصل للنموذج.
+ *
+ * OpenCode 2 لا يشغّل أوامر Hooks؛ إضافته (.opencode/plugins/ag-launchpad.js عبر lib/opencode.mjs) تستدعي السكربتات
+ * نفسها بالعلَم --host=opencode وتقرأ مخرجاتها بصيغة Claude Code كما هي. أسماء أدواته وحقولها من مسبار 2.0.24 على Windows.
  */
 const HOST_FLAG = '--host=';
 const NON_ASCII = /[^\x00-\x7f]/;
@@ -19,6 +22,22 @@ const NO_APPROVAL_PROMPT = 'لا تتوفر نافذة موافقة في هذه 
   + 'اشرح للمستخدم ما الذي مُنع ولماذا؛ وإن كان يريده فعلاً فلينفّذه بنفسه.';
 
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+/**
+ * ما تقدّمه كل أداة مقارنة بـ Claude Code، لتعدّل الـ Hooks سلوكها دون تفرّع على اسم الأداة:
+ * approvalPrompt = تطلب موافقة المستخدم عند قرار ask؛ sessionContext = توصل ملخص بداية الجلسة للنموذج؛
+ * rulesLoaded = ملفات القواعد في سياق النموذج تلقائياً؛ fullContentEdits = ترسل الملف كاملاً حتى عند تعديل سطر.
+ * الأداة غير المعروفة تأخذ أحوط القيم.
+ */
+const HOST_TRAITS = {
+  claude: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false },
+  cursor: { approvalPrompt: false, sessionContext: false, rulesLoaded: false, fullContentEdits: true },
+  opencode: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false },
+};
+
+export function hostTraits(host) {
+  return HOST_TRAITS[host || 'claude'] || HOST_TRAITS.cursor;
+}
 
 function reverseTable(codepage) {
   const decoder = new TextDecoder(codepage);
@@ -79,6 +98,21 @@ function fromCursor(raw) {
   };
 }
 
+const OPENCODE_TOOLS = { read: 'Read', write: 'Write', edit: 'Edit', shell: 'Bash', grep: 'Grep', glob: 'Glob', delete: 'Delete' };
+
+/** حقول OpenCode بلغة Claude Code: path ← file_path (عدا grep حيث path مجلد البحث)، و include ← glob. */
+function fromOpenCode(raw) {
+  const given = isObject(raw.tool_input) ? raw.tool_input : {};
+  const toolInput = { ...given };
+  if (given.path !== undefined && raw.tool_name !== 'grep') toolInput.file_path = given.path;
+  if (given.oldString !== undefined) toolInput.old_string = given.oldString;
+  if (given.newString !== undefined) toolInput.new_string = given.newString;
+  if (given.include !== undefined) toolInput.glob = given.include;
+  return { ...raw, host: 'opencode', tool_name: OPENCODE_TOOLS[raw.tool_name] || raw.tool_name, tool_input: toolInput };
+}
+
+const NORMALIZERS = { cursor: fromCursor, opencode: fromOpenCode };
+
 /**
  * يحلّل مدخلات الـ Hook الخام. يعيد { host, skip, input }:
  * host = 'claude' أو اسم الأداة، و skip = استدعاء مكرر يجب أن يخرج صامتاً.
@@ -95,7 +129,7 @@ export function parseHookInput(rawText, args = process.argv.slice(2)) {
   if (!flag) return { host, skip: true, input: raw };
   const repaired = parseObject(repairMojibake(text));
   const input = Object.keys(repaired).length ? repaired : raw;
-  return { host, skip: false, input: host === 'cursor' ? fromCursor(input) : { ...input, host } };
+  return { host, skip: false, input: NORMALIZERS[host] ? NORMALIZERS[host](input) : { ...input, host } };
 }
 
 /** مدخلات تالفة أو ليست كائناً تُعامل كفارغة (الفشل المفتوح). */

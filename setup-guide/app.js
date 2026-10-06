@@ -15,7 +15,7 @@
     { id: 'review', title: 'المراجعة', required: [] },
   ];
   const LABELS = {
-    env: { claude: 'Claude Code', antigravity: 'Google Antigravity', cursor: 'Cursor' },
+    env: { claude: 'Claude Code', antigravity: 'Google Antigravity', cursor: 'Cursor', opencode: 'OpenCode' },
     type: { web: '🌐 تطبيق ويب', flutter: '📱 جوال — Flutter', rn: '📱 جوال — React Native', backend: '⚙️ باك إند فقط' },
     mode: { prototype: '🧪 تجربة سريعة (prototype)', production: '🏭 منتج حقيقي (production)' },
   };

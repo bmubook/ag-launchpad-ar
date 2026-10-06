@@ -8,9 +8,11 @@
 import {
   addContext, loadSession, pruneOldSessions, readProjectState, readStdinJson, runHook, saveSession,
 } from './lib/common.mjs';
+import { hostTraits } from './lib/host.mjs';
 import { buildSessionContext } from './lib/summary.mjs';
 
 const CHECKPOINT_EVERY = 15;
+const FS_CLOCK_SLACK_MS = 15;
 
 function checkpointContext(count) {
   const state = readProjectState();
@@ -26,10 +28,11 @@ runHook(async () => {
   const input = await readStdinJson();
   const session = loadSession(input.session_id);
   const prompts = session.prompts + 1;
-  // turnStartedAt: يكشف به Hook التوقف ما عُدّل في هذه الجولة بأوامر الطرفية
-  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {}, turnStartedAt: Date.now() });
+  // turnStartedAt: يكشف به Hook التوقف ما عُدّل في هذه الجولة بأوامر الطرفية. ساعة نظام الملفات في Linux والماك خشنة
+  // تتأخر بضعة أجزاء من الثانية عن Date.now()، فملف عُدّل فور بدء الجولة قد يحمل وقتاً أقدم منها؛ لذلك الهامش.
+  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {}, turnStartedAt: Date.now() - FS_CLOCK_SLACK_MS });
   const context = [];
-  if (input.host && prompts === 1) {
+  if (!hostTraits(input.host).sessionContext && prompts === 1) {
     pruneOldSessions();
     context.push(buildSessionContext('startup', input.host));
   }

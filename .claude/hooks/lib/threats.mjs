@@ -10,7 +10,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { projectDir, toProjectRelative } from './common.mjs';
 import {
-  DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEY_MATERIAL, LOCAL_HOST, MUTATING_COMMANDS, MUTATING_GIT, PROJECT_KEY_FILES,
+  DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MUTATING_COMMANDS, MUTATING_GIT, PROJECT_KEY_FILES,
   PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER,
   SECRET_STORES, SHELL_WRAPPERS, UPLOAD, URL_HOST,
 } from './patterns.mjs';
@@ -64,8 +64,11 @@ export function canonicalPath(path) {
   }).join('/');
 }
 
+/** ‎$PWD/ و ‎$env:CLAUDE_PROJECT_DIR/ وأمثالهما تعني جذر المشروع: تُحذف حتى يُطابَق ما بعدها كمسار نسبي. */
+const PROJECT_ROOT_PREFIX = /^(?:\$\{?pwd\}?|\$env:(?:CLAUDE_PROJECT_DIR|PWD)|\$\{?CLAUDE_PROJECT_DIR\}?|%cd%)\//i;
+
 function isProtectedToken(token) {
-  const rel = toProjectRelative(canonicalPath(token));
+  const rel = toProjectRelative(canonicalPath(token.replace(PROJECT_ROOT_PREFIX, '')));
   if (!rel) return false;
   const bare = rel.replace(/\/\*+$/, '').replace(/\/$/, '').toLowerCase();
   return any(PROTECTED_INSTRUCTION_PATHS, rel) || PROTECTED_DIRS.includes(bare);
@@ -78,7 +81,7 @@ function mutates(segment, targets, insideProtected) {
   const redirected = insideProtected
     ? />/.test(segment)
     : targets.some((token) => new RegExp(`>{1,2}\\s*["']?${escapeRegex(token)}`).test(segment));
-  if (redirected) return true;
+  if (redirected || DOTNET_FILE_WRITE.test(segment)) return true;
   const { head, next } = headWord(segment);
   if (head === 'git') return MUTATING_GIT.test(next);
   if (head === 'sed' || head === 'perl') return /\s-[a-zA-Z]*i|--in-place/.test(segment);
@@ -97,6 +100,28 @@ function tamperDecision(segment, insideProtected) {
   const targets = protectedTargets(segment);
   if ((!targets.length && !insideProtected) || !mutates(segment, targets, insideProtected)) return null;
   return tamperAsk(targets);
+}
+
+const PS_ASSIGNMENT = /\$(?:env:)?([A-Za-z_]\w*)\s*=\s*([^;\n]+)/g;
+const SH_ASSIGNMENT = /(?:^|[\s;&|(])([A-Za-z_]\w*)=("[^"]*"|'[^']*'|[^\s;&|)]+)/g;
+
+/**
+ * المتغيرات التي يُسند إليها مسار داخل الأمر نفسه (‎$p = "$PWD\AGENTS.md"‎ أو p=.claude)، بقيمها بعد التوسيع.
+ * كشفتها تجربة حية: النموذج حفظ مسار ملف الحوكمة في متغير ثم كتب فيه، ففلت من المطابقة المباشرة.
+ */
+function assignedValues(command) {
+  const values = new Map();
+  const assignments = [...command.matchAll(PS_ASSIGNMENT), ...command.matchAll(SH_ASSIGNMENT)].sort((a, b) => a.index - b.index);
+  for (const [, name, raw] of assignments) values.set(name, expandVariables(unquote(raw.trim()), values));
+  return values;
+}
+
+function expandVariables(segment, values) {
+  let expanded = segment;
+  for (const [name, value] of values) {
+    expanded = expanded.replace(new RegExp(`\\$\\{?(?:env:)?${name}\\}?(?!\\w)`, 'g'), () => value);
+  }
+  return expanded;
 }
 
 const entersProtectedDir = (segment) => /^(?:cd|chdir|pushd|set-location|sl)$/.test(headWord(segment).head) && protectedTargets(segment).length > 0;
@@ -143,6 +168,11 @@ function remoteExecDecision(command) {
   return decide('ask', '🌐 هذا الأمر ينزّل برنامجاً من الإنترنت ويشغّله فوراً. وافق فقط إذا طلبتَ أنت تثبيته.');
 }
 
+function keychainDecision(command) {
+  if (!KEYCHAIN_READ.test(command)) return null;
+  return decide('deny', '🔒 حماية الأسرار: هذا الأمر يقرأ كلمات مرور محفوظة في سلسلة مفاتيح الجهاز، فلا يشغّله الوكيل.');
+}
+
 function uploadDecision(command) {
   if (!any(UPLOAD, command)) return null;
   const hosts = [...command.matchAll(URL_HOST)].map((match) => match[1]);
@@ -153,15 +183,17 @@ function uploadDecision(command) {
 
 /** يفحص أمر طرفية. يعيد أشد قرار ({ permissionDecision, reason }) أو null إذا لم يُرصد شيء. */
 export function checkCommandThreats(command) {
-  const text = String(command || '');
+  // علامات التنصيص المهرَّبة (\" و \') كما يكتبها بعض النماذج تُعاد إلى أصلها، وإلا تحولت الشرطة المائلة إلى جزء من المسار
+  const text = String(command || '').replace(/\\(?=["'])/g, '');
   if (!text.trim()) return null;
   let insideProtected = false;
-  const perSegment = segments(text).flatMap((segment) => {
+  const variables = assignedValues(slashes(text));
+  const perSegment = segments(text).map((segment) => expandVariables(segment, variables)).flatMap((segment) => {
     const found = [tamperDecision(segment, insideProtected), secretsDecision(segment)];
     insideProtected = insideProtected || entersProtectedDir(segment);
     return found;
   });
-  return strongest([remoteExecDecision(text), uploadDecision(text), xargsDecision(text), ...perSegment]);
+  return strongest([remoteExecDecision(text), uploadDecision(text), keychainDecision(text), xargsDecision(text), ...perSegment]);
 }
 
 function isHomeNpmrc(filePath) {

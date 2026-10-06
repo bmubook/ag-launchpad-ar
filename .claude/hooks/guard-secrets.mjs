@@ -13,6 +13,7 @@ import { resolve } from 'node:path';
 import {
   emit, isRealEnvFile, isServiceAccountFile, projectDir, readStdinJson, runHook, toProjectRelative,
 } from './lib/common.mjs';
+import { hostTraits } from './lib/host.mjs';
 import {
   ENFORCEMENT_PATHS, ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
   SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
@@ -116,7 +117,7 @@ runHook(async () => {
   const result = toolName === 'Bash' || toolName === 'PowerShell'
     ? strongest([checkShellCommand(toolInput.command), checkCommandThreats(toolInput.command)])
     : checkFileTool(toolName, toolInput);
-  if (!result || (result.soft && input.host)) return;
+  if (!result || (result.soft && !hostTraits(input.host).approvalPrompt)) return;
   emit({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',

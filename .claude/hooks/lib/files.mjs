@@ -68,6 +68,18 @@ export function changedSince(root, since, windows = []) {
   return changed;
 }
 
+/** ملفات تطابق أحد patterns تغيّرت على القرص بعد اللحظة since، أياً كان نوعها (مثل ملفات الحوكمة). */
+export function changedMatching(root, since, patterns) {
+  if (!since) return [];
+  const changed = [];
+  let seen = 0;
+  for (const rel of walkFiles(root)) {
+    if (++seen > MAX_SCAN) break;
+    if (patterns.some((re) => re.test(rel)) && modifiedAt(root, rel) > since) changed.push(rel);
+  }
+  return changed;
+}
+
 /** وقت آخر تعديل لملف، أو 0 إذا لم يوجد. */
 export function modifiedAt(root, relPath) {
   try { return statSync(join(root, relPath)).mtimeMs; } catch { return 0; }

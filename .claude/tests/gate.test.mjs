@@ -128,4 +128,20 @@ freshProject({ kicked: true, mode: 'prototype' });
 nodeProject();
 check('M: prototype never-run line suggests --quick', ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' })).includes('verify.mjs --quick قبل أول تعديل'));
 
+// ---------- ملف حوكمة تغيّر بأمر طرفية (كشفتها تجربة حية في OpenCode: دالة ‎.NET أضافت سطراً إلى AGENTS.md دون موافقة)
+freshProject({ kicked: true });
+newTurn('g1');
+write('AGENTS.md', '# a\nسطر تجربة\n');
+const shellEdit = blockReason(stop('g1'));
+check('G: governance file changed outside the edit tools → block, tell the user and offer to undo', shellEdit.includes('🛡️')
+  && shellEdit.includes('AGENTS.md') && shellEdit.includes('التراجع'), shellEdit);
+newTurn('g2');
+post('.claude/skills/x-guide/SKILL.md', '# دليل\n', 'g2');
+check('G: the same kind of file edited through the edit tool → no notice (approval was asked)', stop('g2').out === '', stop('g2').out);
+newTurn('g3');
+write('.claude/settings.local.json', '{"permissions":{"allow":["Bash(npm test)"]}}');
+check('G: settings.local.json written by the app itself ("always allow") → no notice', stop('g3').out === '', stop('g3').out);
+write('CLAUDE.md', '# changed\n');
+check('G: no turn start recorded → no scan, no false notice', stop('g-fresh').out === '', stop('g-fresh').out);
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) report();

@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import {
   GOVERNANCE_FILES, projectDir, readProjectFile, readProjectState, tableRows, truncate,
 } from './common.mjs';
+import { hostTraits } from './host.mjs';
 import { gateStatus, loadQuality, unverifiedFiles, verifyCommand } from './quality.mjs';
 
 const RECENT_LIMIT = 5;
@@ -99,7 +100,7 @@ function section(title, items, emptyText) {
 
 /**
  * source = سبب بدء الجلسة ("compact" يأمر بنقطة تفتيش فورية §12-ب لأن السياق ضُغط للتو).
- * host = اسم الأداة لغير Claude Code: هناك لا تُستورد ملفات القواعد تلقائياً فيُؤمر الوكيل بقراءتها.
+ * host = اسم الأداة لغير Claude Code: إن كانت لا تحمّل ملفات القواعد تلقائياً (Cursor) يُؤمر الوكيل بقراءتها.
  */
 export function buildSessionContext(source, host) {
   const state = readProjectState();
@@ -109,7 +110,7 @@ export function buildSessionContext(source, host) {
   if (source === 'compact') {
     lines.push('🔄 تم ضغط السياق للتو: نفّذ نقطة تفتيش فورية (master_rules.md §12-ب) في ردك التالي بعد اسم النداء.');
   }
-  if (host) {
+  if (!hostTraits(host).rulesLoaded) {
     lines.push('📚 هذه البيئة لا تستورد ملفات القواعد تلقائياً: اقرأ الآن master_rules.md و rules_security.md و rules_code_quality.md و rules_workflow.md كاملةً قبل أي عمل، و rules_ui.md قبل أي عمل على الواجهات.');
   }
   if (!state.kickedOff) {

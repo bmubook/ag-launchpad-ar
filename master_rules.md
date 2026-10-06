@@ -7,6 +7,7 @@
 > **بيئات التشغيل المدعومة:** القواعد نفسها تسري في Antigravity 2.0 و Claude Code. يحمّلها Antigravity عبر `.agents/AGENTS.md`، ويحمّلها Claude Code عبر `CLAUDE.md` (+ مجلد `.claude/`).
 > الملفان `CLAUDE.md` و `.agents/AGENTS.md` ملفات تشغيلية تابعة لهذا الملف ولا تعلو عليه. حيث يختلف السلوك بين البيئتين يَرِد نص صريح لكل بيئة، وجدول المقابلة الكامل في `CLAUDE.md`.
 > &rlm;**Cursor (دعم تجريبي):** يحمّل القواعد عبر `AGENTS.md` في جذر المشروع (ملف تشغيلي تابع كذلك)، وتعمل فيه Hooks القالب عبر `.cursor/hooks.json`. ما ورد في هذا البروتوكول بصيغة «في Claude Code» يسري فيه مع الفروق المذكورة في `AGENTS.md`.
+> &rlm;**OpenCode 2 (دعم تجريبي):** يقرأ `AGENTS.md` نفسه، وإضافة القالب `.opencode/plugins/ag-launchpad.js` تحمّل الملفات الحاكمة في سياق الوكيل وتشغّل Hooks القالب نفسها. ما ورد بصيغة «في Claude Code» يسري فيه مع الفروق المذكورة في `AGENTS.md`.
 
 <div dir="rtl">
 

@@ -39,6 +39,11 @@
     return claude(d).replace('/kickoff', 'نفّذ أمر kickoff: اقرأ الملف .claude/skills/kickoff/SKILL.md ونفّذه كاملاً بالبيانات التالية:');
   }
 
+  /* OpenCode: الأمر /kickoff موجود في قائمته، لكن النص متعدد الأسطر بعد الأمر قد لا يصل كاملاً، فيُطلب تحميل المهارة صراحةً. */
+  function opencode(d) {
+    return claude(d).replace('/kickoff', 'نفّذ أمر kickoff: حمّل المهارة kickoff بأداة skill ونفّذها كاملةً بالبيانات التالية:');
+  }
+
   /* Antigravity: برومبت إقلاع كامل لأن البيئة لا تملك مهارة /kickoff. */
   function antigravity(d) {
     const modeText = d.mode === 'prototype' ? 'prototype للتجريب السريع وبناء النموذج الأولي' : 'production للإنتاج الكامل بصرامة جميع القواعد';
@@ -89,6 +94,12 @@ ${SEP}
       'الصق النص واضغط إرسال.',
       'للأوامر لاحقاً اكتب اسمها للوكيل، مثل: «نفّذ next» لمعرفة الخطوة التالية.',
     ],
+    opencode: [
+      'افتح تطبيق OpenCode، ثم افتح <strong>مجلد المشروع نفسه</strong> (الجذر الذي يحتوي هذا الملف).',
+      'ابدأ جلسة جديدة، والصق النص واضغط إرسال.',
+      'إذا ظهرت نافذة تطلب موافقتك فاقرأ سببها: وافق إن كان ما يطلبه الوكيل هو ما طلبتَه أنت.',
+      'للأوامر لاحقاً اكتب <bdi>/</bdi> واختر من القائمة، مثل <bdi>/next</bdi> لمعرفة الخطوة التالية.',
+    ],
   };
 
   /* نص الإرشاد فوق الناتج لكل بيئة. */
@@ -96,7 +107,8 @@ ${SEP}
     claude: 'انسخه والصقه في Claude Code داخل جذر مجلد المشروع. إذا لم يبدأ الإقلاع تلقائياً فاكتب ⁦/kickoff⁩ ثم الصق النص.',
     antigravity: 'انسخه وأرسله للوكيل في محادثة جديدة داخل Antigravity.',
     cursor: 'انسخه وأرسله للوكيل في محادثة جديدة داخل Cursor، من جذر مجلد المشروع.',
+    opencode: 'انسخه وأرسله في جلسة جديدة داخل OpenCode، بعد فتح جذر مجلد المشروع.',
   };
 
-  window.AGL = { TYPES, claude, antigravity, cursor, NEXT_STEPS, RESULT_LEADS };
+  window.AGL = { TYPES, claude, antigravity, cursor, opencode, NEXT_STEPS, RESULT_LEADS };
 })();

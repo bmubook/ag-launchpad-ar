@@ -12,6 +12,7 @@ import {
   addContext, loadSession, projectDir, readProjectState, readStdinJson, runHook, saveSession, toProjectRelative,
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
+import { hostTraits } from './lib/host.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts } from './lib/quality.mjs';
 import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
@@ -57,7 +58,7 @@ function stepLimitMessage(pending) {
 const NO_GATE_MESSAGE = 'ℹ️ لا توجد بوابة فحص بعد: المشروع بلا أوامر lint/test، فهذا الكود لن يُفحص آلياً. '
   + 'نفّذ /quality-setup قبل بناء الميزات (البنود 13 و 16)، ونبّه المستخدم إن اختار التأجيل.';
 
-/** في أداة بلا نافذة موافقة مسبقة (input.host) يمرّ تعديل ملف الحوكمة، فيُلزَم الوكيل بإبلاغ المستخدم به. */
+/** في أداة بلا نافذة موافقة مسبقة (Cursor) يمرّ تعديل ملف الحوكمة، فيُلزَم الوكيل بإبلاغ المستخدم به. */
 function governanceMessage(relPath) {
   return `🛡️ عدّلت ${relPath} وهو من ملفات الحوكمة/طبقة الإنفاذ (البند 6). هذه البيئة لا تطلب موافقة المستخدم قبل التعديل، `
     + 'فأخبره صراحةً في ردك بما غيّرته في هذا الملف ولماذا.';
@@ -68,7 +69,7 @@ function governanceMessage(relPath) {
  * يُحسب لها الفرق عن آخر حجم معروف للملف في الجلسة، لا الملف كله في كل مرة.
  */
 function editedLines(input, session, relPath, added, fullText) {
-  if (!input.host || typeof input.tool_input?.content !== 'string') return countLines(added);
+  if (!hostTraits(input.host).fullContentEdits || typeof input.tool_input?.content !== 'string') return countLines(added);
   const total = countLines(fullText);
   const previous = session.sizes[relPath];
   session.sizes[relPath] = total;
@@ -92,7 +93,7 @@ runHook(async () => {
   if (status) session.warned[relPath] = status;
   else delete session.warned[relPath];
   if (newCeilingStatus || status === 'hard') messages.push(ceilingMessage(relPath, lines, rule, status));
-  if (input.host && PROTECTED_INSTRUCTION_PATHS.some((re) => re.test(relPath))) messages.push(governanceMessage(relPath));
+  if (!hostTraits(input.host).approvalPrompt && PROTECTED_INSTRUCTION_PATHS.some((re) => re.test(relPath))) messages.push(governanceMessage(relPath));
 
   if (needsVerification(relPath)) {
     const found = scanShortcuts(relPath, added);

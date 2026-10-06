@@ -53,6 +53,8 @@ export const PROTECTED_INSTRUCTION_PATHS = [
   /^\.agents\//i,
   /^\.cursor\//i,
   /^\.cursorignore$/i,
+  /^\.opencode\//i,
+  /^opencode\.jsonc?$/i,
   /(^|\/)(CLAUDE|AGENTS)\.md$/i,
   /^(master_rules|rules_security|rules_code_quality|rules_workflow|rules_ui)\.md$/i,
 ];
@@ -90,10 +92,15 @@ export const ENFORCEMENT_PATHS = [
   /^\.claude\/settings(\.local)?\.json$/i,
   /^\.cursor\//i,
   /^\.cursorignore$/i,
+  /^\.opencode\/plugins\//i,
+  /^opencode\.jsonc?$/i,
 ];
 
 /** مجلدات محمية كما تُذكر في الأوامر بلا شرطة ختامية (rm -rf .claude/hooks). */
-export const PROTECTED_DIRS = ['.claude', '.claude/skills', '.claude/agents', '.claude/rules', '.claude/hooks', '.claude/scripts', '.agents', '.cursor'];
+export const PROTECTED_DIRS = [
+  '.claude', '.claude/skills', '.claude/agents', '.claude/rules', '.claude/hooks', '.claude/scripts', '.agents', '.cursor',
+  '.opencode', '.opencode/plugins', '.opencode/commands', '.opencode/agents',
+];
 
 /** «نزّل وشغّل»: محتوى يُجلب من الإنترنت ويُنفَّذ فوراً. معالجة البيانات (| jq ، | node -e "…") لا تطابق. */
 export const REMOTE_EXEC = [
@@ -129,7 +136,7 @@ export const LOCAL_HOST = /^(?:localhost|127(?:\.\d+){3}|0\.0\.0\.0|\[::1\]|host
 export const SECRET_STORES = [
   /(^|\/)\.ssh(\/|$)/i, /(^|\/)\.aws(\/|$)/i, /(^|\/)\.azure(\/|$)/i, /(^|\/)\.config\/gcloud(\/|$)/i, /(^|\/)\.gnupg(\/|$)/i,
   /(^|\/)\.kube\/config$/i, /(^|\/)\.docker\/config\.json$/i, /(^|\/)(\.netrc|_netrc|\.git-credentials|\.pypirc)$/i,
-  /(^|\/)id_(rsa|dsa|ecdsa|ed25519)$/i, /(^|\/)application_default_credentials\.json$/i,
+  /(^|\/)id_(rsa|dsa|ecdsa|ed25519)$/i, /(^|\/)application_default_credentials\.json$/i, /(^|\/)Library\/Keychains(\/|$)/i,
   /^(?:~|\$HOME|\$env:USERPROFILE|%USERPROFILE%|\/(?:home|Users)\/[^/]+|[A-Za-z]:\/Users\/[^/]+)\/\.npmrc$/i,
 ];
 /** ملفات توقيع داخل المشروع: تُعامل كملف البيئة (لا تُقرأ ولا تُعدَّل، ويُسمح بإنشائها أول مرة). */
@@ -141,10 +148,17 @@ export const KEY_MATERIAL = /\.(pem|key)$/i;
 export const MUTATING_COMMANDS = new Set([
   'rm', 'rmdir', 'unlink', 'del', 'erase', 'rd', 'mv', 'move', 'ren', 'rename', 'cp', 'copy', 'xcopy', 'robocopy', 'tee', 'truncate', 'shred',
   'chmod', 'chown', 'icacls', 'attrib', 'ln', 'dd', 'set-content', 'add-content', 'out-file', 'clear-content', 'remove-item', 'move-item',
-  'rename-item', 'copy-item', 'new-item', 'ri', 'mi', 'rni', 'cpi', 'ni',
+  'rename-item', 'copy-item', 'new-item', 'ri', 'mi', 'rni', 'cpi', 'ni', 'ac', 'sc', 'clc', 'ditto', 'rsync',
 ]);
+/** قراءة كلمات المرور المحفوظة في سلسلة مفاتيح الماك (Keychain) أو مخزن أسرار Linux. */
+export const KEYCHAIN_READ = /\bsecurity\s+(?:find-(?:generic|internet)-password|dump-keychain|export)\b|\bsecret-tool\s+lookup\b/i;
+/**
+ * كتابة أو حذف بدوال ‎.NET من PowerShell، مثل ‎[System.IO.File]::AppendAllText("$PWD\AGENTS.md", …)‎:
+ * صيغة يلجأ إليها النموذج على ويندوز لتفادي مشكلات الترميز، ولا تبدأ بكلمة أمر معروفة.
+ */
+export const DOTNET_FILE_WRITE = /\[(?:System\.)?IO\.(?:File|Directory)\]::(?:Write|Append|Delete|Move|Copy|Replace|Create|OpenWrite|SetAttributes)\w*|(?:New-Object\s+(?:-TypeName\s+)?|\[)(?:System\.)?IO\.StreamWriter\b/i;
 export const MUTATING_GIT = /^(?:rm|mv|checkout|restore|clean|apply|reset|stash)$/;
 export const SHELL_WRAPPERS = new Set(['powershell', 'pwsh', 'cmd', 'bash', 'sh', 'zsh']);
 export const SCRIPT_INTERPRETERS = new Set(['node', 'deno', 'bun', 'python', 'python3', 'py', 'ruby', 'php']);
 /** كتابة أو حذف من داخل سكربت سطر واحد (node -e ، python -c) أو أمر مغلَّف (powershell -Command "…"). */
-export const INLINE_WRITE = /writeFile|appendFile|unlink|rmSync|rmdir|renameSync|copyFile|cpSync|createWriteStream|truncate|\bopen\([^)]*['"][wa]|write_text|shutil\.|os\.(?:remove|rename|unlink)|Set-Content|Add-Content|Out-File|Clear-Content|Remove-Item|Move-Item|Rename-Item|Copy-Item|\b(?:rm|del|mv|cp|tee)\s/i;
+export const INLINE_WRITE = /writeFile|appendFile|unlink|rmSync|rmdir|renameSync|copyFile|cpSync|createWriteStream|truncate|\bopen\([^)]*['"][wa]|write_text|shutil\.|os\.(?:remove|rename|unlink)|Set-Content|Add-Content|Out-File|Clear-Content|Remove-Item|Move-Item|Rename-Item|Copy-Item|IO\.File\]::(?:Write|Append|Delete|Move|Copy|Replace)|IO\.StreamWriter|\bFile\.(?:write|delete|rename|unlink)\b|FileUtils\.(?:rm|mv|cp|touch)|\b(?:rm|del|mv|cp|tee)\s/i;

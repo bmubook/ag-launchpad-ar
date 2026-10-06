@@ -12,7 +12,8 @@ import {
   emit, isCodeFile, loadSession, projectDir, readProjectState, readStdinJson, runHook, truncate,
 } from './lib/common.mjs';
 import { collectTests, isCovered, isLogicFile } from './lib/coverage.mjs';
-import { changedSince, modifiedAt, readText } from './lib/files.mjs';
+import { changedMatching, changedSince, modifiedAt, readText } from './lib/files.mjs';
+import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
   gateStatus, loadQuality, needsVerification, setOpenShortcuts, verifyCommand, verifyWindows,
 } from './lib/quality.mjs';
@@ -35,6 +36,23 @@ function openShortcuts(root, session, touched, quality) {
     .map(([rel, kinds]) => [rel, (current[rel] || []).filter((f) => kinds.includes(f.kind))])
     .filter(([, still]) => still.length)
     .map(([rel, still]) => `${rel} (${still.map((f) => f.label).join('؛ ')})`);
+}
+
+// إعدادات شخصية يكتبها التطبيق نفسه (مثل «السماح دائماً» في Claude Code)، لا الوكيل
+const SELF_WRITTEN = /^\.claude\/settings\.local\.json$/i;
+
+/**
+ * ملفات حوكمة تغيّرت على القرص في هذه الجولة دون أن تمر بأداة تعديل: كُتبت بأمر طرفية لم يتعرف عليه الحارس
+ * (دالة ‎.NET، متغير يخفي المسار، سكربت)، فلم يُسأل المستخدم عنها. خط دفاع ثانٍ بعد lib/threats.mjs.
+ */
+function governanceChangedByShell(root, session) {
+  return changedMatching(root, session.turnStartedAt, PROTECTED_INSTRUCTION_PATHS)
+    .filter((rel) => !session.edited.includes(rel) && !SELF_WRITTEN.test(rel));
+}
+
+function governanceProblem(files) {
+  return `🛡️ تغيّر ${list(files)} بأمر طرفية لا بأداة التعديل، فلم يمرّ بموافقة المستخدم. `
+    + 'أخبره صراحةً في ردك بما غيّرته في هذا الملف ولماذا، واعرض عليه التراجع عنه إن لم يكن هو من طلبه.';
 }
 
 function shortcutsProblem(open) {
@@ -84,10 +102,11 @@ runHook(async () => {
   const touched = touchedThisTurn(root, session, quality);
   // يُحدَّث سجل الاختصارات في كل جولة، حتى لو أُصلح الاختصار بأمر طرفية أو خارج الجلسة
   const open = openShortcuts(root, session, touched, quality);
+  const governance = governanceChangedByShell(root, session);
+  const problems = governance.length ? [governanceProblem(governance)] : [];
   const codeFiles = touched.filter(isCodeFile);
-  if (!codeFiles.length) return;
+  if (!codeFiles.length) return block(problems);
 
-  const problems = [];
   if (open.length) problems.push(shortcutsProblem(open));
 
   const verifiable = touched.filter(needsVerification);
@@ -107,5 +126,9 @@ runHook(async () => {
   const documented = logs.some((file) => session.edited.includes(file)
     || (session.turnStartedAt && modifiedAt(root, file) > session.turnStartedAt));
   if (!documented) problems.push(docsProblem(codeFiles, logs));
-  if (problems.length) emit({ decision: 'block', reason: problems.join('\n\n') });
+  block(problems);
 });
+
+function block(problems) {
+  if (problems.length) emit({ decision: 'block', reason: problems.join('\n\n') });
+}
