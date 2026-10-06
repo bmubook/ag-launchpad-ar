@@ -47,8 +47,8 @@ export const INJECTION = [
 /** ملفات التعليمات وطبقة الإنفاذ: أي كتابة فيها تحتاج موافقة المستخدم الصريحة. */
 // المطابقة بلا حساسية لحالة الأحرف: على Windows و macOS المسار ‎.CLAUDE/SETTINGS.JSON هو الملف نفسه
 export const PROTECTED_INSTRUCTION_PATHS = [
-  /^\.claude\/(skills|agents|rules|hooks|scripts)\//i,
-  /^\.claude\/(settings(\.local)?\.json|statusline\.mjs)$/i,
+  /^\.claude\/(skills|agents|rules|hooks|scripts|launchpad)\//i,
+  /^\.claude\/(settings(\.local)?\.json|statusline\.mjs|launchpad\.json)$/i,
   /^skills\//i,
   /^\.agents\//i,
   /^\.cursor\//i,
@@ -62,7 +62,7 @@ export const PROTECTED_INSTRUCTION_PATHS = [
 /** ملفات القالب التي تحتوي عبارات الفحص نفسها كقوائم مرجعية — تأخذ سؤال الحوكمة العادي لا إنذار الحقن. */
 export const INJECTION_SCAN_EXEMPT = [
   /^\.claude\/skills\/(import-skill|db-change|fix|launch-check)\/SKILL\.md$/,
-  /^\.claude\/hooks\/lib\/patterns\.mjs$/,
+  /^\.claude\/(launchpad\/)?hooks\/lib\/patterns\.mjs$/,
   /^rules_security\.md$/,
 ];
 
@@ -88,8 +88,9 @@ export const SERVICE_ACCOUNT_REFERENCE = /[^\s'"]*(?:adminsdk|service[-_]?accoun
 
 /** طبقة الإنفاذ نفسها: تعديلها يعطّل الحماية، فلا يمرّ في أداة بلا نافذة موافقة. */
 export const ENFORCEMENT_PATHS = [
-  /^\.claude\/(hooks|scripts)\//i,
-  /^\.claude\/settings(\.local)?\.json$/i,
+  // launchpad/ = حقيبة الحارس داخل مشروع قائم، و launchpad.json = أوامر الفحص التي تحكم بوابة الإثبات
+  /^\.claude\/(hooks|scripts|launchpad)\//i,
+  /^\.claude\/(settings(\.local)?|launchpad)\.json$/i,
   /^\.cursor\//i,
   /^\.cursorignore$/i,
   /^\.opencode\/plugins\//i,
@@ -98,7 +99,7 @@ export const ENFORCEMENT_PATHS = [
 
 /** مجلدات محمية كما تُذكر في الأوامر بلا شرطة ختامية (rm -rf .claude/hooks). */
 export const PROTECTED_DIRS = [
-  '.claude', '.claude/skills', '.claude/agents', '.claude/rules', '.claude/hooks', '.claude/scripts', '.agents', '.cursor',
+  '.claude', '.claude/skills', '.claude/agents', '.claude/rules', '.claude/hooks', '.claude/scripts', '.claude/launchpad', '.agents', '.cursor',
   '.opencode', '.opencode/plugins', '.opencode/commands', '.opencode/agents',
 ];
 

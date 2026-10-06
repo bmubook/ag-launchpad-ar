@@ -8,8 +8,9 @@ import { join } from 'node:path';
 import { projectDir } from './common.mjs';
 import { detectChecks, planChecks, readJson } from './checks.mjs';
 import { changedSince, needsVerification } from './files.mjs';
+import { verifyCommand } from './kit.mjs';
 
-export { detectChecks, planChecks, needsVerification };
+export { detectChecks, planChecks, needsVerification, verifyCommand };
 
 const STATE_FILE = '.claude/state/quality.json';
 const HISTORY_LIMIT = 30;
@@ -111,6 +112,3 @@ export function gateStatus(mode = 'production', root = projectDir()) {
   if (unverifiedFiles(root, quality).length) return 'stale';
   return mode !== 'prototype' && verify.level !== 'full' ? 'partial' : 'green';
 }
-
-/** أمر الفحص المناسب لوضع التشغيل. */
-export const verifyCommand = (mode) => (mode === 'prototype' ? 'node .claude/scripts/verify.mjs --quick' : 'node .claude/scripts/verify.mjs');

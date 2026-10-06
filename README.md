@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/OpenCode-Beta-3b82f6?style=for-the-badge" alt="OpenCode (Beta)">
   <img src="https://img.shields.io/badge/العربية-أولاً-2dd4a8?style=for-the-badge" alt="Arabic First">
   <img src="https://img.shields.io/badge/Firebase-Standard-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
-  <img src="https://img.shields.io/badge/Version-4.9-f59e0b?style=for-the-badge" alt="Version 4.9">
+  <img src="https://img.shields.io/badge/Version-4.10-f59e0b?style=for-the-badge" alt="Version 4.10">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -54,6 +54,8 @@
 
 > 🌍 **لماذا عربي؟** لأن جميع القواعد والتوجيهات والتواصل مع الوكيل مكتوبة بالعربية الفصحى المباشرة. القالب مصمم لخدمة مجتمع الـ Vibe Coders العرب الذين يبنون مشاريعهم باستخدام الذكاء الاصطناعي.
 
+> 👨‍💻 **مطوّر عندك مشروع قائم؟** خذ الحواجز وحدها دون القالب كله: أمر واحد يضيفها إلى مشروعك أياً كانت لغته — [حقيبة الحارس](#guard-kit).
+
 ---
 
 ## ⚡ ابدأ في 3 خطوات
@@ -73,6 +75,48 @@
 <p align="center"><sub>🧙 مولّد الإقلاع: معالج من 5 خطوات بوضعين فاتح وداكن، مع مراجعة قبل التوليد وحفظ تلقائي — يعمل على جهازك دون إرسال أي بيانات</sub></p>
 
 > 📋 **المتطلبات:** اشتراك Claude مدفوع، و Node.js 18+، وعلى ويندوز Git for Windows — [التفاصيل](#requirements). تستخدم Google Antigravity؟ [مسارها هنا](#antigravity-start). تستخدم Cursor؟ [مساره هنا](#cursor-start). تستخدم OpenCode؟ [مساره هنا](#opencode-start).
+
+---
+
+<a id="guard-kit"></a>
+
+## 👨‍💻 للمحترف: حقيبة الحارس
+
+عندك مشروع قائم بأي لغة، ولا تحتاج رحلة المبتدئ؟ خذ **الحواجز وحدها**. يراقب الحارس وكيل الذكاء الاصطناعي وأنت تعمل كعادتك، ولا يظهر إلا إذا حاول الوكيل أن يتحايل، أو أن يعلن نجاح عمل لم يُفحص.
+
+| # | الخطوة | كيف |
+|:-:|:-------|:----|
+| 1 | **حمّل القالب مرة واحدة** | في أي مكان على جهازك: `git clone https://github.com/bmubook/ag-launchpad-ar.git` أو **Download ZIP** |
+| 2 | **ركّب الحارس في مشروعك** | من مجلد القالب: `node .claude/scripts/guard-install.mjs <مسار مشروعك>` — ويطبع لك أوامر الفحص التي وجدها |
+| 3 | **افتح مشروعك في Claude Code** | كالمعتاد. يعرض سطر الحالة «🛡️ الحارس» ونتيجة آخر فحص |
+
+| ما يأخذه مشروعك | ما لا يأخذه |
+|:----------------|:------------|
+| 🧪 **بوابة الإثبات:** لا يُنهي الوكيل رده بعد تعديل الكود قبل أن تنجح فحوص مشروعك فعلاً، ويُنبَّه إذا نقص عدد الاختبارات الناجحة | رحلة المبتدئ: الإقلاع والعصف الذهني والمخططات ووضع التعلّم |
+| 🚩 **كاشف التحايل:** اختبار معطّل، خطأ مكتوم، فحص مُسكت، كود ناقص، بيانات وهمية — لحظة كتابتها | اسم النداء وختم التوثيق والسجلات الأربعة: تاريخ مشروعك في Git |
+| 🧩 **الاختبار مع المنطق:** ملف منطق عُدّل دون اختبار يغطيه يوقف إنهاء الرد، بأعراف كل لغة | اشتراط Firebase: الحارس يعمل مع أي قاعدة بيانات |
+| 🔒 **حماية الأسرار وحواجز الحقن:** لا قراءة لـ `.env` ولا لمخازن المفاتيح، ويسألك قبل تنزيل سكربت وتشغيله أو رفع ملف إلى الخارج | سقف حجم الملفات، إلا إذا فعّلته أنت |
+
+**اللغات التي يعرف أوامر فحصها وحده:** Node و Flutter و Python و Go و Rust و Java و Kotlin و .NET و PHP و Ruby و Swift. لا يشغّل إلا ما يضمن مشروعك وجوده، مثل `go test ./...` و `cargo test`، أو أداة مُعدّة في ملفاتك مثل ruff في `pyproject.toml`. وما لا يكتشفه تكتبه أنت في `.claude/launchpad.json`:
+
+<div dir="ltr">
+
+```json
+{
+  "mode": "production",
+  "ceilings": false,
+  "checks": [
+    { "step": "lint", "run": "ruff check ." },
+    { "step": "test", "run": "pytest -q" }
+  ]
+}
+```
+
+</div>
+
+- **ما يضيفه إلى مشروعك:** مجلد `.claude/launchpad/`، وملف تعليمات قصيراً للوكيل (3 كيلوبايت بدل 80 في القالب الكامل)، وملف إعداداتك. ويدمج إعداداته مع `.claude/settings.json` دون حذف ما كتبته، ويضيف سطراً واحداً إلى `.gitignore`. لا يمس كودك ولا `CLAUDE.md`.
+- **التحديث:** حدّث القالب (`git pull`) ثم أعد أمر التركيب نفسه. **الإزالة:** أضف `--remove`، فيُزال كل ما أضافه وتعود إعداداتك كما كانت.
+- **يعمل اليوم في Claude Code.** دعم Cursor و OpenCode في إصدار لاحق. ماذا تفعل حين يقول لك الحارس شيئاً؟ [الدليل](SETUP_GUIDE.md#guard-kit) — والحدود المعروفة [هنا](#kit-limits).
 
 ---
 
@@ -383,10 +427,11 @@ claude
 
 | ما اختُبر | كيف | النتيجة |
 |:----------|:----|:-------:|
-| طبقة الإنفاذ الآلي (Hooks + السكربتات + سطر الحالة) | 501 اختباراً آلياً تشمل محاولات تسريب `.env` وحقن نصي وبوابة الإثبات وكاشف الاختصارات وتعديلات الطرفية وطبقتي Cursor و OpenCode — شغّلها بنفسك: `node .claude/tests/hooks.test.mjs` | ✅ 501/501 |
+| طبقة الإنفاذ الآلي (Hooks + السكربتات + سطر الحالة) | 605 اختبارات آلية تشمل محاولات تسريب `.env` وحقن نصي وبوابة الإثبات وكاشف الاختصارات وتعديلات الطرفية وطبقتي Cursor و OpenCode، وحقيبة الحارس (التركيب والتحديث والإزالة) واكتشاف أوامر الفحص في إحدى عشرة لغة — شغّلها بنفسك: `node .claude/tests/hooks.test.mjs` | ✅ 605/605 |
+| حقيبة الحارس على مشروع Python حقيقي | تركيب في مشروع له إعداداته و `CLAUDE.md` خاص به، ثم جلسة بأدوات حقيقية (ruff و pytest في بيئة `.venv`): رصد `TODO` لحظة كتابته، وطلب الفحص قبل إعلان النجاح، وطلب اختبار لملف منطق جديد، وعدّ الاختبارات من 1 إلى 3، وتنبيه صريح حين لم تكن أداة الفحص مثبّتة | ✅ ولم تُمس إعدادات المشروع ولا `CLAUDE.md` |
 | الحواجز ضد حقن الأوامر | 149 حالة في `node .claude/tests/attacks.test.mjs`: هجمات يجب أن تتوقف (تنزيل وتشغيل، تعطيل الحماية، قراءة المفاتيح، رفع الملفات، والتحايل بتغيير حالة الأحرف أو بنقطة ختامية على ويندوز، والكتابة بدوال ‎.NET في PowerShell التي كشفتها تجربة حية في OpenCode، وأوامر الماك مثل سلسلة المفاتيح و ditto)، وأوامر مشروعة يجب أن تمرّ، وحدود معروفة موثّقة. وفُحصت الأوامر الـ 154 المذكورة في توثيق القالب ومهاراته فلم يتعطل أي أمر مشروع منها | ✅ 149/149 |
 | الـ Hooks داخل Cursor على جهاز حقيقي | مسبار سجّل ما يرسله Cursor 3.12 على ويندوز فعلاً، ثم تجربة قبول بالـ Hooks الحقيقية: ملخص الحالة يصل مع أول رسالة، والتعديلات تُسجَّل، وبوابة إنهاء الرد تُقيَّم بلا تكرار | ✅ وكشف المسبار أن الـ Hooks لم تكن تعمل هناك إطلاقاً (صيغة الأوامر، رمز BOM، تشوّه النص العربي، غياب نافذة الموافقة) فبُنيت الطبقة على البيانات الفعلية |
-| طبقة الإنفاذ على Linux (المسار نفسه الذي يسلكه الماك) | الاختبارات كلها على Ubuntu 26.04 داخل WSL بـ Node.js 22، ثلاث جولات متتالية | ✅ 495/495 — وكشفت أن ساعة نظام الملفات الخشنة في Linux والماك كانت قد تُفلت تعديلاً بالطرفية يقع فور بدء الجولة، فأُصلح |
+| طبقة الإنفاذ على Linux (المسار نفسه الذي يسلكه الماك) | الاختبارات كلها على Ubuntu 26.04 داخل WSL بـ Node.js 22، ثلاث جولات متتالية | ✅ 599/599 — وكشفت أن ساعة نظام الملفات الخشنة في Linux والماك كانت قد تُفلت تعديلاً بالطرفية يقع فور بدء الجولة، فأُصلح |
 | إضافة القالب داخل OpenCode على جهاز حقيقي | مسبار سجّل ما يرسله OpenCode 2.0 على ويندوز فعلاً، ثم تجربة قبول بالإضافة الحقيقية ونموذج مجاني: القواعد وملخص الحالة يصلان من أول رسالة، وقراءة `.env` تُمنع بسبب عربي واضح، وتنبيه الاختصار يصل في نتيجة أداة الكتابة، وتعديل ملف قواعد ينتظر الموافقة، وبوابة إنهاء الرد تعيد الوكيل مرة واحدة بلا تكرار | ✅ وكشف المسبار أن طريقة الإضافات تغيّرت كلياً في الإصدار 2، فبُنيت الإضافة على صيغته الجديدة؛ وكشفت التجربة اليدوية في التطبيق أن نموذجاً عدّل `AGENTS.md` بدالة ‎.NET في PowerShell دون موافقة، فسُدّت الثغرة في الحارس لكل التطبيقات وأضيفت طبقة احتياطية |
 | بوابة الإثبات على مشروع حقيقي | مشروع Next.js + Firebase بناه القالب: وكيل «كسول» كتب `TODO` وخطأً مكتوماً وملفاً بلا اختبار ثم أدخل خطأً بأمر `sed` — نجحت كل فحوص المشروع نفسه، وأمسكت البوابة الأربعة؛ وكشفت التجربة 7 ثغرات في البوابة أُصلحت قبل النشر | ✅ |
 | أمثلة قواعد أمان Firebase في المخططات و `/db-change` | 18 حالة على محاكي Firestore الحقيقي: المالك يصل، والغريب والزائر يُمنعان، والبيانات الخاطئة تُرفض | ✅ 18/18 |
@@ -458,6 +503,7 @@ ag-launchpad-ar/
 │   ├── ⚙️ settings.json       ← الصلاحيات + الـ Hooks + سطر الحالة
 │   ├── 📁 hooks/              ← سكربتات Node تنفّذ القواعد آلياً
 │   ├── 📁 scripts/            ← الفحص البيئي + أحجام الملفات + بوابة الإثبات + تقرير الصحة + خارطة الطريق
+│   │                             + guard-install.mjs و guard-kit/ (تركيب حقيبة الحارس في مشروع قائم)
 │   ├── 📁 agents/             ← وكلاء المراجعة الثلاثة (الأمن / الأداء / تجربة المستخدم)
 │   ├── 📁 skills/             ← المهارات الـ 16 (/kickoff، /next، /fix ...)
 │   ├── 📁 rules/              ← قواعد الواجهات (تُحمَّل عند العمل على ملفات UI)
@@ -516,7 +562,8 @@ ag-launchpad-ar/
 | **⚡ معايير حديثة** | قواعد أمان مغلقة افتراضياً، httpOnly Cookies،&rlm; CSS Logical Properties،&rlm; WebP، وأكثر |
 | **🧙 مولّد إقلاع بصري** | معالج من 5 خطوات (فاتح/داكن، مراجعة قبل التوليد، حفظ تلقائي، وصولية WCAG AA) — أو أسئلة داخل المحادثة مباشرة |
 | **🧱 متانة مفروضة آلياً** | في Claude Code: بوابة إثبات تشغّل فحص المشروع فعلاً قبل إنهاء أي رد عُدّل فيه كود، وكاشف اختصارات، وحد للخطوة، ودليل قبول لكل مهمة، وفحص صحة عند نهاية كل مرحلة |
-| **🧪 مُختبر فعلياً** | 501 اختباراً آلياً لطبقة الإنفاذ، وقواعد الأمان جُرّبت على محاكي Firebase الحقيقي — [التفاصيل](#tested) |
+| **🧪 مُختبر فعلياً** | 605 اختبارات آلية لطبقة الإنفاذ، وقواعد الأمان جُرّبت على محاكي Firebase الحقيقي — [التفاصيل](#tested) |
+| **👨‍💻 حقيبة الحارس** | الحواجز وحدها لمشروع قائم بأي لغة، بأمر تركيب واحد يدمج إعداداته دون حذف إعداداتك، ويُزال بالأمر نفسه — [التفاصيل](#guard-kit) |
 | **🌍 i18n جاهز** | دعم عربي/إنجليزي من البداية + قابل للتوسع لأي لغة |
 | **⚙️ وضعا تشغيل** | `prototype` للتجريب السريع، `production` للصرامة الكاملة |
 | **🤝 شبكة إجماع حقيقية** | في Claude Code: 3 وكلاء مراجعة فرعيون مستقلون (الأمن، الأداء، تجربة المستخدم) يعمل كل منهم بسياق نظيف وبالتوازي عبر `/consensus-gate` |
@@ -546,6 +593,8 @@ ag-launchpad-ar/
 > 🖱️ **Cursor (دعم تجريبي):** يحتاج اشتراكاً في Cursor يتيح وضع Agent (التجربة المجانية محدودة)، و Node.js 18+؛ ولا يلزمه Git Bash لأن أوامر الـ Hooks فيه تعمل في أي طرفية.
 >
 > 🧩 **OpenCode (دعم تجريبي):** يحتاج OpenCode 2 أو أحدث (تطبيق سطح المكتب أو الطرفية)، ونموذجاً من قائمته (فيها نماذج مجانية)، و Node.js 18+؛ ولا يلزمه Git Bash.
+>
+> 👨‍💻 **حقيبة الحارس:** تحتاج Claude Code و Node.js 18+ (وعلى ويندوز Git for Windows)، وأدوات الفحص التي يستخدمها مشروعك نفسه مثبّتةً على جهازك.
 >
 > ⚠️ لا يعمل القالب بكامل بنوده في بيئات أخرى (Windsurf،&rlm; Copilot وغيرهما): الأداة التي تقرأ `AGENTS.md` من الجذر تلتزم بالقواعد المكتوبة، لكن دون الإنفاذ الآلي بالـ Hooks.
 
@@ -584,6 +633,18 @@ ag-launchpad-ar/
 | **Node.js على الماك** | تطبيقات الماك المفتوحة من Dock لا ترى أحياناً Node المثبّت عبر Homebrew أو nvm، فتبحث الإضافة عنه في أماكن تثبيته الشائعة (Homebrew و nvm و Volta و fnm) | إن قال لك الوكيل إن الإضافة لم تجد Node.js فثبّته من [nodejs.org](https://nodejs.org) ثم أعد تشغيل OpenCode. ملفات الأسرار تبقى محمية حتى ذلك الحين بصلاحيات `opencode.json` |
 | **مُجرَّب على ويندوز فقط، بتطبيق سطح المكتب 2.0** | أداة التعديل بالرقع (patch) التي تستخدمها بعض النماذج، والماك و Linux، تغطيها الاختبارات الآلية بأوامر كل نظام (zsh وأدوات الماك وسلسلة المفاتيح)، وقد شُغّلت كاملةً على Linux، دون تجربة حية لتطبيق OpenCode خارج ويندوز بعد | بلّغ عن أي سلوك مختلف في Issues |
 
+<a id="kit-limits"></a>
+
+### حدود معروفة (حقيبة الحارس)
+
+| الحد | الأثر | ما تفعله |
+|:-----|:------|:---------|
+| **Claude Code وحده الآن** | لا يركّب الأمر طبقة Cursor ولا OpenCode | استخدم Claude Code، أو القالب الكامل في تلك الأدوات |
+| **اكتشاف الأوامر محافظ** | لا يخمّن أداة لا تذكرها ملفات مشروعك (ruff دون إعداده مثلاً)، ولا يبحث في المجلدات الفرعية، ويتوقف عند حلّين أو مشروعين في جذر .NET | اكتب أوامرك في `.claude/launchpad.json`، فتحل محل الاكتشاف كله |
+| **جُرّب على مشروع حقيقي بـ Python و Node** | لغات Go و Rust و Java و .NET و PHP و Ruby و Swift تغطيها اختبارات تحاكي ما تطبعه أدواتها، دون تجربة على مشروع حقيقي بعد | بلّغ في Issues عن أي أمر لا يناسب مشروعك |
+| **«ملف منطق بلا اختبار» تقريبي** | يعتمد على أعراف كل لغة (اسم ملف الاختبار، الاستيراد، اختبارات الحزمة في Go، `#[cfg(test)]` في Rust)، فقد يطلب اختباراً لملف مختبَر بطريقة غير معتادة | يكفي أن يذكر لك الوكيل السبب؛ الحارس يوقفه مرة واحدة فقط |
+| **رسائل الحارس للوكيل بالعربية** | الوكيل يفهمها ويكلّمك بلغتك | — |
+
 ---
 
 ## 🤝 المساهمة
@@ -604,6 +665,8 @@ ag-launchpad-ar/
 **AG Launchpad AR** is an Arabic-first starter template that turns an AI coding agent (**Claude Code**, **Google Antigravity**, and in beta **Cursor** and **OpenCode 2**) into a disciplined software engineer for beginners ("vibe coders"). It ships 37 governance rules, automatic enforcement hooks (secrets protection, file-size ceilings, mandatory documentation, context checkpoints), three independent review subagents, and a guided journey: `/kickoff` → `/grill-me` → `/blueprint` → `/quality-setup` → `/next` → `/fix` → `/launch-check`. It includes an auto-updating visual roadmap page (docs/roadmap.html) showing where the project stands, a learning mode with an Arabic glossary and ready-made **Firebase** blueprints for web (Next.js), Flutter, React Native (Expo) and backend, with security rules verified on the Firebase emulator. All communication with the agent is in Arabic.
 
 **Quick start:** download the repo → open the folder in the Claude desktop app (Code tab) → say hello. MIT licensed.
+
+**Guard Kit — for existing projects:** `node .claude/scripts/guard-install.mjs <your-project>` installs only the enforcement layer into any existing repository: a proof gate (the agent cannot report "done" before your own checks pass, and a drop in passing tests is flagged), a shortcut detector (skipped tests, swallowed errors, silenced linters, placeholders, fake data), a test-with-logic check, and secrets / prompt-injection guards. Checks are auto-detected for Node, Flutter, Python, Go, Rust, Java/Kotlin, .NET, PHP, Ruby and Swift, or taken from your own list in `.claude/launchpad.json`. It merges into your `.claude/settings.json` without touching your code or `CLAUDE.md`, adds a 3 KB rules file instead of the full template's 80 KB, and `--remove` restores everything. Claude Code only for now; the guard's messages to the agent are in Arabic.
 
 </div>
 

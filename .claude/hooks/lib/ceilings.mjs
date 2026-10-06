@@ -16,6 +16,10 @@ const TEST_PATTERNS = [
   /\.(test|spec)\.[a-z0-9]+$/i,
   /_test\.(dart|go|py)$/i,
   /(^|\/)test_[^/]+\.py$/i,
+  /(^|\/)tests?\.py$/i,
+  /_spec\.rb$/i,
+  // FooTest.java و FooTests.cs و MyApp.Tests/ — حساسة لحالة الأحرف كما في lib/shortcuts.mjs
+  /[A-Za-z0-9]Tests?\.(cs|java|kts?|swift|php)$|(^|\/)[^/]+\.Tests?\//,
 ];
 
 const UNCAPPED_PATTERNS = [

@@ -13,17 +13,23 @@ import {
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
 import { hostTraits } from './lib/host.mjs';
-import { writeRoadmap } from '../scripts/roadmap/page.mjs';
+import { CONFIG_FILE, GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
-import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts } from './lib/quality.mjs';
+import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts, verifyCommand } from './lib/quality.mjs';
 import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
 
 function readFile(relPath) {
   try { return readFileSync(resolve(projectDir(), relPath), 'utf8'); } catch { return ''; }
 }
 
+/**
+ * في الحقيبة سقف الحجم معطّل ما لم يُفعَّل (ceilings في .claude/launchpad.json): ملفات المشاريع القائمة كبيرة غالباً،
+ * وتنبيه عند كل تعديل يدفع الوكيل إلى إعادة هيكلة لم يطلبها أحد.
+ */
+const ceilingsOn = () => !GUARD_KIT || readProjectState().ceilings;
+
 function currentStatus(relPath, fullText) {
-  const rule = ceilingFor(relPath);
+  const rule = ceilingsOn() ? ceilingFor(relPath) : null;
   if (!rule || !fullText) return { rule, lines: 0, status: null };
   const lines = countLines(fullText);
   return { rule, lines, status: ceilingStatus(lines, rule) };
@@ -53,11 +59,13 @@ function shortcutMessage(relPath, found) {
 
 function stepLimitMessage(pending) {
   return `⏸️ حد الخطوة (البند 8): عدّلت ${pending.files.length} ملفاً (نحو ${pending.lines} سطراً) منذ آخر فحص ناجح. `
-    + 'توقف عن إضافة كود جديد وشغّل الآن: node .claude/scripts/verify.mjs --quick — الأخطاء المتراكمة فوق بعضها أصعب تشخيصاً من خطأ واحد حديث.';
+    + `توقف عن إضافة كود جديد وشغّل الآن: ${verifyCommand('prototype')} — الأخطاء المتراكمة فوق بعضها أصعب تشخيصاً من خطأ واحد حديث.`;
 }
 
 const NO_GATE_MESSAGE = 'ℹ️ لا توجد بوابة فحص بعد: المشروع بلا أوامر lint/test، فهذا الكود لن يُفحص آلياً. '
-  + 'نفّذ /quality-setup قبل بناء الميزات (البنود 13 و 16)، ونبّه المستخدم إن اختار التأجيل.';
+  + (GUARD_KIT
+    ? `لم يجد الحارس أوامر فحص يعرفها: أخبر المستخدم أن يكتبها في ${CONFIG_FILE} (الحقل checks)، ولا تكتبها أنت دون طلبه.`
+    : 'نفّذ /quality-setup قبل بناء الميزات (البنود 13 و 16)، ونبّه المستخدم إن اختار التأجيل.');
 
 /** في أداة بلا نافذة موافقة مسبقة (Cursor) يمرّ تعديل ملف الحوكمة، فيُلزَم الوكيل بإبلاغ المستخدم به. */
 function governanceMessage(relPath) {
@@ -69,9 +77,13 @@ const ROADMAP_SOURCES = new Set(['project_map.md', 'changelog.md']);
 const ROADMAP_CREATED = '🗺️ أُنشئت خارطة الطريق docs/roadmap.html، وتتحدث تلقائياً كلما تغيّر project_map.md. '
   + 'أخبر المستخدم في ردك بجملة واحدة أنه يرى منها أين وصل مشروعه: يفتحها بالنقر المزدوج، أو تفتحها له بالأمر node .claude/scripts/roadmap.mjs --open.';
 
-/** خارطة الطريق تتبع project_map.md؛ أول إنشاء لها يُبلَّغ به المستخدم. أي فشل هنا لا يوقف الجلسة. */
-function refreshRoadmap() {
+/**
+ * خارطة الطريق تتبع project_map.md؛ أول إنشاء لها يُبلَّغ به المستخدم. أي فشل هنا لا يوقف الجلسة.
+ * الاستيراد عند الحاجة فقط: حقيبة الحارس لا تحمل سكربتات الخارطة.
+ */
+async function refreshRoadmap() {
   try {
+    const { writeRoadmap } = await import('../scripts/roadmap/page.mjs');
     return writeRoadmap(projectDir()).created ? ROADMAP_CREATED : null;
   } catch {
     return null;
@@ -109,7 +121,7 @@ runHook(async () => {
   if (newCeilingStatus || status === 'hard') messages.push(ceilingMessage(relPath, lines, rule, status));
   if (!hostTraits(input.host).approvalPrompt && PROTECTED_INSTRUCTION_PATHS.some((re) => re.test(relPath))) messages.push(governanceMessage(relPath));
   if (ROADMAP_SOURCES.has(relPath) && readProjectState().kickedOff) {
-    const note = refreshRoadmap();
+    const note = await refreshRoadmap();
     if (note) messages.push(note);
   }
 
@@ -128,7 +140,7 @@ runHook(async () => {
     const { shouldWarn, pending } = recordPendingEdit(relPath, changed, state.mode === 'prototype' ? 2 : 1);
     if (detectChecks().length) {
       if (shouldWarn) messages.push(stepLimitMessage(pending));
-    } else if (state.kickedOff && rule && !session.warned['#no-gate']) {
+    } else if ((state.kickedOff || GUARD_KIT) && ceilingFor(relPath) && !session.warned['#no-gate']) {
       session.warned['#no-gate'] = 'shown';
       messages.push(NO_GATE_MESSAGE);
     }

@@ -1,10 +1,13 @@
 /**
- * اكتشاف أوامر فحص المشروع لبوابة الإثبات: Node (package.json) و Flutter (pubspec.yaml) و functions/.
- * الأسماء المعتمدة من /quality-setup: format:check و lint و typecheck و test و test:rules و build.
+ * اكتشاف أوامر فحص المشروع لبوابة الإثبات: Node (package.json) و Flutter (pubspec.yaml) و functions/،
+ * واللغات الأخرى في lib/stacks.mjs. الأسماء المعتمدة من /quality-setup: format:check و lint و typecheck و test و test:rules و build.
+ * ما يكتبه صاحب المشروع في .claude/launchpad.json (الحقل checks) يحل محل الاكتشاف كله.
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { projectDir } from './common.mjs';
+import { readGuardConfig } from './kit.mjs';
+import { stackSteps } from './stacks.mjs';
 
 export function readJson(path) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
@@ -66,11 +69,39 @@ function flutterSteps(dir) {
   return steps;
 }
 
+const STEP_LABELS = { format: 'التنسيق', lint: 'التدقيق', types: 'الأنواع', test: 'الاختبارات', rules: 'قواعد الأمان', build: 'البناء' };
+
+/**
+ * أوامر صاحب المشروع: {"checks": [{"step": "test", "run": "pytest -q"}]}. step واحدة من STEP_LABELS (غيرها فحص عام)،
+ * و label و cwd (مجلد داخل المشروع) و fix و failOnOutput اختيارية. أمر صالح واحد يكفي ليحل محل الاكتشاف التلقائي.
+ */
+function configuredChecks(root) {
+  const entries = readGuardConfig(root).checks;
+  if (!Array.isArray(entries)) return null;
+  const steps = [];
+  entries.forEach((entry, index) => {
+    const cmd = typeof entry?.run === 'string' ? entry.run.trim() : '';
+    const cwd = resolve(root, typeof entry?.cwd === 'string' ? entry.cwd : '.');
+    const inside = relative(root, cwd);
+    if (!cmd || inside.startsWith('..') || isAbsolute(inside)) return;
+    const kind = STEP_LABELS[entry.step] ? entry.step : 'check';
+    const label = typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : STEP_LABELS[kind] || `الفحص ${index + 1}`;
+    steps.push({
+      name: `config${index + 1}:${kind}`, label, cmd, cwd, fullOnly: kind === 'build', rulesOnly: kind === 'rules',
+      fix: typeof entry.fix === 'string' ? entry.fix : null, failOnOutput: entry.failOnOutput === true,
+    });
+  });
+  return steps.length ? steps : null;
+}
+
 /** كل خطوات الفحص المتاحة في المشروع (الجذر ثم functions/). مصفوفة فارغة = لا بوابة فحص بعد. */
 export function detectChecks(root = projectDir()) {
+  const configured = configuredChecks(root);
+  if (configured) return configured;
   const steps = [];
   if (existsSync(join(root, 'pubspec.yaml'))) steps.push(...flutterSteps(root));
   else if (existsSync(join(root, 'package.json'))) steps.push(...nodeSteps(root, ''));
+  steps.push(...stackSteps(root));
   const functionsDir = join(root, 'functions');
   if (existsSync(join(functionsDir, 'package.json'))) steps.push(...nodeSteps(functionsDir, 'functions:'));
   return steps;

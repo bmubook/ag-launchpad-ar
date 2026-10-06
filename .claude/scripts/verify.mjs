@@ -10,29 +10,20 @@
 import { spawnSync } from 'node:child_process';
 import { relative } from 'node:path';
 import { projectDir, readProjectState } from '../hooks/lib/common.mjs';
-import { gateStatus, isRulesFile, loadQuality, planChecks, recordVerifyRun, unverifiedFiles } from '../hooks/lib/quality.mjs';
+import { CONFIG_FILE, GUARD_KIT } from '../hooks/lib/kit.mjs';
+import {
+  gateStatus, isRulesFile, loadQuality, planChecks, recordVerifyRun, unverifiedFiles, verifyCommand,
+} from '../hooks/lib/quality.mjs';
+import { parsePassedTests } from '../hooks/lib/test-count.mjs';
 
 const args = new Set(process.argv.slice(2));
 const root = projectDir();
 const STEP_TIMEOUT_MS = Number(process.env.AGLP_VERIFY_TIMEOUT_MS) || 10 * 60 * 1000;
 const TAIL_LINES = 40;
+// في القالب يجهّز /quality-setup الأوامر؛ في الحقيبة يكتبها صاحب المشروع إن لم تُكتشف تلقائياً
+const SETUP_HINT = GUARD_KIT ? `اكتب أوامر الفحص في ${CONFIG_FILE} (الحقل checks)` : 'نفّذ /quality-setup لتجهيز أساس الجودة';
 
 const stripAnsi = (text) => String(text || '').replace(/\u001b\[[0-9;?]*[A-Za-z]/g, '');
-
-/** عدد الاختبارات الناجحة من مخرجات المشغّلات الشائعة (Vitest / Jest / Flutter / node:test)، أو null. */
-function parsePassedTests(output) {
-  const patterns = [
-    /Tests:?\s+(?:\d+\s+(?:failed|skipped|todo)[,|\s]+)*(\d+)\s+passed/i,
-    /\+(\d+)(?:\s+~\d+)?(?:\s+-\d+)?:\s+(?:All tests passed|Some tests failed)/,
-    /^#\s*pass\s+(\d+)/m,
-    /(\d+)\s+passed/i,
-  ];
-  for (const re of patterns) {
-    const match = output.match(re);
-    if (match) return Number(match[1]);
-  }
-  return null;
-}
 
 function runStep(step) {
   const started = Date.now();
@@ -42,7 +33,9 @@ function runStep(step) {
   });
   const output = stripAnsi(`${result.stdout || ''}\n${result.stderr || ''}`);
   const timedOut = result.error?.code === 'ETIMEDOUT';
-  return { ...step, ok: result.status === 0 && !result.error, ms: Date.now() - started, output, timedOut };
+  // أدوات تنجح دائماً وتطبع ما يحتاج إصلاحاً (gofmt -l): المخرج غير الفارغ فشل
+  const reportedProblems = Boolean(step.failOnOutput) && output.trim() !== '';
+  return { ...step, ok: result.status === 0 && !result.error && !reportedProblems, ms: Date.now() - started, output, timedOut };
 }
 
 /**
@@ -56,12 +49,15 @@ function isTestFailure(step) {
 }
 
 const seconds = (ms) => `${(ms / 1000).toFixed(1)} ث`;
+// رسائل الطرفية حين لا توجد الأداة نفسها: cmd في Windows، و sh/bash/zsh، و python -m لوحدة غير مثبتة.
+// خطأ استيراد داخل الاختبارات (ModuleNotFoundError) خلل في الكود لا في الأداة، فلا يطابق.
+const MISSING_TOOL = /is not recognized as an internal or external command|^\S*sh: (?:\d+: |line \d+: )?\S+: (?:command )?not found\s*$|command not found: \S+|^.*python[\d.]*(?:\.exe)?: No module named \S+\s*$/im;
 
 function statusLine(quality, mode) {
   const { verify } = quality;
   const gate = gateStatus(mode, root);
   const labels = {
-    none: 'لا توجد أوامر فحص في المشروع بعد — نفّذ /quality-setup.',
+    none: `لا توجد أوامر فحص في المشروع بعد — ${SETUP_HINT}.`,
     never: 'لم يُشغَّل الفحص بعد.',
     green: '✅ آخر فحص ناجح ولا تعديلات بعده.',
     red: `🔴 آخر فحص فاشل عند «${verify?.failedLabel || verify?.failed || '؟'}».`,
@@ -89,7 +85,9 @@ function toMarkdown(run, steps, notes) {
     const tail = failed.output.trim().split(/\r?\n/).slice(-TAIL_LINES).join('\n');
     lines.push(`### آخر ${TAIL_LINES} سطراً من مخرجات «${failed.label}»`, '', '```', tail, '```', '');
     // فشل التنسيق وحده لا يعني خللاً في المنطق: إصلاحه أمر واحد ولا يُحسب محاولة تصحيح
-    if (/(^|:)format$/.test(failed.name) && failed.fix) {
+    if (MISSING_TOOL.test(failed.output)) {
+      lines.push(`🧰 يبدو أن أداة الفحص نفسها غير مثبّتة أو ليست في PATH. أخبر المستخدم بذلك: يثبّتها، أو يعدّل الأمر في ${CONFIG_FILE} (الحقل checks). لا تغيّر الكود لتمرير هذا الفشل.`);
+    } else if (/(^|:)format$/.test(failed.name) && failed.fix) {
       lines.push(`🎨 فشل التنسيق فقط: شغّل \`${failed.fix}\` ثم أعد الفحص. هذا لا يُحسب من محاولات التصحيح الثلاث (البند 8).`);
     } else {
       lines.push('أصلح السبب الجذري ثم أعد التشغيل (البند 22). لا تعطّل الفحص ولا تحذف الاختبار لتمريره (البند 11). بعد 3 محاولات فاشلة طبّق البند 8.');
@@ -105,7 +103,7 @@ function main() {
   const rules = args.has('--rules') || unverifiedFiles(root, before).some(isRulesFile);
   const plan = planChecks({ quick: args.has('--quick'), rules }, root);
   if (!plan.steps.length) {
-    process.stdout.write('⚠️ لا توجد أوامر فحص في المشروع (لا package.json بأوامر lint/test/build ولا pubspec.yaml). نفّذ /quality-setup لتجهيز أساس الجودة.\n');
+    process.stdout.write(`⚠️ لا توجد أوامر فحص في المشروع: لم أجد أوامر lint/test/build معروفة (package.json أو pubspec.yaml أو أدوات Python و Go و Rust و Java و .NET و PHP و Ruby و Swift). ${SETUP_HINT}.\n`);
     process.exitCode = 2;
     return;
   }
@@ -135,7 +133,7 @@ function main() {
   }
   if (run.ok && redFirst) notes.push('- 🔴→🟢 شوهد الاختبار فاشلاً قبل أن ينجح (دليل أن الاختبار يكشف الخلل فعلاً).');
   if (run.ok && plan.level === 'quick' && readProjectState().mode !== 'prototype') {
-    notes.push('- ℹ️ هذا فحص سريع. وضع production يتطلب الفحص الكامل قبل إنهاء المهمة: `node .claude/scripts/verify.mjs`');
+    notes.push(`- ℹ️ هذا فحص سريع. وضع production يتطلب الفحص الكامل قبل إنهاء المهمة: \`${verifyCommand('production')}\``);
   }
   if (notes.length) notes.push('');
 

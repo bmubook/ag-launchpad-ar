@@ -4,7 +4,7 @@
  * 1) تُعالَج الاختصارات المرصودة أو تُذكر للمستخدم صراحةً (البند 11).
  * 2) ينجح فحص المشروع بعد آخر تعديل: node .claude/scripts/verify.mjs (البنود 8 و 13 و 16).
  * 3) يكون لكل ملف منطق عُدّل اختبارٌ يستورده (البند 13).
- * 4) يُحدَّث changelog.md (master_rules.md §2).
+ * 4) يُحدَّث changelog.md (master_rules.md §2). حقيبة الحارس بلا سجلات: تاريخ المشروع القائم في Git.
  * «عُدّل في هذه الجولة» = ما سجّلته أدوات التعديل + ما تغيّر على القرص منذ بداية الجولة (sed، سكربتات، مولّدات).
  * stop_hook_active يمنع الحلقات اللانهائية: المنع مرة واحدة، ثم تبقى الحالة ظاهرة في سطر الحالة.
  */
@@ -13,6 +13,7 @@ import {
 } from './lib/common.mjs';
 import { collectTests, isCovered, isLogicFile } from './lib/coverage.mjs';
 import { changedPrints, changedSince, fingerprint, modifiedAt, readText } from './lib/files.mjs';
+import { GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
   gateStatus, loadQuality, needsVerification, setOpenShortcuts, verifyCommand, verifyWindows,
@@ -57,9 +58,13 @@ function governanceProblem(files) {
     + 'أخبره صراحةً في ردك بما غيّرته في هذا الملف ولماذا، واعرض عليه التراجع عنه إن لم يكن هو من طلبه.';
 }
 
+// في الحقيبة لا Backlog ولا bugs_log.md: ما يُترك يُذكر للمستخدم وحده
+const TRACK_SHORTCUT = GUARD_KIT ? '' : '، وسجّله في Backlog أو bugs_log.md ليُزال لاحقاً';
+const TRACK_FAILURE = GUARD_KIT ? '' : 'فسجّل الخطأ في bugs_log.md و';
+
 function shortcutsProblem(open) {
   return `🚩 اختصارات لم تُعالج (البند 11): ${truncate(open.join(' — '), 500)}. `
-    + 'أصلحها بالحل الصحيح الآن. وإن كان أحدها ضرورياً فعلاً فاذكره للمستخدم في ردك تحت عنوان «🚩 اختصارات مؤقتة» مع سببه، وسجّله في Backlog أو bugs_log.md ليُزال لاحقاً.';
+    + `أصلحها بالحل الصحيح الآن. وإن كان أحدها ضرورياً فعلاً فاذكره للمستخدم في ردك تحت عنوان «🚩 اختصارات مؤقتة» مع سببه${TRACK_SHORTCUT}.`;
 }
 
 function verifyProblem(gate, mode, files, quality) {
@@ -71,7 +76,7 @@ function verifyProblem(gate, mode, files, quality) {
   }[gate];
   return `🧪 بوابة الإثبات (البنود 8 و 13 و 16): عدّلت كوداً في هذه الجولة (${list(files)}) و${situation}. `
     + `شغّل الآن: ${verifyCommand(mode)} — وأصلح السبب الجذري لأي فشل ثم أعد التشغيل حتى ينجح، ولا تصف العمل بأنه مكتمل قبل ذلك. `
-    + 'استثناءان يُذكران للمستخدم صراحةً في الرد: إذا استنفدت محاولات التصحيح (البند 8) فسجّل الخطأ في bugs_log.md واكتب «🔴 الفحص: فاشل — <السبب>»؛ '
+    + `استثناءان يُذكران للمستخدم صراحةً في الرد: إذا استنفدت محاولات التصحيح (البند 8) ${TRACK_FAILURE}اكتب «🔴 الفحص: فاشل — <السبب>»؛ `
     + 'وإذا كان العمل متوقفاً بانتظار قراره فاكتب «🟠 الفحص: مؤجل — <السبب>».';
 }
 
@@ -119,11 +124,12 @@ runHook(async () => {
     const logic = verifiable.filter(isLogicFile);
     if (logic.length && gate !== 'none') {
       const tests = collectTests(root);
-      const untested = logic.filter((rel) => modifiedAt(root, rel) && !isCovered(rel, tests));
+      const untested = logic.filter((rel) => modifiedAt(root, rel) && !isCovered(rel, tests, root));
       if (untested.length) problems.push(untestedProblem(untested));
     }
   }
 
+  if (GUARD_KIT) return block(problems);
   const logs = acceptedLogs(readProjectState().kickedOff);
   const documented = logs.some((file) => session.edited.includes(file)
     || (session.turnStartedAt && modifiedAt(root, file) > session.turnStartedAt));

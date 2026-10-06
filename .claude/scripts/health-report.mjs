@@ -38,7 +38,7 @@ function scanProject() {
     if (isLogicFile(rel)) logic.push({ file: rel, lines });
   }
   const tests = collectTests(root);
-  const untested = logic.filter((f) => !isCovered(f.file, tests)).sort((a, b) => b.lines - a.lines);
+  const untested = logic.filter((f) => !isCovered(f.file, tests, root)).sort((a, b) => b.lines - a.lines);
   // مزامنة سجل الاختصارات الدائم (سطر الحالة وبداية الجلسة) مع ما في المشروع فعلاً
   const byFile = {};
   for (const s of shortcuts) (byFile[s.file] ||= []).push(s.kind);

@@ -9,9 +9,14 @@ import {
   GOVERNANCE_FILES, projectDir, readProjectFile, readProjectState, tableRows, truncate,
 } from './common.mjs';
 import { hostTraits } from './host.mjs';
-import { gateStatus, loadQuality, unverifiedFiles, verifyCommand } from './quality.mjs';
+import { CONFIG_FILE, GUARD_KIT } from './kit.mjs';
+import { detectChecks, gateStatus, loadQuality, unverifiedFiles, verifyCommand } from './quality.mjs';
 
 const RECENT_LIMIT = 5;
+// الحقيبة بلا مهارة /fix وبلا ملفات القواعد التي تشير إليها «البند 0»
+const RED_ADVICE = GUARD_KIT
+  ? 'أبلغ المستخدم في ردك الأول وأصلح سببه الجذري قبل أي ميزة جديدة.'
+  : 'الاستقرار يسبق الميزات (البند 0): أبلغ المستخدم في ردك الأول وأصلحه عبر /fix قبل أي ميزة جديدة.';
 
 function recentChanges() {
   const rows = tableRows(readProjectFile('changelog.md'), /جدول التغييرات/);
@@ -60,7 +65,7 @@ function gateLines(mode) {
 
 function gateLine(gate, verify, quality, run, mode) {
   if (gate === 'green') return [`• 🧪 بوابة الإثبات: آخر فحص ناجح ✅${Number.isFinite(verify.tests) ? ` (${verify.tests} اختباراً)` : ''}. بعد أي تعديل كودي شغّل ${run} قبل إنهاء الرد.`];
-  if (gate === 'red') return [`• 🔴 بوابة الإثبات: آخر فحص فاشل عند «${verify.failedLabel || verify.failed}». الاستقرار يسبق الميزات (البند 0): أبلغ المستخدم في ردك الأول وأصلحه عبر /fix قبل أي ميزة جديدة.`];
+  if (gate === 'red') return [`• 🔴 بوابة الإثبات: آخر فحص فاشل عند «${verify.failedLabel || verify.failed}». ${RED_ADVICE}`];
   if (gate === 'stale') {
     const files = unverifiedFiles(undefined, quality);
     return [`• 🟠 بوابة الإثبات: ${files.length} ملفاً معدّلاً لم يُفحص منذ آخر فحص ناجح (${truncate(files.join('، '), 160)}). شغّل ${run} قبل البناء فوقها.`];
@@ -98,11 +103,20 @@ function section(title, items, emptyText) {
   return [`• ${title}:`, ...(items.length ? items : [`  - ${emptyText}`])];
 }
 
+/** ملخص حقيبة الحارس: سطر الحارس وحالة بوابة الإثبات فقط — لا إقلاع ولا سجلات ولا اسم نداء. */
+function buildGuardContext() {
+  const lines = ['🛡️ حارس AG Launchpad مفعّل في هذا المشروع (حقيبة الحارس). قواعده القصيرة في .claude/rules/launchpad-guard.md.'];
+  if (detectChecks().length) lines.push(...gateLines(readProjectState().mode));
+  else lines.push(`• ℹ️ لم يجد الحارس أوامر فحص في هذا المشروع، فالتعديلات لن تُفحص آلياً. أخبر المستخدم أن يكتبها في ${CONFIG_FILE} (الحقل checks).`);
+  return lines.join('\n');
+}
+
 /**
  * source = سبب بدء الجلسة ("compact" يأمر بنقطة تفتيش فورية §12-ب لأن السياق ضُغط للتو).
  * host = اسم الأداة لغير Claude Code: إن كانت لا تحمّل ملفات القواعد تلقائياً (Cursor) يُؤمر الوكيل بقراءتها.
  */
 export function buildSessionContext(source, host) {
+  if (GUARD_KIT) return buildGuardContext();
   const state = readProjectState();
   const missing = GOVERNANCE_FILES.filter((file) => !existsSync(join(projectDir(), file)));
   const lines = ['🧭 حالة المشروع — Hook بداية الجلسة (AG Launchpad AR)'];

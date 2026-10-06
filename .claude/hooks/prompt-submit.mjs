@@ -10,6 +10,7 @@ import {
 } from './lib/common.mjs';
 import { fingerprint } from './lib/files.mjs';
 import { hostTraits } from './lib/host.mjs';
+import { GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { buildSessionContext } from './lib/summary.mjs';
 
@@ -42,6 +43,7 @@ runHook(async () => {
     pruneOldSessions();
     context.push(buildSessionContext('startup', input.host));
   }
-  if (prompts % CHECKPOINT_EVERY === 0) context.push(checkpointContext(prompts));
+  // نقطة التفتيش تعيد قراءة الملفات الحاكمة، والحقيبة بلا ملفات حاكمة
+  if (prompts % CHECKPOINT_EVERY === 0 && !GUARD_KIT) context.push(checkpointContext(prompts));
   if (context.length) addContext('UserPromptSubmit', context.join('\n\n'));
 });

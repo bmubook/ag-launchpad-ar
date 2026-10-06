@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { join, resolve, relative, basename } from 'node:path';
 import { parseHookInput, toHostOutput } from './host.mjs';
+import { GUARD_KIT, kitProjectState } from './kit.mjs';
 
 export const GOVERNANCE_FILES = [
   'master_rules.md', 'rules_security.md', 'rules_code_quality.md', 'rules_workflow.md',
@@ -76,8 +77,9 @@ function toggleValue(value) {
   return null;
 }
 
-/** يقرأ مراسي project_map.md (الاسم، الطبيعة، اسم النداء، الوضع، المرحلة، التعلّم، الاقتراحات). */
+/** يقرأ مراسي project_map.md (الاسم، الطبيعة، اسم النداء، الوضع، المرحلة، التعلّم، الاقتراحات). في الحقيبة: lib/kit.mjs. */
 export function readProjectState() {
+  if (GUARD_KIT) return kitProjectState(projectDir());
   const map = readProjectFile('project_map.md') || '';
   const state = {};
   for (const [key, re] of Object.entries(ANCHORS)) {
