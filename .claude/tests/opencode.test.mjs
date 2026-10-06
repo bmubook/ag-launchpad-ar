@@ -203,6 +203,9 @@ check('OC files: each reviewer is a read-only subagent pointing at its Claude Co
   const text = existsSync(path) ? readFileSync(path, 'utf8') : '';
   return text.includes('mode: subagent') && /action: edit\r?\n\s+resource: "\*"\r?\n\s+effect: deny/.test(text) && text.includes(`.claude/agents/${file}`);
 }), agents.join(','));
+const qualitySetup = readFileSync(join(REPO, '.claude/skills/quality-setup/SKILL.md'), 'utf8');
+check('OC files: /quality-setup keeps the OpenCode layer out of the formatter and linter (an update failed format:check without it)',
+  /استثنِ ملفات القالب من المنسّق والمدقق/.test(qualitySetup) && ['.opencode/', 'opencode.json', '.cursor/', '.claude/'].every((p) => qualitySetup.includes(`\`${p}\``)));
 const plugin = await import(pathToFileURL(join(REPO, '.opencode/plugins/ag-launchpad.js')).href);
 check('OC files: the plugin uses the V2 shape (default export with id and setup)', plugin.default?.id === 'ag-launchpad' && typeof plugin.default.setup === 'function');
 
