@@ -13,6 +13,7 @@ import {
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
 import { hostTraits } from './lib/host.mjs';
+import { writeRoadmap } from '../scripts/roadmap/page.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts } from './lib/quality.mjs';
 import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
@@ -64,6 +65,19 @@ function governanceMessage(relPath) {
     + 'فأخبره صراحةً في ردك بما غيّرته في هذا الملف ولماذا.';
 }
 
+const ROADMAP_SOURCES = new Set(['project_map.md', 'changelog.md']);
+const ROADMAP_CREATED = '🗺️ أُنشئت خارطة الطريق docs/roadmap.html، وتتحدث تلقائياً كلما تغيّر project_map.md. '
+  + 'أخبر المستخدم في ردك بجملة واحدة أنه يرى منها أين وصل مشروعه: يفتحها بالنقر المزدوج، أو تفتحها له بالأمر node .claude/scripts/roadmap.mjs --open.';
+
+/** خارطة الطريق تتبع project_map.md؛ أول إنشاء لها يُبلَّغ به المستخدم. أي فشل هنا لا يوقف الجلسة. */
+function refreshRoadmap() {
+  try {
+    return writeRoadmap(projectDir()).created ? ROADMAP_CREATED : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * أسطر هذا التعديل لحد الخطوة. أداة ترسل محتوى الملف كاملاً حتى عند تغيير سطر واحد (Cursor)
  * يُحسب لها الفرق عن آخر حجم معروف للملف في الجلسة، لا الملف كله في كل مرة.
@@ -94,6 +108,10 @@ runHook(async () => {
   else delete session.warned[relPath];
   if (newCeilingStatus || status === 'hard') messages.push(ceilingMessage(relPath, lines, rule, status));
   if (!hostTraits(input.host).approvalPrompt && PROTECTED_INSTRUCTION_PATHS.some((re) => re.test(relPath))) messages.push(governanceMessage(relPath));
+  if (ROADMAP_SOURCES.has(relPath) && readProjectState().kickedOff) {
+    const note = refreshRoadmap();
+    if (note) messages.push(note);
+  }
 
   if (needsVerification(relPath)) {
     const found = scanShortcuts(relPath, added);

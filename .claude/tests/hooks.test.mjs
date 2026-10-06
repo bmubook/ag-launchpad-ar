@@ -269,5 +269,6 @@ await import('./gate.test.mjs');
 await import('./hosts.test.mjs');
 await import('./attacks.test.mjs');
 await import('./opencode.test.mjs');
+await import('./roadmap.test.mjs');
 
 report();
