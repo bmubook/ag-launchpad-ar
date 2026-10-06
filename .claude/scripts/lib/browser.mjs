@@ -19,7 +19,8 @@ export function openInBrowser(file, label, { dryRun = false, platform = process.
   const child = spawn(opener.command, opener.args, { ...opener.options, detached: true, stdio: 'ignore', windowsHide: true });
   child.once('spawn', () => {
     child.unref();
-    process.stdout.write(`✅ فُتح ${label} في المتصفح: ${file}\n`);
+    // «تم فتح» تصلح للمذكّر (مولّد الإقلاع) والمؤنث (خارطة الطريق)
+    process.stdout.write(`✅ تم فتح ${label} في المتصفح: ${file}\n`);
   });
   child.once('error', () => {
     process.stdout.write(`⚠️ تعذّر فتح المتصفح تلقائياً. افتح هذا الملف يدوياً بالنقر المزدوج:\n${file}\n`);
