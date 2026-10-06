@@ -28,10 +28,12 @@ function projectMap({ name = 'متجر راهو', color = 'أزرق ملكي #3b
       : ['| - | لا توجد تدفقات بعد | - | - | - | - | - | - | - |']), '', '</div>'].join('\n');
 }
 
-// ---------- القالب نفسه قبل الإقلاع
-const template = roadmapData(REPO);
-check('RM template: before kickoff the journey points at kickoff, phases are tentative', stationOf(template) === 'kickoff'
-  && template.tentative && template.next.command === '/kickoff' && template.phases.length > 0, JSON.stringify(template.stations));
+// ---------- قبل الإقلاع: ملف تجربة لا project_map.md الحقيقي، فالاختبارات تُشغَّل أيضاً داخل مشاريع أُقلعت
+freshProject();
+write('project_map.md', projectMap({ name: '[يُملأ من المستخدم]', stack: '[لم يُحدد بعد]' }));
+const template = roadmapData(tmp);
+check('RM before kickoff: the journey points at kickoff, phases are tentative', stationOf(template) === 'kickoff'
+  && template.tentative && template.next.command === '/kickoff' && template.phases.length > 0 && template.project === 'مشروعك', JSON.stringify(template.stations));
 
 // ---------- محطات الرحلة كما تُحسب من ملفات المشروع
 freshProject();
