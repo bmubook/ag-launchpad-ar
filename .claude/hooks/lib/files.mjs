@@ -2,6 +2,7 @@
  * ملفات المشروع على القرص — يشترك فيه size-report.mjs و health-report.mjs وبوابة الإثبات.
  * changedSince يكمّل سجل أدوات التعديل: تعديل بأمر طرفية (sed، سكربت، مولّد كود) لا يمر بـ Hook ما بعد التعديل.
  */
+import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { isCodeFile } from './common.mjs';
@@ -68,16 +69,25 @@ export function changedSince(root, since, windows = []) {
   return changed;
 }
 
-/** ملفات تطابق أحد patterns تغيّرت على القرص بعد اللحظة since، أياً كان نوعها (مثل ملفات الحوكمة). */
-export function changedMatching(root, since, patterns) {
-  if (!since) return [];
-  const changed = [];
+/**
+ * بصمة محتوى كل ملف يطابق أحد patterns: { المسار: sha256 }. تُقارن بصمتان لمعرفة ما تغيّر محتواه فعلاً؛
+ * وقت التعديل لا يكفي هنا لأن أوامر Git (الانتقال بين الفروع، الدمج) تعيد كتابة الملفات بالمحتوى نفسه.
+ */
+export function fingerprint(root, patterns) {
+  const prints = {};
   let seen = 0;
   for (const rel of walkFiles(root)) {
     if (++seen > MAX_SCAN) break;
-    if (patterns.some((re) => re.test(rel)) && modifiedAt(root, rel) > since) changed.push(rel);
+    if (!patterns.some((re) => re.test(rel))) continue;
+    try { prints[rel] = createHash('sha256').update(readFileSync(join(root, rel))).digest('hex'); } catch { /* حُذف أثناء المسح */ }
   }
-  return changed;
+  return prints;
+}
+
+/** الملفات التي أُضيفت أو حُذفت أو تغيّر محتواها بين بصمتين. */
+export function changedPrints(before, after) {
+  const paths = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return [...paths].filter((rel) => before[rel] !== after[rel]).sort();
 }
 
 /** وقت آخر تعديل لملف، أو 0 إذا لم يوجد. */

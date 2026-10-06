@@ -135,9 +135,10 @@ export function loadSession(sessionId) {
       shortcuts: data.shortcuts && typeof data.shortcuts === 'object' ? data.shortcuts : {},
       sizes: data.sizes && typeof data.sizes === 'object' ? data.sizes : {},
       turnStartedAt: Number(data.turnStartedAt) || 0,
+      governance: data.governance && typeof data.governance === 'object' ? data.governance : null,
     };
   } catch {
-    return { prompts: 0, edited: [], warned: {}, shortcuts: {}, sizes: {}, turnStartedAt: 0 };
+    return { prompts: 0, edited: [], warned: {}, shortcuts: {}, sizes: {}, turnStartedAt: 0, governance: null };
   }
 }
 

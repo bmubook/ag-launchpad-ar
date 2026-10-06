@@ -143,5 +143,19 @@ write('.claude/settings.local.json', '{"permissions":{"allow":["Bash(npm test)"]
 check('G: settings.local.json written by the app itself ("always allow") → no notice', stop('g3').out === '', stop('g3').out);
 write('CLAUDE.md', '# changed\n');
 check('G: no turn start recorded → no scan, no false notice', stop('g-fresh').out === '', stop('g-fresh').out);
+// انتقال Git بين الفروع أو الدمج يعيد كتابة الملفات بالمحتوى نفسه (كشفه نشر v4.8.0): لا تنبيه إلا لتغيّر المحتوى
+write('AGENTS.md', '# a\n');
+newTurn('g4');
+write('AGENTS.md', '# a\n');
+write('.claude/hooks/guard-secrets.mjs', readFileSync(join(tmp, '.claude/hooks/guard-secrets.mjs')));
+check('G: same content rewritten (git checkout / merge) → no notice', stop('g4').out === '', stop('g4').out);
+newTurn('g5');
+write('.claude/skills/x-guide/SKILL.md', '# دليل معدّل\n');
+const shellRewrite = blockReason(stop('g5'));
+check('G: content really changed by a shell command → notice names that file only', shellRewrite.includes('x-guide')
+  && !shellRewrite.includes('AGENTS.md'), shellRewrite);
+newTurn('g6');
+write('.agents/new-rule.md', 'تعليمات جديدة\n');
+check('G: a new governance file created by a shell command → notice', blockReason(stop('g6')).includes('.agents/new-rule.md'), stop('g6').out);
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) report();

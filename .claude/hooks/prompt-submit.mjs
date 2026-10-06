@@ -6,9 +6,11 @@
  * 3) في أداة لا توصل سياق بداية الجلسة للنموذج (Cursor): يحقن ملخص الحالة مع أول رسالة في المحادثة.
  */
 import {
-  addContext, loadSession, pruneOldSessions, readProjectState, readStdinJson, runHook, saveSession,
+  addContext, loadSession, projectDir, pruneOldSessions, readProjectState, readStdinJson, runHook, saveSession,
 } from './lib/common.mjs';
+import { fingerprint } from './lib/files.mjs';
 import { hostTraits } from './lib/host.mjs';
+import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { buildSessionContext } from './lib/summary.mjs';
 
 const CHECKPOINT_EVERY = 15;
@@ -30,7 +32,11 @@ runHook(async () => {
   const prompts = session.prompts + 1;
   // turnStartedAt: يكشف به Hook التوقف ما عُدّل في هذه الجولة بأوامر الطرفية. ساعة نظام الملفات في Linux والماك خشنة
   // تتأخر بضعة أجزاء من الثانية عن Date.now()، فملف عُدّل فور بدء الجولة قد يحمل وقتاً أقدم منها؛ لذلك الهامش.
-  saveSession(input.session_id, { ...session, prompts, edited: [], shortcuts: {}, turnStartedAt: Date.now() - FS_CLOCK_SLACK_MS });
+  // governance: بصمة محتوى ملفات الحوكمة، يقارن بها Hook التوقف ما تغيّر منها بأمر طرفية
+  saveSession(input.session_id, {
+    ...session, prompts, edited: [], shortcuts: {}, turnStartedAt: Date.now() - FS_CLOCK_SLACK_MS,
+    governance: fingerprint(projectDir(), PROTECTED_INSTRUCTION_PATHS),
+  });
   const context = [];
   if (!hostTraits(input.host).sessionContext && prompts === 1) {
     pruneOldSessions();

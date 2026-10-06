@@ -12,7 +12,7 @@ import {
   emit, isCodeFile, loadSession, projectDir, readProjectState, readStdinJson, runHook, truncate,
 } from './lib/common.mjs';
 import { collectTests, isCovered, isLogicFile } from './lib/coverage.mjs';
-import { changedMatching, changedSince, modifiedAt, readText } from './lib/files.mjs';
+import { changedPrints, changedSince, fingerprint, modifiedAt, readText } from './lib/files.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
   gateStatus, loadQuality, needsVerification, setOpenShortcuts, verifyCommand, verifyWindows,
@@ -44,9 +44,11 @@ const SELF_WRITTEN = /^\.claude\/settings\.local\.json$/i;
 /**
  * ملفات حوكمة تغيّرت على القرص في هذه الجولة دون أن تمر بأداة تعديل: كُتبت بأمر طرفية لم يتعرف عليه الحارس
  * (دالة ‎.NET، متغير يخفي المسار، سكربت)، فلم يُسأل المستخدم عنها. خط دفاع ثانٍ بعد lib/threats.mjs.
+ * المقارنة بالمحتوى مع بصمة بداية الجولة (prompt-submit.mjs)، فانتقال Git بين الفروع لا يُحسب تغييراً.
  */
 function governanceChangedByShell(root, session) {
-  return changedMatching(root, session.turnStartedAt, PROTECTED_INSTRUCTION_PATHS)
+  if (!session.governance) return [];
+  return changedPrints(session.governance, fingerprint(root, PROTECTED_INSTRUCTION_PATHS))
     .filter((rel) => !session.edited.includes(rel) && !SELF_WRITTEN.test(rel));
 }
 
