@@ -2,7 +2,7 @@
 // وعدّ الاختبارات، وكاشف الاختصارات وأعراف التغطية في هذه اللغات، وسرد الملفات عبر Git.
 // تُشغَّل ضمن hooks.test.mjs، أو وحدها: node .claude/tests/stacks.test.mjs
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { check, ctx, freshProject, report, runNode, tmp } from './helpers.mjs';
@@ -65,11 +65,12 @@ freshProject({ kicked: true });
 write('pom.xml', '<project/>');
 check('JVM: Maven → test + package', names() === 'maven:test,maven:build' && cmd('maven:test') === 'mvn -B test', names());
 write(WIN ? 'mvnw.cmd' : 'mvnw');
-check('JVM: Maven wrapper preferred', cmd('maven:test') === `${WIN ? 'mvnw.cmd' : './mvnw'} -B test`, cmd('maven:test'));
+// بمسار نسبي صريح: Claude Code يمنع cmd في Windows من البحث في المجلد الحالي
+check('JVM: Maven wrapper preferred, by explicit relative path', cmd('maven:test') === `${WIN ? '.\\mvnw.cmd' : './mvnw'} -B test`, cmd('maven:test'));
 freshProject({ kicked: true });
 write('build.gradle.kts', '');
 write(WIN ? 'gradlew.bat' : 'gradlew');
-check('JVM: Gradle wrapper → test + assemble', cmd('gradle:test') === `${WIN ? 'gradlew.bat' : './gradlew'} test` && names() === 'gradle:test,gradle:build', names());
+check('JVM: Gradle wrapper → test + assemble', cmd('gradle:test') === `${WIN ? '.\\gradlew.bat' : './gradlew'} test` && names() === 'gradle:test,gradle:build', names());
 freshProject({ kicked: true });
 write('Shop.sln', ''); write('.editorconfig', 'root = true\n');
 check('NET: one solution → format, build, test --no-build', names() === 'dotnet:format,dotnet:types,dotnet:test' && cmd('dotnet:test') === 'dotnet test "Shop.sln" --no-build', names());
@@ -181,6 +182,22 @@ if (git('init', '-q').status === 0) {
   check('GIT: changedSince follows .gitignore (generated/ skipped, src/ kept)', changed.includes('src/a.ts') && !changed.some((f) => f.startsWith('generated/')), JSON.stringify(changed));
   const prints = probe('files', "Object.keys(m.fingerprint(root, [/^\\.claude\\/launchpad\\.json$/]))");
   check('GIT: governance fingerprint still sees a gitignored .claude/', JSON.stringify(prints) === '[".claude/launchpad.json"]', JSON.stringify(prints));
+  // ملف تعليمات في مجلد متجاهَل: Claude Code يحمّله، فيبقى في البصمة (مراجعة الأمن)
+  write('generated/CLAUDE.md', '# injected\n');
+  const nested = probe('files', "Object.keys(m.fingerprint(root, [/(^|\\/)CLAUDE\\.md$/]))");
+  check('GIT: an instruction file inside a gitignored folder is still fingerprinted', JSON.stringify(nested) === '["generated/CLAUDE.md"]', JSON.stringify(nested));
+  // .git/info/exclude لا يظهر في المشروع، فلا يُخفى به ملف عن البوابة
+  write('.git/info/exclude', 'hidden/\n'); write('hidden/c.ts', 'export const c = 1;\n');
+  check('GIT: .git/info/exclude does not hide changes from the gate', probe('files', 'm.changedSince(root, 1)').includes('hidden/c.ts'));
+  // وحدة فرعية: Git يسردها مساراً واحداً، فتُمسح ملفاتها من القرص
+  write('libs/sub/d.ts', 'export const d = 1;\n');
+  spawnSync('git', ['init', '-q'], { cwd: join(tmp, 'libs/sub') });
+  write('.gitmodules', '[submodule "libs/sub"]\n\tpath = libs/sub\n\turl = ./libs/sub\n');
+  check('GIT: files inside a submodule are still checked', probe('files', 'm.changedSince(root, 1)').includes('libs/sub/d.ts'));
+  // core.fsmonitor أمر يشغّله Git نفسه؛ ضبطه بأمر طرفية لا يجعل الحارس ينفّذه مع كل Hook
+  git('config', 'core.fsmonitor', 'node -e "require(\'fs\').writeFileSync(\'fsmonitor-ran\', \'x\')"');
+  probe('files', 'm.changedSince(root, 1).length');
+  check('GIT: the listing never runs core.fsmonitor', !existsSync(join(tmp, 'fsmonitor-ran')));
 } else {
   check('GIT: git is available for the listing tests', false, git('--version').stderr);
 }

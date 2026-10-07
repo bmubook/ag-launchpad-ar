@@ -10,10 +10,11 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { projectDir, toProjectRelative } from './common.mjs';
 import {
-  DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MUTATING_COMMANDS, MUTATING_GIT, PROJECT_KEY_FILES,
-  PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER,
+  DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MAX_COMMAND_CHARS, MUTATING_COMMANDS, MUTATING_GIT,
+  PROJECT_KEY_FILES, PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER,
   SECRET_STORES, SHELL_WRAPPERS, UPLOAD, URL_HOST,
 } from './patterns.mjs';
+import { assignedValues, expandVariables } from './shell-vars.mjs';
 
 const SEVERITY = { allow: 0, ask: 1, deny: 2 };
 const WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Delete']);
@@ -102,27 +103,7 @@ function tamperDecision(segment, insideProtected) {
   return tamperAsk(targets);
 }
 
-const PS_ASSIGNMENT = /\$(?:env:)?([A-Za-z_]\w*)\s*=\s*([^;\n]+)/g;
-const SH_ASSIGNMENT = /(?:^|[\s;&|(])([A-Za-z_]\w*)=("[^"]*"|'[^']*'|[^\s;&|)]+)/g;
-
-/**
- * المتغيرات التي يُسند إليها مسار داخل الأمر نفسه (‎$p = "$PWD\AGENTS.md"‎ أو p=.claude)، بقيمها بعد التوسيع.
- * كشفتها تجربة حية: النموذج حفظ مسار ملف الحوكمة في متغير ثم كتب فيه، ففلت من المطابقة المباشرة.
- */
-function assignedValues(command) {
-  const values = new Map();
-  const assignments = [...command.matchAll(PS_ASSIGNMENT), ...command.matchAll(SH_ASSIGNMENT)].sort((a, b) => a.index - b.index);
-  for (const [, name, raw] of assignments) values.set(name, expandVariables(unquote(raw.trim()), values));
-  return values;
-}
-
-function expandVariables(segment, values) {
-  let expanded = segment;
-  for (const [name, value] of values) {
-    expanded = expanded.replace(new RegExp(`\\$\\{?(?:env:)?${name}\\}?(?!\\w)`, 'g'), () => value);
-  }
-  return expanded;
-}
+const TOO_COMPLEX = decide('ask', '🛡️ هذا الأمر يبني مساراته من متغيرات كثيرة أو طويلة، فلا يستطيع الحارس فحصه كاملاً. وافق فقط إذا كنت تعرف ما يفعله.');
 
 const entersProtectedDir = (segment) => /^(?:cd|chdir|pushd|set-location|sl)$/.test(headWord(segment).head) && protectedTargets(segment).length > 0;
 
@@ -186,14 +167,25 @@ export function checkCommandThreats(command) {
   // علامات التنصيص المهرَّبة (\" و \') كما يكتبها بعض النماذج تُعاد إلى أصلها، وإلا تحولت الشرطة المائلة إلى جزء من المسار
   const text = String(command || '').replace(/\\(?=["'])/g, '');
   if (!text.trim()) return null;
-  let insideProtected = false;
+  const whole = [remoteExecDecision(text), uploadDecision(text), keychainDecision(text)];
   const variables = assignedValues(slashes(text));
-  const perSegment = segments(text).map((segment) => expandVariables(segment, variables)).flatMap((segment) => {
+  // توسيع المقاطع كلها بميزانية واحدة: متغيرات كثيرة الاستعمال تضخّم الأمر أضعافاً، فيُسأل عنه المستخدم بدل فحصه
+  const expanded = [];
+  let size = 0;
+  for (const segment of variables ? segments(text) : []) {
+    const value = expandVariables(segment, variables);
+    size += value === null ? Infinity : value.length;
+    if (size > 2 * MAX_COMMAND_CHARS) break;
+    expanded.push(value);
+  }
+  if (!variables || size > 2 * MAX_COMMAND_CHARS) return strongest([TOO_COMPLEX, ...whole]);
+  let insideProtected = false;
+  const perSegment = expanded.flatMap((segment) => {
     const found = [tamperDecision(segment, insideProtected), secretsDecision(segment)];
     insideProtected = insideProtected || entersProtectedDir(segment);
     return found;
   });
-  return strongest([remoteExecDecision(text), uploadDecision(text), keychainDecision(text), xargsDecision(text), ...perSegment]);
+  return strongest([...whole, xargsDecision(text), ...perSegment]);
 }
 
 function isHomeNpmrc(filePath) {

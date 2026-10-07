@@ -67,6 +67,7 @@ let settings = p.json('.claude/settings.json');
 check('KIT: own hook and permission kept, kit hooks added for the five events', settings.hooks.PostToolUse[0].hooks[0].command === 'echo mine'
   && settings.permissions.allow.includes('Bash(npm test)') && kitCommands(settings).length === 5, JSON.stringify(settings).slice(0, 500));
 check('KIT: secrets deny list and status line added', settings.permissions.deny.includes('Read(.env)') && settings.statusLine.command.includes('.claude/launchpad/statusline.mjs'));
+check('KIT: destructive Git and rm -rf ask first, as in the full template', settings.permissions.ask.includes('Bash(git reset --hard:*)') && settings.permissions.ask.includes('Bash(rm -rf:*)'), JSON.stringify(settings.permissions.ask));
 check('KIT: .gitignore gets the state folder', p.read('.gitignore').includes('.claude/state/'));
 check('KIT: agent rules stay short (under 5 KB)', p.read('.claude/rules/launchpad-guard.md').length < 5000);
 
@@ -152,10 +153,24 @@ const broken = project();
 broken.put('.claude/settings.json', '{ "hooks": ');
 r = broken.install();
 check('KS: invalid settings.json → exit 1, nothing written', r.code === 1 && r.out.includes('JSON') && !broken.has('.claude/launchpad') && broken.read('.claude/settings.json') === '{ "hooks": ', r.out);
+for (const shape of [{ hooks: [] }, { hooks: { Stop: {} } }, { permissions: { deny: 'Read(.env)' } }]) {
+  const odd = project({ settings: shape });
+  r = odd.install();
+  check(`KS: settings of an unexpected shape ${JSON.stringify(shape)} → exit 1, nothing written`,
+    r.code === 1 && r.out.includes('بشكل غير متوقع') && !odd.has('.claude/launchpad') && JSON.stringify(odd.json('.claude/settings.json')) === JSON.stringify(shape), r.out);
+}
 check('KS: template folder itself → refused', spawnSync('node', [join(REPO, '.claude/scripts/guard-install.mjs'), REPO], { encoding: 'utf8' }).status === 1);
 const full = project();
 full.put('master_rules.md', '#\n'); full.put('.claude/hooks/stop-gate.mjs', '');
 check('KS: a full-template project → refused (guards already there)', full.install().code === 1);
+// المجلد الشخصي فيه ~/.claude، أي إعدادات Claude Code لكل المشاريع
+const home = project({ node: false, git: false });
+r = spawnSync('node', [join(REPO, '.claude/scripts/guard-install.mjs'), home.dir], { encoding: 'utf8', env: { ...process.env, HOME: home.dir, USERPROFILE: home.dir } });
+check('KS: the home folder → refused, nothing written', r.status === 1 && `${r.stdout}${r.stderr}`.includes('مجلدك الشخصي') && !home.has('.claude'), r.stdout + r.stderr);
+const foreign = project();
+foreign.put('.claude/launchpad/notes.txt', 'not the kit\n');
+r = foreign.install();
+check('KS: an existing .claude/launchpad not made by the kit → refused, untouched', r.code === 1 && r.out.includes('manifest') && foreign.read('.claude/launchpad/notes.txt') === 'not the kit\n' && !foreign.has('.claude/launchpad/hooks'), r.out);
 check('KS: missing folder or unknown flag → exit 1 with usage', spawnSync('node', [join(REPO, '.claude/scripts/guard-install.mjs'), join(tmpdir(), 'aglp-missing-dir')], { encoding: 'utf8' }).status === 1
   && p.install('--remvoe').out.includes('خيار غير معروف'));
 

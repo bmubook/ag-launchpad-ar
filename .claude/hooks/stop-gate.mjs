@@ -106,11 +106,12 @@ runHook(async () => {
   const root = projectDir();
   const session = loadSession(input.session_id);
   const quality = loadQuality(root);
+  // فحص ملفات الحوكمة أولاً: هو خط الدفاع الثاني، فلا يتأخر خلف مسح الاختصارات
+  const governance = governanceChangedByShell(root, session);
+  const problems = governance.length ? [governanceProblem(governance)] : [];
   const touched = touchedThisTurn(root, session, quality);
   // يُحدَّث سجل الاختصارات في كل جولة، حتى لو أُصلح الاختصار بأمر طرفية أو خارج الجلسة
   const open = openShortcuts(root, session, touched, quality);
-  const governance = governanceChangedByShell(root, session);
-  const problems = governance.length ? [governanceProblem(governance)] : [];
   const codeFiles = touched.filter(isCodeFile);
   if (!codeFiles.length) return block(problems);
 

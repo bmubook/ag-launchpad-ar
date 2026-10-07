@@ -272,5 +272,6 @@ await import('./opencode.test.mjs');
 await import('./roadmap.test.mjs');
 await import('./stacks.test.mjs');
 await import('./kit.test.mjs');
+await import('./redos.test.mjs');
 
 report();

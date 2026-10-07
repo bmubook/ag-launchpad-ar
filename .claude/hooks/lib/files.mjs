@@ -5,7 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { isCodeFile } from './common.mjs';
 
 const IGNORED_DIRS = new Set([
@@ -32,17 +32,54 @@ export function needsVerification(relPath) {
   return isCodeFile(relPath) && !NOT_VERIFIABLE.some((re) => re.test(relPath));
 }
 
+// قائمة Git محفوظة لكل عملية: الـ Hook الواحد يسرد الملفات أكثر من مرة، والملفات لا تتغير بين المرات
+const gitListings = new Map();
+// الحجة المعتمدة لـ Git: core.fsmonitor أمر يشغّله Git نفسه، فيمكن أن يُضبط ليشغّل أي شيء مع كل Hook
+const GIT_LIST = ['-c', 'core.fsmonitor=false', 'ls-files', '-z', '--cached', '--others', '--exclude-per-directory=.gitignore'];
+
+/** على Windows يبحث النظام عن البرنامج في المجلد الحالي قبل PATH، فلا يُشغَّل git.exe موضوع في المشروع بدل Git. */
+function withoutCurrentDirLookup(run) {
+  if (process.platform !== 'win32') return run();
+  const previous = process.env.NoDefaultCurrentDirectoryInExePath;
+  process.env.NoDefaultCurrentDirectoryInExePath = '1';
+  try {
+    return run();
+  } finally {
+    if (previous === undefined) delete process.env.NoDefaultCurrentDirectoryInExePath;
+    else process.env.NoDefaultCurrentDirectoryInExePath = previous;
+  }
+}
+
 /**
- * ملفات المشروع كما يعرفها Git: المتتبَّعة والجديدة غير المتجاهَلة. أسرع من مسح القرص في المستودعات الكبيرة،
- * ويستبعد مخرجات البناء في أي لغة (bin/ و obj/ في .NET مثلاً). null إذا لم يكن الجذر مستودع Git أو لم يتوفر git.
+ * ملفات المشروع كما يعرفها Git: المتتبَّعة والجديدة، عدا ما تتجاهله ملفات .gitignore في المشروع نفسه.
+ * أسرع من مسح القرص في المستودعات الكبيرة، ويستبعد مخرجات البناء في أي لغة (bin/ و obj/ في .NET مثلاً).
+ * لا يُعتمد .git/info/exclude ولا ملف التجاهل العام: كلاهما لا يظهر في المشروع، فلا يُخفى به ملف عن البوابة.
+ * null إذا لم يكن الجذر مستودع Git أو لم يتوفر git.
  */
 function gitFiles(root) {
-  if (!existsSync(join(root, '.git'))) return null;
-  const result = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
-    cwd: root, encoding: 'utf8', timeout: 5000, maxBuffer: 64 * 1024 * 1024, windowsHide: true,
-  });
-  if (result.error || result.status !== 0) return null;
-  return result.stdout.split('\0').filter(Boolean);
+  if (gitListings.has(root)) return gitListings.get(root);
+  let files = null;
+  if (existsSync(join(root, '.git'))) {
+    const result = withoutCurrentDirLookup(() => spawnSync('git', GIT_LIST, {
+      cwd: root, encoding: 'utf8', timeout: 5000, maxBuffer: 64 * 1024 * 1024, windowsHide: true,
+    }));
+    if (!result.error && result.status === 0) files = result.stdout.split('\0').filter(Boolean);
+  }
+  gitListings.set(root, files);
+  return files;
+}
+
+/** مسارات الوحدات الفرعية (submodules) داخل المشروع: Git يسرد الوحدة مساراً واحداً، فتُمسح ملفاتها من القرص. */
+function submoduleDirs(root) {
+  const text = readText(root, '.gitmodules') || '';
+  return text.split(/\r?\n/)
+    .map((line) => line.trim().match(/^path\s*=\s*(.+)$/)?.[1])
+    .filter(Boolean)
+    .map((path) => resolve(root, path))
+    .filter((dir) => {
+      const inside = relative(root, dir);
+      return inside && !inside.startsWith('..') && !isAbsolute(inside);
+    });
 }
 
 const inIgnoredDir = (rel) => rel.startsWith('.claude/state/') || rel.split('/').slice(0, -1).some((part) => IGNORED_DIRS.has(part));
@@ -67,8 +104,12 @@ function* walkDisk(root, dir, budget) {
 /** يولّد المسارات النسبية (بشرطات أمامية) لملفات المشروع عدا المتجاهَلة وملفات الحالة: من Git إن أمكن، وإلا من القرص. */
 export function* walkFiles(root) {
   const listed = gitFiles(root);
-  if (listed) yield* listed.filter((rel) => !inIgnoredDir(rel)).slice(0, MAX_GIT_SCAN);
-  else yield* walkDisk(root, root, { left: MAX_SCAN });
+  if (!listed) {
+    yield* walkDisk(root, root, { left: MAX_SCAN });
+    return;
+  }
+  yield* listed.filter((rel) => !inIgnoredDir(rel)).slice(0, MAX_GIT_SCAN);
+  for (const dir of submoduleDirs(root)) yield* walkDisk(root, dir, { left: MAX_SCAN });
 }
 
 /** نص الملف، أو null إذا كان أكبر من 2MB أو غير قابل للقراءة. */
@@ -99,15 +140,16 @@ export function changedSince(root, since, windows = []) {
   return changed;
 }
 
-/** ملفات الحوكمة المرشحة للبصمة: ما يعرفه المسح العام + مجلدات الحوكمة وملفات الجذر من القرص مباشرة. */
+/**
+ * ملفات الحوكمة المرشحة للبصمة: ما يعرفه Git + القرص كله، لأن Claude Code يحمّل CLAUDE.md في مجلد فرعي
+ * حتى لو تجاهله Git، + مجلدات الحوكمة كاملة دائماً (مسح القرص العام قد يبلغ حده قبلها).
+ */
 function governanceCandidates(root) {
   const candidates = new Set(walkFiles(root));
+  for (const rel of walkDisk(root, root, { left: MAX_SCAN })) candidates.add(rel);
   for (const dir of GOVERNANCE_DIRS) {
     for (const rel of walkDisk(root, join(root, dir), { left: MAX_SCAN })) candidates.add(rel);
   }
-  try {
-    for (const entry of readdirSync(root, { withFileTypes: true })) if (entry.isFile()) candidates.add(entry.name);
-  } catch { /* الجذر غير قابل للقراءة */ }
   return candidates;
 }
 

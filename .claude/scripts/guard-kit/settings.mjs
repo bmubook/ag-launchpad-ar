@@ -12,7 +12,10 @@ const isKitCommand = (command) => String(command || '').replace(/\\/g, '/').incl
 const relocate = (command) => String(command)
   .replace('/.claude/hooks/', `/${KIT_MARK}hooks/`).replace('/.claude/statusline.mjs', `/${KIT_MARK}statusline.mjs`);
 
-/** Hooks القالب وسطر حالته وقواعد منع قراءة الأسرار، بمسارات الحقيبة. */
+// قوائم الصلاحيات التي تُدمج وتُزال: منع قراءة الأسرار، وسؤالك قبل أوامر Git المدمّرة و rm -rf، وقراءة نتيجة الفحص
+const PERMISSION_LISTS = ['deny', 'ask', 'allow'];
+
+/** Hooks القالب وسطر حالته وصلاحياته الحامية، بمسارات الحقيبة. */
 export function kitSettings(templateSettings) {
   const hooks = {};
   for (const [event, groups] of Object.entries(templateSettings.hooks || {})) {
@@ -23,6 +26,7 @@ export function kitSettings(templateSettings) {
     hooks,
     statusLine: line ? { ...line, command: relocate(line.command) } : null,
     deny: [...(templateSettings.permissions?.deny || [])],
+    ask: [...(templateSettings.permissions?.ask || [])],
     allow: KIT_ALLOW,
   };
 }
@@ -54,8 +58,9 @@ export function mergeSettings(existing, kit, previouslyAdded = {}) {
   for (const [event, groups] of Object.entries(kit.hooks)) settings.hooks[event] = [...(settings.hooks[event] || []), ...groups];
 
   const permissions = isObject(settings.permissions) ? settings.permissions : {};
-  const added = { deny: [...(previouslyAdded.deny || [])], allow: [...(previouslyAdded.allow || [])], statusLine: false };
-  for (const key of ['deny', 'allow']) {
+  const added = { statusLine: false };
+  for (const key of PERMISSION_LISTS) {
+    added[key] = [...(previouslyAdded[key] || [])];
     const rules = Array.isArray(permissions[key]) ? permissions[key] : [];
     for (const rule of kit[key]) {
       if (rules.includes(rule)) continue;
@@ -81,7 +86,7 @@ export function removeSettings(existing, added = {}) {
     if (!Object.keys(settings.hooks).length) delete settings.hooks;
   }
   if (isObject(settings.permissions)) {
-    for (const key of ['deny', 'allow']) {
+    for (const key of PERMISSION_LISTS) {
       if (!Array.isArray(settings.permissions[key])) continue;
       settings.permissions[key] = settings.permissions[key].filter((rule) => !(added[key] || []).includes(rule));
       if (!settings.permissions[key].length) delete settings.permissions[key];

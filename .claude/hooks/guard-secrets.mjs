@@ -15,8 +15,8 @@ import {
 } from './lib/common.mjs';
 import { hostTraits } from './lib/host.mjs';
 import {
-  ENFORCEMENT_PATHS, ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND,
-  SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
+  ENFORCEMENT_PATHS, ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, MAX_COMMAND_CHARS, PROTECTED_INSTRUCTION_PATHS,
+  READ_OR_EXFIL_COMMAND, SAFE_ENV_COMMANDS, SECRET_HIGH, SECRET_MEDIUM, SERVICE_ACCOUNT_REFERENCE,
 } from './lib/patterns.mjs';
 import { canonicalPath, checkCommandThreats, checkPathThreats, decide, strongest } from './lib/threats.mjs';
 
@@ -110,13 +110,23 @@ function checkShellCommand(command) {
   return decide('ask', `🔒 هذا الأمر يشير إلى ملف البيئة الحقيقي (${files}). وافق فقط إذا كنت متأكداً أنه لا يعرض محتواه.`);
 }
 
+/**
+ * أمر أطول من MAX_COMMAND_CHARS يُسأل عنه المستخدم دون فحص: الفحص الكامل لأمر ضخم مصنوع بعناية قد يتجاوز مهلة
+ * الـ Hook، فيمرّ الأمر دون أي فحص. الأوامر الطويلة المشروعة نادرة، ومكانها ملف سكربت يُراجَع.
+ */
+function checkCommand(command) {
+  const text = String(command || '');
+  if (text.length > MAX_COMMAND_CHARS) {
+    return decide('ask', `🛡️ هذا الأمر طويل جداً (${text.length} حرفاً)، فلا يستطيع الحارس فحصه كاملاً. وافق فقط إذا كنت تعرف ما يفعله؛ الأوامر الطويلة تُكتب عادةً في ملف سكربت يُراجَع قبل تشغيله.`);
+  }
+  return strongest([checkShellCommand(text), checkCommandThreats(text)]);
+}
+
 runHook(async () => {
   const input = await readStdinJson();
   const toolName = input.tool_name || '';
   const toolInput = input.tool_input || {};
-  const result = toolName === 'Bash' || toolName === 'PowerShell'
-    ? strongest([checkShellCommand(toolInput.command), checkCommandThreats(toolInput.command)])
-    : checkFileTool(toolName, toolInput);
+  const result = toolName === 'Bash' || toolName === 'PowerShell' ? checkCommand(toolInput.command) : checkFileTool(toolName, toolInput);
   if (!result || (result.soft && !hostTraits(input.host).approvalPrompt)) return;
   emit({
     hookSpecificOutput: {

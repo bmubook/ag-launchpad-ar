@@ -38,24 +38,33 @@ export function isLogicFile(relPath) {
 export function collectTests(root) {
   const stems = new Set();
   const goDirs = new Set();
-  let text = '';
+  const files = [];
   for (const rel of walkFiles(root)) {
     if (!isTestFile(rel) || !needsVerification(rel)) continue;
+    files.push(rel);
     stems.add(stem(rel));
     if (/_test\.go$/i.test(rel)) goDirs.add(dirOf(rel));
-    text += `${(readText(root, rel) || '').toLowerCase()}\n`;
   }
-  return { stems, text, goDirs, count: stems.size };
+  let text = null;
+  return {
+    stems, goDirs, count: stems.size,
+    // النصوص تُقرأ عند أول حاجة فقط: في مشروع فيه آلاف الاختبارات يكفي الاسم غالباً
+    get text() {
+      text ??= files.map((rel) => `${(readText(root, rel) || '').toLowerCase()}\n`).join('');
+      return text;
+    },
+  };
 }
 
 /** root اختياري: به يُقرأ ملف Rust نفسه بحثاً عن اختباراته الداخلية. */
 export function isCovered(relPath, tests, root = null) {
   const name = stem(relPath);
-  if (tests.stems.has(name) || [`/${name}'`, `/${name}"`, `/${name}.`, `'${name}'`, `"${name}"`].some((n) => tests.text.includes(n))) return true;
+  if (tests.stems.has(name)) return true;
+  // اختبارات Go تخص الحزمة كلها: أي ملف _test.go في المجلد نفسه يغطي ملفاته
+  if (/\.go$/i.test(relPath) && tests.goDirs?.has(dirOf(relPath))) return true;
+  if ([`/${name}'`, `/${name}"`, `/${name}.`, `'${name}'`, `"${name}"`].some((n) => tests.text.includes(n))) return true;
   const word = escapeRegex(name);
   if (/\.py$/i.test(relPath)) return new RegExp(`\\b(?:from|import)\\s+[\\w.]*\\b${word}\\b`).test(tests.text);
-  // اختبارات Go تخص الحزمة كلها: أي ملف _test.go في المجلد نفسه يغطي ملفاته
-  if (/\.go$/i.test(relPath)) return Boolean(tests.goDirs?.has(dirOf(relPath)));
   if (/\.rs$/i.test(relPath)) return tests.text.includes(`::${name}`) || /#\[cfg\(test\)\]/.test((root && readText(root, relPath)) || '');
   if (CLASS_NAMED.test(relPath)) return new RegExp(`(^|[^a-z0-9_])${word}($|[^a-z0-9_])`).test(tests.text);
   return false;

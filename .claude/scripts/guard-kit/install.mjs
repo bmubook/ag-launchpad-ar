@@ -6,7 +6,8 @@
 import {
   cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync, writeFileSync,
 } from 'node:fs';
-import { dirname, isAbsolute, join, relative } from 'node:path';
+import { homedir } from 'node:os';
+import { dirname, isAbsolute, join, parse, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectChecks } from '../../hooks/lib/checks.mjs';
 import { kitSettings, mergeSettings, removeSettings } from './settings.mjs';
@@ -58,12 +59,22 @@ export function templateVersion() {
   return versions.length ? versions[versions.length - 1][1] : '0.0.0';
 }
 
+/** هل child هو parent نفسه أو داخله؟ (relative في Windows لا يفرّق بين حالة الأحرف) */
+function isWithin(parent, child) {
+  const rel = relative(parent, child);
+  return !rel || (!rel.startsWith('..') && !isAbsolute(rel));
+}
+
 function checkTarget(target) {
   if (!existsSync(target) || !statSync(target).isDirectory()) throw new KitError(`لم أجد مجلد المشروع: ${target}`);
-  const inside = relative(TEMPLATE, target);
-  if (!inside || (!inside.startsWith('..') && !isAbsolute(inside))) {
+  // ~/.claude هو مجلد إعدادات Claude Code العامة: التركيب فيه يفرض الحواجز على كل مشاريع الجهاز
+  if (!relative(homedir(), target) || parse(target).root === target) {
+    throw new KitError('هذا مجلدك الشخصي أو جذر القرص، وفيه إعدادات Claude Code لكل مشاريعك. ركّب الحقيبة في مجلد مشروع واحد.');
+  }
+  if (isWithin(TEMPLATE, target)) {
     throw new KitError('هذا مجلد القالب نفسه أو مجلد داخله. ركّب الحقيبة في مشروعك: node .claude/scripts/guard-install.mjs <مسار مشروعك>');
   }
+  if (isWithin(join(target, KIT_DIR), TEMPLATE)) throw new KitError(`القالب نفسه داخل ${KIT_DIR} في هذا المشروع؛ انقله إلى مكان آخر أولاً.`);
   if (existsSync(join(target, 'master_rules.md')) && existsSync(join(target, '.claude', 'hooks', 'stop-gate.mjs'))) {
     throw new KitError('هذا المشروع يعمل بالقالب الكامل، وحواجزه فيه أصلاً؛ لا حاجة إلى الحقيبة.');
   }
@@ -71,7 +82,7 @@ function checkTarget(target) {
   if (link) throw new KitError(`${link} رابط رمزي (symlink)، فلا أكتب عبره احتياطاً. أزل الرابط ثم أعد الأمر.`);
 }
 
-/** إعدادات المشروع، أو null إن لم توجد. ملف تالف يوقف كل شيء قبل أي تغيير. */
+/** إعدادات المشروع، أو null إن لم توجد. ملف تالف، أو بشكل لا تفهمه الحقيبة، يوقف كل شيء قبل أي تغيير. */
 function readSettings(path) {
   if (!existsSync(path)) return null;
   const text = readFileSync(path, 'utf8').replace(/^﻿/, '');
@@ -79,7 +90,19 @@ function readSettings(path) {
   let value = null;
   try { value = JSON.parse(text); } catch { value = null; }
   if (!isObject(value)) throw new KitError(`${SETTINGS_FILE} ليس JSON صالحاً، فلم أغيّر شيئاً. أصلحه ثم أعد الأمر.`);
+  assertSettingsShape(value);
   return value;
+}
+
+/** hooks كائن قوائم، و permissions كائن قوائم: غير ذلك لا يُدمج فيه ولا يُحذف منه شيء. */
+function assertSettingsShape(settings) {
+  const unexpected = (field) => new KitError(`${SETTINGS_FILE}: الحقل ${field} بشكل غير متوقع، فلم أغيّر شيئاً. أصلحه ثم أعد الأمر.`);
+  if (settings.hooks !== undefined && !isObject(settings.hooks)) throw unexpected('hooks');
+  for (const [event, groups] of Object.entries(settings.hooks || {})) if (!Array.isArray(groups)) throw unexpected(`hooks.${event}`);
+  if (settings.permissions !== undefined && !isObject(settings.permissions)) throw unexpected('permissions');
+  for (const key of ['allow', 'deny', 'ask']) {
+    if (settings.permissions?.[key] !== undefined && !Array.isArray(settings.permissions[key])) throw unexpected(`permissions.${key}`);
+  }
 }
 
 /** يضيف سطر .claude/state/ إلى .gitignore إن لم يكن متجاهَلاً. خارج مستودع Git بلا .gitignore لا يُنشأ ملف. */
@@ -122,6 +145,10 @@ const sameConfig = (a, b) => isObject(a) && ['mode', 'ceilings', 'checks'].every
 export function install(target) {
   checkTarget(target);
   const previous = readJsonFile(join(target, MANIFEST_FILE)) || {};
+  // مجلد بالاسم نفسه لم تركّبه الحقيبة: لا يُحذف منه شيء ولا يُكتب فوقه
+  if (!previous.version && list(join(target, KIT_DIR)).length) {
+    throw new KitError(`${KIT_DIR} موجود في المشروع وليس من تركيب سابق للحقيبة (لا manifest.json فيه)، فلم أغيّر شيئاً. انقله أو أعد تسميته ثم أعد الأمر.`);
+  }
   const settingsPath = join(target, SETTINGS_FILE);
   const existing = readSettings(settingsPath);
   const templateSettings = readJsonFile(join(TEMPLATE, SETTINGS_FILE));

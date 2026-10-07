@@ -6,21 +6,19 @@
  * 3) يكشف الاختصارات في النص المضاف (البند 11): TODO، اختبار معطّل، خطأ مكتوم، فحص معطّل، بيانات وهمية...
  * 4) يسجّل التعديل «غير مفحوص» لبوابة الإثبات، وينبّه عند بلوغ حد الخطوة (البند 8).
  */
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import {
   addContext, loadSession, projectDir, readProjectState, readStdinJson, runHook, saveSession, toProjectRelative,
 } from './lib/common.mjs';
 import { ceilingFor, ceilingStatus, countLines } from './lib/ceilings.mjs';
+import { readText } from './lib/files.mjs';
 import { hostTraits } from './lib/host.mjs';
 import { CONFIG_FILE, GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts, verifyCommand } from './lib/quality.mjs';
 import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
 
-function readFile(relPath) {
-  try { return readFileSync(resolve(projectDir(), relPath), 'utf8'); } catch { return ''; }
-}
+/** نص الملف بعد التعديل؛ ملف أكبر من 2MB (مولّد غالباً) يُعامل كفارغ فلا يطول الـ Hook عن مهلته. */
+const readFile = (relPath) => readText(projectDir(), relPath) || '';
 
 /**
  * في الحقيبة سقف الحجم معطّل ما لم يُفعَّل (ceilings في .claude/launchpad.json): ملفات المشاريع القائمة كبيرة غالباً،

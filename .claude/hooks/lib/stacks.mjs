@@ -88,9 +88,15 @@ function rustSteps(dir) {
 const MAVEN = { id: 'maven', title: 'Maven' };
 const GRADLE = { id: 'gradle', title: 'Gradle' };
 
-/** غلاف الأداة داخل المشروع (mvnw / gradlew) يضمن الإصدار الذي يعتمده؛ وإلا فالأداة من PATH. */
+/**
+ * غلاف الأداة داخل المشروع (mvnw / gradlew) يضمن الإصدار الذي يعتمده؛ وإلا فالأداة من PATH.
+ * بمسار نسبي صريح: Claude Code يمنع cmd في Windows من البحث في المجلد الحالي (NoDefaultCurrentDirectoryInExePath).
+ */
 function wrapper(dir, name, fallback) {
-  if (WINDOWS) return [`${name}.cmd`, `${name}.bat`].find((file) => has(dir, file)) || fallback;
+  if (WINDOWS) {
+    const file = [`${name}.cmd`, `${name}.bat`].find((candidate) => has(dir, candidate));
+    return file ? `.\\${file}` : fallback;
+  }
   return has(dir, name) ? `./${name}` : fallback;
 }
 
