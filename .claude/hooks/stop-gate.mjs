@@ -12,7 +12,8 @@ import {
   emit, isCodeFile, loadSession, projectDir, readProjectState, readStdinJson, runHook, truncate,
 } from './lib/common.mjs';
 import { collectTests, isCovered, isLogicFile } from './lib/coverage.mjs';
-import { changedPrints, changedSince, fingerprint, modifiedAt, readText } from './lib/files.mjs';
+import { changedSince, modifiedAt, readText, walkWasTruncated } from './lib/files.mjs';
+import { changedPrints, fingerprint } from './lib/fingerprint.mjs';
 import { GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
@@ -22,21 +23,57 @@ import { scanFile } from './lib/shortcuts.mjs';
 
 const list = (files) => truncate(files.join('، '), 300);
 
+/*
+ * حدود Hook التوقف: مهلته 15 ث، وجولة لمست آلاف الملفات (touch جماعي مثلاً) قد تُطيل إعادة الفحص حتى ينقطع
+ * الـ Hook فيمرّ الرد دون أي فحص. ما لا يتسع له الوقت أو الحد يُعلَن «فحصاً جزئياً» ويوقف الإنهاء، ولا يُعد ناجحاً.
+ */
+const DEADLINE_MS = 8000;
+const MAX_RESCAN = 300;
+const MAX_LOGIC_CHECK = 100;
+const startedAt = Date.now();
+const late = () => Date.now() - startedAt > DEADLINE_MS;
+
 /** ملفات هذه الجولة: أدوات التعديل + تعديلات القرص منذ بدايتها (خارج فترات تشغيل الفحص نفسه). */
 function touchedThisTurn(root, session, quality) {
   const onDisk = session.turnStartedAt ? changedSince(root, session.turnStartedAt, verifyWindows(quality)) : [];
   return [...new Set([...session.edited, ...onDisk])];
 }
 
-/** يعيد فحص الملفات من القرص ويحدّث سجل الاختصارات الدائم؛ يعيد ما رُصد في هذه الجولة وما زال قائماً. */
-function openShortcuts(root, session, touched, quality) {
-  const recheck = [...new Set([...touched.filter(needsVerification), ...Object.keys(quality.shortcuts)])];
-  const current = Object.fromEntries(recheck.map((rel) => [rel, scanFile(rel, readText(root, rel) || '')]));
+/**
+ * يعيد فحص الملفات من القرص ويحدّث سجل الاختصارات الدائم؛ يعيد ما رُصد في هذه الجولة وما زال قائماً.
+ * الأولوية لما رُصد في هذه الجولة، وما لم يتسع له الوقت يُعد قائماً لا مُصلحاً.
+ */
+function openShortcuts(root, session, touched, quality, partial) {
+  const ordered = [...new Set([...Object.keys(session.shortcuts), ...Object.keys(quality.shortcuts), ...touched.filter(needsVerification)])];
+  const current = {};
+  for (const rel of ordered.slice(0, MAX_RESCAN)) {
+    if (late()) break;
+    current[rel] = scanFile(rel, readText(root, rel) || '');
+  }
+  if (Object.keys(current).length < ordered.length) partial.add('الاختصارات');
   setOpenShortcuts(Object.fromEntries(Object.entries(current).map(([rel, found]) => [rel, found.map((f) => f.kind)])), root);
-  return Object.entries(session.shortcuts)
-    .map(([rel, kinds]) => [rel, (current[rel] || []).filter((f) => kinds.includes(f.kind))])
-    .filter(([, still]) => still.length)
-    .map(([rel, still]) => `${rel} (${still.map((f) => f.label).join('؛ ')})`);
+  return Object.entries(session.shortcuts).flatMap(([rel, kinds]) => {
+    if (!(rel in current)) return [`${rel} (لم يُعد فحصه في الوقت المتاح)`];
+    const still = current[rel].filter((f) => kinds.includes(f.kind));
+    return still.length ? [`${rel} (${still.map((f) => f.label).join('؛ ')})`] : [];
+  });
+}
+
+/** ملفات منطق عُدّلت ولا يغطيها اختبار، في حدود الوقت وعدد الملفات. */
+function untestedLogic(root, logic, partial) {
+  const tests = collectTests(root);
+  const untested = [];
+  for (const rel of logic.slice(0, MAX_LOGIC_CHECK)) {
+    if (late()) break;
+    if (modifiedAt(root, rel) && !isCovered(rel, tests, root)) untested.push(rel);
+  }
+  if (logic.length > MAX_LOGIC_CHECK || late()) partial.add('تغطية الاختبارات');
+  return untested;
+}
+
+function partialProblem(parts, mode) {
+  return `⏱️ فحص جزئي: لمست هذه الجولة ملفات كثيرة، فلم يتسع الوقت لإعادة فحص ${[...parts].join(' و')} فيها كلها. `
+    + `راجع ما تغيّر (git status) وشغّل ${verifyCommand(mode)} قبل إنهاء الرد، وأخبر المستخدم إن كان التغيير الواسع مقصوداً.`;
 }
 
 // إعدادات شخصية يكتبها التطبيق نفسه (مثل «السماح دائماً» في Claude Code)، لا الوكيل
@@ -110,25 +147,28 @@ runHook(async () => {
   const governance = governanceChangedByShell(root, session);
   const problems = governance.length ? [governanceProblem(governance)] : [];
   const touched = touchedThisTurn(root, session, quality);
+  const partial = new Set();
+  // مشروع أكبر من حد المسح: ما لم يُمسح قد يكون عُدّل بأمر طرفية، فلا يُعدّ سليماً
+  if (walkWasTruncated(root)) partial.add('الملفات المعدّلة بأوامر الطرفية');
   // يُحدَّث سجل الاختصارات في كل جولة، حتى لو أُصلح الاختصار بأمر طرفية أو خارج الجلسة
-  const open = openShortcuts(root, session, touched, quality);
+  const open = openShortcuts(root, session, touched, quality, partial);
   const codeFiles = touched.filter(isCodeFile);
   if (!codeFiles.length) return block(problems);
 
   if (open.length) problems.push(shortcutsProblem(open));
 
+  const { mode } = readProjectState();
   const verifiable = touched.filter(needsVerification);
   if (verifiable.length) {
-    const { mode } = readProjectState();
     const gate = gateStatus(mode, root);
     if (!['green', 'none'].includes(gate)) problems.push(verifyProblem(gate, mode, verifiable, quality));
     const logic = verifiable.filter(isLogicFile);
     if (logic.length && gate !== 'none') {
-      const tests = collectTests(root);
-      const untested = logic.filter((rel) => modifiedAt(root, rel) && !isCovered(rel, tests, root));
+      const untested = untestedLogic(root, logic, partial);
       if (untested.length) problems.push(untestedProblem(untested));
     }
   }
+  if (partial.size) problems.push(partialProblem(partial, mode));
 
   if (GUARD_KIT) return block(problems);
   const logs = acceptedLogs(readProjectState().kickedOff);

@@ -18,6 +18,7 @@ const CLASS_TEST_SUFFIX = /Tests?(?=\.(cs|java|kts?|swift|php)$)/;
 const CLASS_NAMED = /\.(cs|java|kts?|swift|php)$/i;
 
 const dirOf = (rel) => rel.split('/').slice(0, -1).join('/');
+const MAX_TESTS_TEXT = 32 * 1024 * 1024;
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** اسم الملف دون المجلد واللاحقة وعلامات الاختبار: src/lib/tax.ts و tests/tax.test.ts و TaxTest.java ← tax */
@@ -48,9 +49,20 @@ export function collectTests(root) {
   let text = null;
   return {
     stems, goDirs, count: stems.size,
-    // النصوص تُقرأ عند أول حاجة فقط: في مشروع فيه آلاف الاختبارات يكفي الاسم غالباً
+    // النصوص تُقرأ عند أول حاجة فقط: في مشروع فيه آلاف الاختبارات يكفي الاسم غالباً.
+    // وبحد أعلى للحجم، فلا يطول Hook التوقف حتى ينقطع؛ ما بعد الحد يجعل الملف «غير مختبر» لا «مختبراً»
     get text() {
-      text ??= files.map((rel) => `${(readText(root, rel) || '').toLowerCase()}\n`).join('');
+      if (text === null) {
+        const parts = [];
+        let size = 0;
+        for (const rel of files) {
+          const content = readText(root, rel) || '';
+          size += content.length;
+          if (size > MAX_TESTS_TEXT) break;
+          parts.push(content.toLowerCase());
+        }
+        text = parts.join('\n');
+      }
       return text;
     },
   };

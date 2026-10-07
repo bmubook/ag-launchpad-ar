@@ -1,24 +1,21 @@
 /**
- * ملفات المشروع على القرص — يشترك فيه size-report.mjs و health-report.mjs وبوابة الإثبات.
+ * ملفات المشروع على القرص — يشترك فيه size-report.mjs و health-report.mjs وبوابة الإثبات وبصمة الحوكمة (lib/fingerprint.mjs).
  * changedSince يكمّل سجل أدوات التعديل: تعديل بأمر طرفية (sed، سكربت، مولّد كود) لا يمر بـ Hook ما بعد التعديل.
  */
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { isCodeFile } from './common.mjs';
 
-const IGNORED_DIRS = new Set([
+export const IGNORED_DIRS = new Set([
   '.git', 'node_modules', 'dist', 'build', 'out', '.next', '.nuxt', '.output', 'coverage',
   '.dart_tool', '.gradle', 'Pods', '.venv', 'venv', '__pycache__', 'vendor', '.turbo', '.cache', '.firebase', '.expo',
   'target', '.mypy_cache', '.pytest_cache', '.ruff_cache', '.tox', '.nox', '.svelte-kit', '.parcel-cache', '.terraform', '.vs', '.idea',
 ]);
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
-const MAX_SCAN = 5000;
+export const MAX_SCAN = 20000;
 // Git يستبعد مخرجات البناء بنفسه (.gitignore)، فيتسع الحد لمستودعات المحترفين الكبيرة
 const MAX_GIT_SCAN = 50000;
-// مجلدات الحوكمة تُمسح من القرص دائماً، حتى لو تجاهلها Git: بصمتها خط الدفاع الثاني لطبقة الحماية
-const GOVERNANCE_DIRS = ['.claude', '.agents', '.cursor', '.opencode', 'skills'];
 
 // ملفات لا يغطيها فحص المشروع: القالب نفسه، وإعدادات لا تُبنى ولا تُختبر، وملفات تولّدها الأدوات
 const NOT_VERIFIABLE = [
@@ -84,32 +81,48 @@ function submoduleDirs(root) {
 
 const inIgnoredDir = (rel) => rel.startsWith('.claude/state/') || rel.split('/').slice(0, -1).some((part) => IGNORED_DIRS.has(part));
 
-/** مسح القرص بحد أقصى لعدد الملفات (budget.left)، مع تخطي المجلدات المتجاهَلة. */
-function* walkDisk(root, dir, budget) {
+/** مسح القرص بحد أقصى لعدد الملفات (budget.left)، مع تخطي المجلدات المتجاهَلة. budget.truncated = بقي ما لم يُمسح. */
+export function* walkDisk(root, dir, budget) {
   let entries = [];
   try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
   for (const entry of entries) {
+    if (budget.truncated) return;
     const full = join(dir, entry.name);
     const rel = relative(root, full).replace(/\\/g, '/');
     if (entry.isDirectory()) {
       if (!IGNORED_DIRS.has(entry.name) && rel !== '.claude/state') yield* walkDisk(root, full, budget);
     } else if (entry.isFile()) {
-      if (budget.left-- <= 0) return;
+      if (budget.left <= 0) {
+        budget.truncated = true;
+        return;
+      }
+      budget.left -= 1;
       yield rel;
     }
-    if (budget.left <= 0) return;
   }
 }
+
+// مشاريع لم يكتمل مسحها لكثرة ملفاتها: Hook التوقف يعلن «فحصاً جزئياً» بدل أن يعدّ ما لم يُمسح غير معدَّل
+const truncatedWalks = new Set();
+export const walkWasTruncated = (root) => truncatedWalks.has(root);
 
 /** يولّد المسارات النسبية (بشرطات أمامية) لملفات المشروع عدا المتجاهَلة وملفات الحالة: من Git إن أمكن، وإلا من القرص. */
 export function* walkFiles(root) {
   const listed = gitFiles(root);
+  const budgets = [];
   if (!listed) {
-    yield* walkDisk(root, root, { left: MAX_SCAN });
-    return;
+    budgets.push({ left: MAX_SCAN });
+    yield* walkDisk(root, root, budgets[0]);
+  } else {
+    const kept = listed.filter((rel) => !inIgnoredDir(rel));
+    if (kept.length > MAX_GIT_SCAN) truncatedWalks.add(root);
+    yield* kept.slice(0, MAX_GIT_SCAN);
+    for (const dir of submoduleDirs(root)) {
+      budgets.push({ left: MAX_SCAN });
+      yield* walkDisk(root, dir, budgets[budgets.length - 1]);
+    }
   }
-  yield* listed.filter((rel) => !inIgnoredDir(rel)).slice(0, MAX_GIT_SCAN);
-  for (const dir of submoduleDirs(root)) yield* walkDisk(root, dir, { left: MAX_SCAN });
+  if (budgets.some((budget) => budget.truncated)) truncatedWalks.add(root);
 }
 
 /** نص الملف، أو null إذا كان أكبر من 2MB أو غير قابل للقراءة. */
@@ -122,6 +135,23 @@ export function readText(root, relPath) {
   }
 }
 
+// أوقات التعديل محفوظة لكل عملية: Hook التوقف يسأل عنها مرتين (ملفات الجولة، وما بعد آخر فحص)
+const fileStats = new Map();
+
+/** { mtime, isFile } لمسار نسبي، أو null إذا لم يوجد. */
+function statOf(root, rel) {
+  const full = join(root, rel);
+  if (!fileStats.has(full)) {
+    let entry = null;
+    try {
+      const stats = statSync(full);
+      entry = { mtime: stats.mtimeMs, isFile: stats.isFile() };
+    } catch { /* حُذف منذ سرده */ }
+    fileStats.set(full, entry);
+  }
+  return fileStats.get(full);
+}
+
 /**
  * ملفات تستوجب الفحص عُدّلت على القرص بعد اللحظة since.
  * windows: فترات تشغيل الفحص نفسه [بداية، نهاية] — ما كتبته الأدوات أثناءها (مثل next build) لا يُحسب تعديلاً.
@@ -131,45 +161,12 @@ export function changedSince(root, since, windows = []) {
   const changed = [];
   for (const rel of walkFiles(root)) {
     if (!needsVerification(rel)) continue;
-    let stats;
     // isFile: Git يسرد الوحدات الفرعية (submodules) كمسارات، ووقت تعديل المجلد ليس تعديلاً لكود
-    try { stats = statSync(join(root, rel)); } catch { continue; }
-    const mtime = stats.mtimeMs;
-    if (stats.isFile() && mtime > since && !windows.some(([start, end]) => mtime >= start && mtime <= end)) changed.push(rel);
+    const stats = statOf(root, rel);
+    if (!stats?.isFile || stats.mtime <= since) continue;
+    if (!windows.some(([start, end]) => stats.mtime >= start && stats.mtime <= end)) changed.push(rel);
   }
   return changed;
-}
-
-/**
- * ملفات الحوكمة المرشحة للبصمة: ما يعرفه Git + القرص كله، لأن Claude Code يحمّل CLAUDE.md في مجلد فرعي
- * حتى لو تجاهله Git، + مجلدات الحوكمة كاملة دائماً (مسح القرص العام قد يبلغ حده قبلها).
- */
-function governanceCandidates(root) {
-  const candidates = new Set(walkFiles(root));
-  for (const rel of walkDisk(root, root, { left: MAX_SCAN })) candidates.add(rel);
-  for (const dir of GOVERNANCE_DIRS) {
-    for (const rel of walkDisk(root, join(root, dir), { left: MAX_SCAN })) candidates.add(rel);
-  }
-  return candidates;
-}
-
-/**
- * بصمة محتوى كل ملف يطابق أحد patterns: { المسار: sha256 }. تُقارن بصمتان لمعرفة ما تغيّر محتواه فعلاً؛
- * وقت التعديل لا يكفي هنا لأن أوامر Git (الانتقال بين الفروع، الدمج) تعيد كتابة الملفات بالمحتوى نفسه.
- */
-export function fingerprint(root, patterns) {
-  const prints = {};
-  for (const rel of governanceCandidates(root)) {
-    if (!patterns.some((re) => re.test(rel))) continue;
-    try { prints[rel] = createHash('sha256').update(readFileSync(join(root, rel))).digest('hex'); } catch { /* حُذف أثناء المسح */ }
-  }
-  return prints;
-}
-
-/** الملفات التي أُضيفت أو حُذفت أو تغيّر محتواها بين بصمتين. */
-export function changedPrints(before, after) {
-  const paths = new Set([...Object.keys(before), ...Object.keys(after)]);
-  return [...paths].filter((rel) => before[rel] !== after[rel]).sort();
 }
 
 /** وقت آخر تعديل لملف، أو 0 إذا لم يوجد. */

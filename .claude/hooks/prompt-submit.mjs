@@ -8,7 +8,7 @@
 import {
   addContext, loadSession, projectDir, pruneOldSessions, readProjectState, readStdinJson, runHook, saveSession,
 } from './lib/common.mjs';
-import { fingerprint } from './lib/files.mjs';
+import { fingerprint } from './lib/fingerprint.mjs';
 import { hostTraits } from './lib/host.mjs';
 import { GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';

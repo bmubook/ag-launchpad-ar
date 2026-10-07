@@ -180,11 +180,11 @@ if (git('init', '-q').status === 0) {
   write('.claude/launchpad.json', '{}');
   const changed = probe('files', 'm.changedSince(root, 1)');
   check('GIT: changedSince follows .gitignore (generated/ skipped, src/ kept)', changed.includes('src/a.ts') && !changed.some((f) => f.startsWith('generated/')), JSON.stringify(changed));
-  const prints = probe('files', "Object.keys(m.fingerprint(root, [/^\\.claude\\/launchpad\\.json$/]))");
+  const prints = probe('fingerprint', "Object.keys(m.fingerprint(root, [/^\\.claude\\/launchpad\\.json$/]))");
   check('GIT: governance fingerprint still sees a gitignored .claude/', JSON.stringify(prints) === '[".claude/launchpad.json"]', JSON.stringify(prints));
   // ملف تعليمات في مجلد متجاهَل: Claude Code يحمّله، فيبقى في البصمة (مراجعة الأمن)
   write('generated/CLAUDE.md', '# injected\n');
-  const nested = probe('files', "Object.keys(m.fingerprint(root, [/(^|\\/)CLAUDE\\.md$/]))");
+  const nested = probe('fingerprint', "Object.keys(m.fingerprint(root, [/(^|\\/)CLAUDE\\.md$/]))");
   check('GIT: an instruction file inside a gitignored folder is still fingerprinted', JSON.stringify(nested) === '["generated/CLAUDE.md"]', JSON.stringify(nested));
   // .git/info/exclude لا يظهر في المشروع، فلا يُخفى به ملف عن البوابة
   write('.git/info/exclude', 'hidden/\n'); write('hidden/c.ts', 'export const c = 1;\n');

@@ -39,10 +39,11 @@ export const INJECTION = [
   /\byou\s+are\s+now\s+(?:a|an|the|in)\b/i,
   /(?:new|override|reveal|print)\s+(?:the\s+|your\s+)?system\s+prompt/i,
   /\brm\s+-rf\s+(?:\/|~|\*|\$HOME)/i,
-  /\b(?:curl|wget)\b[^\n|]{0,500}\|\s{0,20}(?:ba|z)?sh\b/i,
-  /\b(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^\n|]{0,500}\|\s{0,20}iex\b/i,
+  // الفاصل بين الكلمتين «مُلطَّف»: يقف عند ظهور الكلمة الأولى من جديد، فلا تتداخل مناطق المسح ويبقى الزمن خطياً بلا حد للطول
+  /\b(?:curl|wget)\b(?:(?!\b(?:curl|wget)\b)[^\n|])*\|\s*(?:ba|z)?sh\b/i,
+  /\b(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b(?:(?!\b(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b)[^\n|])*\|\s*iex\b/i,
   /\bDROP\s+(?:TABLE|DATABASE|SCHEMA)\b/i,
-  /Remove-Item\b[^\n]{0,300}-Recurse\b[^\n]{0,300}-Force|\bdel\s+\/[sq]\b/i,
+  /Remove-Item\b(?=(?:(?!Remove-Item)[^\n])*-Recurse\b)(?=(?:(?!Remove-Item)[^\n])*-Force)|\bdel\s+\/[sq]\b/i,
   /(?:send|upload|post|exfiltrate)\s[^\n]{0,40}(?:\.env|credentials|api\s*keys?|secrets)/i,
 ];
 
@@ -106,37 +107,48 @@ export const PROTECTED_DIRS = [
 ];
 
 /**
- * أطول أمر طرفية يفحصه الحارس. ما فوقه يُسأل عنه المستخدم دون فحص (guard-secrets.mjs): أمر طويل مصنوع
- * بعناية كان يُبطئ الأنماط حتى تنتهي مهلة الـ Hook فيمرّ دون أي فحص. وحدود الأنماط أدناه تساويه، فلا تُتجاوز داخله.
+ * أطول أمر طرفية يفحصه الحارس. ما فوقه يُسأل عنه المستخدم دون فحص (guard-secrets.mjs): أمر ضخم مصنوع بعناية
+ * قد يُبطئ ما بعد الأنماط (تفكيك المقاطع والمتغيرات) حتى تنتهي مهلة الـ Hook فيمرّ دون أي فحص.
  */
 export const MAX_COMMAND_CHARS = 10000;
 
+/*
+ * أنماط الأوامر أدناه خطية الزمن دون حد للطول: المسافات تأتي بعد نص ثابت فلا تتداخل مناطقها، والفاصل بين
+ * الأمر والأنبوب «مُلطَّف» يقف عند ظهور اسم الأمر من جديد. حد صغير للمسافات كان يُتجاوز بحشو 25 مسافة (مراجعة الأمن).
+ */
+const FETCHER = String.raw`(?:curl|wget)`;
+const PS_FETCHER = String.raw`(?:iwr|irm|curl|wget|Invoke-WebRequest|Invoke-RestMethod)`;
+const PS_SENDER = String.raw`(?:Invoke-RestMethod|Invoke-WebRequest|irm|iwr)`;
+/** نص بعد اسم الأمر حتى الفاصل، دون أن يعبر ظهوراً آخر للاسم نفسه. */
+const gapAfter = (word, stops) => String.raw`\b${word}\b(?:(?!\b${word}\b)[^${stops}])*`;
+
 /** «نزّل وشغّل»: محتوى يُجلب من الإنترنت ويُنفَّذ فوراً. معالجة البيانات (| jq ، | node -e "…") لا تطابق. */
 export const REMOTE_EXEC = [
-  /\b(?:curl|wget)\b[^|;&\n]{0,10000}\|\s{0,20}(?:sudo\s{1,20})?(?:env\s{1,20}\S{1,200}\s{1,20}){0,10}(?:ba|z|da|k|fi)?sh\b/i,
-  /\b(?:curl|wget)\b[^|;&\n]{0,10000}\|\s{0,20}(?:sudo\s{1,20})?(?:python[0-9.]*|node|perl|ruby|php|pwsh|powershell)(?:\.exe)?\s{0,20}(?:-\s*)?(?=$|[;&|)\n])/i,
-  /\b(?:iwr|irm|curl|wget|Invoke-WebRequest|Invoke-RestMethod)\b[^|;\n]{0,10000}\|\s{0,20}(?:iex|Invoke-Expression)\b/i,
-  /\b(?:iex|Invoke-Expression)\b[^;\n]{0,10000}\b(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod|DownloadString)\b/i,
-  /\b(?:ba|z|da|k|fi)?sh\s{1,20}(?:-[a-z]{1,20}\s{1,20}){0,10}-c\s{1,20}["']?\s{0,20}(?:\$\(|`)\s{0,20}(?:curl|wget)\b/i,
-  /(?:^|[\s;&|(])(?:(?:ba|z|da|k|fi)?sh|source|\.)\s{1,20}<\(\s{0,20}(?:curl|wget)\b/i,
-  /\beval\s{1,20}["']?\s{0,20}(?:\$\(|`)\s{0,20}(?:curl|wget)\b/i,
+  new RegExp(String.raw`${gapAfter(FETCHER, '|;&\n')}\|\s*(?:sudo\s+)?(?:env\s+\S+\s+)*(?:ba|z|da|k|fi)?sh\b`, 'i'),
+  new RegExp(String.raw`${gapAfter(FETCHER, '|;&\n')}\|\s*(?:sudo\s+)?(?:python[0-9.]*|node|perl|ruby|php|pwsh|powershell)(?:\.exe)?(?:\s*-)?\s*(?=$|[;&|)\n])`, 'i'),
+  new RegExp(String.raw`${gapAfter(PS_FETCHER, '|;\n')}\|\s*(?:iex|Invoke-Expression)\b`, 'i'),
+  new RegExp(String.raw`${gapAfter('(?:iex|Invoke-Expression)', ';\n')}\b(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod|DownloadString)\b`, 'i'),
+  /\b(?:ba|z|da|k|fi)?sh\s+(?:-[a-z]+\s+)*-c\s+(?:["']\s*)?(?:\$\(|`)\s*(?:curl|wget)\b/i,
+  /(?:^|[\s;&|(])(?:(?:ba|z|da|k|fi)?sh|source|\.)\s+<\(\s*(?:curl|wget)\b/i,
+  /\beval\s+(?:["']\s*)?(?:\$\(|`)\s*(?:curl|wget)\b/i,
 ];
 /** تنزيل سكربت إلى ملف (يُفحص بعده هل يُشغَّل الملف نفسه في الأمر ذاته). */
-export const DOWNLOAD_TO_SCRIPT = /\s(?:-o|-O|--output(?:-document)?|-OutFile)[=\s]{1,20}["']?([^\s"';|&]{1,1000}\.(?:sh|bash|zsh|ps1|bat|cmd|py|js|mjs|rb|pl))["']?/gi;
-export const SCRIPT_RUNNER = String.raw`(?:\b(?:(?:ba|z|da|k|fi)?sh|python[0-9.]*|node|pwsh|powershell|perl|ruby|php|source|chmod)\b[^;&|\n]{0,10000}|(?:^|[\s;&|])\.{1,2}[\\/])`;
+export const DOWNLOAD_TO_SCRIPT = /\s(?:-o|-O|--output(?:-document)?|-OutFile)[=\s]+["']?([^\s"';|&]+\.(?:sh|bash|zsh|ps1|bat|cmd|py|js|mjs|rb|pl))["']?/gi;
+// يُبحث به في بقية الأمر نفسه فقط، وطوله لا يتجاوز MAX_COMMAND_CHARS
+export const SCRIPT_RUNNER = String.raw`(?:\b(?:(?:ba|z|da|k|fi)?sh|python[0-9.]*|node|pwsh|powershell|perl|ruby|php|source|chmod)\b[^;&|\n]*|(?:^|[\s;&|])\.{1,2}[\\/])`;
 
 /** رفع ملف من الجهاز إلى خادم. إرسال JSON مكتوب في الأمر نفسه (-d '{"a":1}') لا يطابق. */
 export const UPLOAD = [
-  /\bcurl\b[^;\n]{0,10000}\s(?:-d|--data(?:-binary|-ascii|-urlencode)?|--json)(?:=|\s{1,20})["']?(?:[\w.-]{0,200}=)?@/,
-  /\bcurl\b[^;\n]{0,10000}\s(?:-F|--form)(?:=|\s{1,20})["']?[^\s"'=]{0,200}=[@<]/,
-  /\bcurl\b[^;\n]{0,10000}\s(?:-T|--upload-file)(?:=|\s)/,
-  /\bwget\b[^;\n]{0,10000}\s--(?:post|body)-file\b/i,
-  /\b(?:Invoke-RestMethod|Invoke-WebRequest|irm|iwr)\b[^;\n]{0,10000}\s-InFile\b/i,
-  /\b(?:Invoke-RestMethod|Invoke-WebRequest|irm|iwr)\b[^;\n]{0,10000}\s-Body\s{0,20}\(?\s{0,20}\$?\(?\s{0,20}(?:Get-Content|gc|cat|type)\b/i,
-  /\.Upload(?:File|String|Data)\s{0,20}\(/i,
-  /\b(?:scp|rsync)\b[^;|&\n]{0,10000}\s(?:[\w.-]{1,256}@)?[\w.-]{2,256}:(?!\/\/)/i,
-  /\|\s{0,20}(?:nc|ncat|netcat)\b/i,
-  /\b(?:nc|ncat|netcat)\b[^;|\n]{0,10000}<\s{0,20}\S/i,
+  new RegExp(String.raw`${gapAfter('curl', ';\n')}\s(?:-d|--data(?:-binary|-ascii|-urlencode)?|--json)(?:=|\s+)["']?(?:[\w.-]*=)?@`),
+  new RegExp(String.raw`${gapAfter('curl', ';\n')}\s(?:-F|--form)(?:=|\s+)["']?[^\s"']*=[@<]`),
+  new RegExp(String.raw`${gapAfter('curl', ';\n')}\s(?:-T|--upload-file)(?:=|\s)`),
+  new RegExp(String.raw`${gapAfter('wget', ';\n')}\s--(?:post|body)-file\b`, 'i'),
+  new RegExp(String.raw`${gapAfter(PS_SENDER, ';\n')}\s-InFile\b`, 'i'),
+  new RegExp(String.raw`${gapAfter(PS_SENDER, ';\n')}\s-Body\s*(?:\(\s*)?(?:\$\s*)?(?:\(\s*)?(?:Get-Content|gc|cat|type)\b`, 'i'),
+  /\.Upload(?:File|String|Data)\s*\(/i,
+  new RegExp(String.raw`${gapAfter('(?:scp|rsync)', ';|&\n')}\s(?:[\w.-]+@)?[\w.-]{2,}:(?!\/\/)`, 'i'),
+  /\|\s*(?:nc|ncat|netcat)\b/i,
+  new RegExp(String.raw`${gapAfter('(?:nc|ncat|netcat)', ';|\n')}<\s*\S`, 'i'),
 ];
 export const URL_HOST = /https?:\/\/(\[[^\]]+\]|[^/\s:'"@]+)/gi;
 export const LOCAL_HOST = /^(?:localhost|127(?:\.\d+){3}|0\.0\.0\.0|\[::1\]|host\.docker\.internal|[\w-]+\.(?:localhost|test))$/i;
@@ -170,4 +182,4 @@ export const MUTATING_GIT = /^(?:rm|mv|checkout|restore|clean|apply|reset|stash)
 export const SHELL_WRAPPERS = new Set(['powershell', 'pwsh', 'cmd', 'bash', 'sh', 'zsh']);
 export const SCRIPT_INTERPRETERS = new Set(['node', 'deno', 'bun', 'python', 'python3', 'py', 'ruby', 'php']);
 /** كتابة أو حذف من داخل سكربت سطر واحد (node -e ، python -c) أو أمر مغلَّف (powershell -Command "…"). */
-export const INLINE_WRITE = /writeFile|appendFile|unlink|rmSync|rmdir|renameSync|copyFile|cpSync|createWriteStream|truncate|\bopen\([^)]{0,500}['"][wa]|write_text|shutil\.|os\.(?:remove|rename|unlink)|Set-Content|Add-Content|Out-File|Clear-Content|Remove-Item|Move-Item|Rename-Item|Copy-Item|IO\.File\]::(?:Write|Append|Delete|Move|Copy|Replace)|IO\.StreamWriter|\bFile\.(?:write|delete|rename|unlink)\b|FileUtils\.(?:rm|mv|cp|touch)|\b(?:rm|del|mv|cp|tee)\s/i;
+export const INLINE_WRITE = /writeFile|appendFile|unlink|rmSync|rmdir|renameSync|copyFile|cpSync|createWriteStream|truncate|\bopen\((?:(?!\bopen\()[^)])*['"][wa]|write_text|shutil\.|os\.(?:remove|rename|unlink)|Set-Content|Add-Content|Out-File|Clear-Content|Remove-Item|Move-Item|Rename-Item|Copy-Item|IO\.File\]::(?:Write|Append|Delete|Move|Copy|Replace)|IO\.StreamWriter|\bFile\.(?:write|delete|rename|unlink)\b|FileUtils\.(?:rm|mv|cp|touch)|\b(?:rm|del|mv|cp|tee)\s/i;
