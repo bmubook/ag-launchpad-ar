@@ -11,7 +11,7 @@ import { join, resolve } from 'node:path';
 import { projectDir, toProjectRelative } from './common.mjs';
 import {
   DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MAX_COMMAND_CHARS, MUTATING_COMMANDS, MUTATING_GIT,
-  PROJECT_KEY_FILES, PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER,
+  PROJECT_KEY_FILES, PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER_WORD,
   SECRET_STORES, SHELL_WRAPPERS, UPLOAD, URL_HOST,
 } from './patterns.mjs';
 import { assignedValues, expandVariables } from './shell-vars.mjs';
@@ -135,13 +135,23 @@ function secretsDecision(segment) {
   return null;
 }
 
+/** اسم الملف وحده بأحرف صغيرة: ‎./a.sh و /tmp/a.sh و .\a.ps1 و "a.sh" ← a.sh */
+const baseName = (token) => slashes(unquote(token)).split('/').pop().toLowerCase();
+
+/**
+ * ينزّل سكربتاً ثم يشغّله في الأمر نفسه. أسماء الملفات المنزّلة تُجمع أولاً، ثم يُمسح كل مقطع بعد أول تنزيل
+ * مرة واحدة بحثاً عن مشغّل يتبعه أحد تلك الأسماء؛ فالزمن خطي مهما كثرت أهداف التنزيل وكلمات التشغيل.
+ */
 function downloadsThenRuns(command) {
-  for (const match of command.matchAll(DOWNLOAD_TO_SCRIPT)) {
-    const name = escapeRegex(slashes(match[1]).split('/').pop());
-    const rest = command.slice(match.index + match[0].length);
-    if (new RegExp(`${SCRIPT_RUNNER}${name}(?=$|[\\s"';|&)])`, 'i').test(rest)) return true;
-  }
-  return false;
+  const downloads = [...command.matchAll(DOWNLOAD_TO_SCRIPT)];
+  if (!downloads.length) return false;
+  const names = new Set(downloads.map((match) => baseName(match[1])));
+  const rest = command.slice(downloads[0].index + downloads[0][0].length);
+  return rest.split(/[;&|\n]/).some((segment) => {
+    const tokens = segment.split(/\s+/).filter(Boolean);
+    const runner = tokens.findIndex((token) => SCRIPT_RUNNER_WORD.test(baseName(token)) || /^["']?\.{1,2}[\\/]/.test(token));
+    return runner !== -1 && tokens.slice(runner).some((token) => names.has(baseName(token)));
+  });
 }
 
 function remoteExecDecision(command) {

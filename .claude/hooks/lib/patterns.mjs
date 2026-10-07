@@ -134,8 +134,8 @@ export const REMOTE_EXEC = [
 ];
 /** تنزيل سكربت إلى ملف (يُفحص بعده هل يُشغَّل الملف نفسه في الأمر ذاته). */
 export const DOWNLOAD_TO_SCRIPT = /\s(?:-o|-O|--output(?:-document)?|-OutFile)[=\s]+["']?([^\s"';|&]+\.(?:sh|bash|zsh|ps1|bat|cmd|py|js|mjs|rb|pl))["']?/gi;
-// يُبحث به في بقية الأمر نفسه فقط، وطوله لا يتجاوز MAX_COMMAND_CHARS
-export const SCRIPT_RUNNER = String.raw`(?:\b(?:(?:ba|z|da|k|fi)?sh|python[0-9.]*|node|pwsh|powershell|perl|ruby|php|source|chmod)\b[^;&|\n]*|(?:^|[\s;&|])\.{1,2}[\\/])`;
+/** كلمة تشغّل سكربتاً (أو تجعله قابلاً للتشغيل) إذا تبعها اسم ملف منزَّل في المقطع نفسه. */
+export const SCRIPT_RUNNER_WORD = /^(?:(?:ba|z|da|k|fi)?sh|python[0-9.]*|node|pwsh|powershell|perl|ruby|php|source|chmod)(?:\.exe)?$/i;
 
 /** رفع ملف من الجهاز إلى خادم. إرسال JSON مكتوب في الأمر نفسه (-d '{"a":1}') لا يطابق. */
 export const UPLOAD = [

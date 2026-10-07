@@ -69,7 +69,8 @@ export const SHORTCUTS = [
     re: /\b(it|test|describe)\.(skip|only|todo)\s*\(|\b(xit|xdescribe|xtest|fit|fdescribe)\s*\(|\bskip:\s*(true|['"])|@pytest\.mark\.skip|@(unittest\.)?skip\b|\bt\.Skip(Now|f)?\(|#\[ignore\b|@(Disabled|Ignore)\b|\[Ignore\b|\bSkip\s*=\s*"|markTest(Skipped|Incomplete)\(|^[ \t]*(xit|xdescribe|xcontext|xspecify)[ \t]|\bXCTSkip(If|Unless)?\b/m },
   // except في Python و rescue في Ruby يبدآن السطر، فمطابقتهما من أوله تمنع تداخل المسح بين ظهورين في سطر واحد
   { kind: 'swallowed-error', label: 'خطأ مكتوم (catch فارغ)', files: ANY_CODE,
-    re: /catch\s*(?:\([^()\n]*\))?\s*\{\s*(?:\/\/[^\n]*\n\s*)*\}|\.catch\(\s*(?:(?:\([\w\s,]*\)|\w+)\s*)?=>\s*(?:\{\s*\}|null|undefined)\s*\)|^[ \t]*except\b[^:\n]*:\s*(?:#[^\n]*\n\s*)*pass\b|\bif\s+err\s*!=\s*nil\s*\{\s*\}|\b_\s*=\s*err\b|^[ \t]*rescue\b[^\n]*\n(?:[ \t]*(?:#[^\n]*)?\n)*[ \t]*end\b|\brescue\s+nil\b/m },
+    // أسطر التعليق داخل catch الفارغ لا تعبر سطراً فيه catch آخر، وإلا أعاد كل ظهور مسح ما بعده (مراجعة الأمن)
+    re: /catch\s*(?:\([^()\n]*\))?\s*\{\s*(?:\/\/(?![^\n]*\bcatch\b)[^\n]*\n\s*)*\}|\.catch\(\s*(?:(?:\([\w\s,]*\)|\w+)\s*)?=>\s*(?:\{\s*\}|null|undefined)\s*\)|^[ \t]*except\b[^:\n]*:\s*(?:#[^\n]*\n\s*)*pass\b|\bif\s+err\s*!=\s*nil\s*\{\s*\}|\b_\s*=\s*err\b|^[ \t]*rescue\b[^\n]*\n(?:[ \t]*(?:#[^\n]*)?\n)*[ \t]*end\b|\brescue\s+nil\b/m },
   { kind: 'any-type', label: 'نوع any يعطّل فحص الأنواع', files: TS, where: inProductionCode,
     re: /:\s*any\b(?!\w)|\bas\s+any\b|<any>/ },
   { kind: 'test-branch', label: 'سلوك خاص ببيئة الاختبار داخل كود التطبيق', files: ANY_CODE, where: inProductionCode,
