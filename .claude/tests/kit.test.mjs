@@ -57,7 +57,8 @@ const kitCommands = (settings) => Object.values(settings.hooks || {}).flat().fla
 // ---------- التركيب في مشروع له إعداداته
 const p = project({ settings: { hooks: { PostToolUse: [USER_HOOK] }, permissions: { allow: ['Bash(npm test)'] } } });
 let r = p.install();
-check('KIT: install → exit 0, summary names the detected checks', r.code === 0 && r.out.includes('🛡️') && r.out.includes('npm run test'), r.out);
+check('KIT: install → exit 0, summary names the detected checks and where the result shows', r.code === 0 && r.out.includes('🛡️') && r.out.includes('npm run test')
+  && r.out.includes('في آخر كل رد') && r.out.includes('تطبيق سطح المكتب لا يعرض سطر الحالة'), r.out);
 check('KIT: guard layer, agent rules and config created', p.has('.claude/launchpad/hooks/stop-gate.mjs') && p.has('.claude/launchpad/scripts/verify.mjs')
   && p.has('.claude/launchpad/statusline.mjs') && p.has('.claude/rules/launchpad-guard.md') && p.json('.claude/launchpad.json').mode === 'production');
 check('KIT: the template beginner layer is not copied (no skills, rules files or roadmap)', !p.has('.claude/launchpad/skills') && !p.has('master_rules.md')

@@ -46,9 +46,10 @@ function printInstall(dir, result) {
   ];
   if (result.gitignoreAdded) lines.push('  • .gitignore — سطر واحد: .claude/state/');
   lines.push('', ...checksLines(result.checks), '', 'الخطوة التالية: افتح المشروع في Claude Code وابدأ جلسة جديدة.');
+  lines.push('في آخر كل رد عدّل فيه الوكيل كوداً يذكر لك نتيجة الفحص.');
   lines.push(result.ownStatusLine
     ? 'ℹ️ سطر الحالة الخاص بك بقي كما هو، فلن تظهر فيه شارة الحارس.'
-    : 'سيظهر «🛡️ الحارس» في سطر الحالة مع نتيجة آخر فحص.');
+    : 'وفي الطرفية يعرضها سطر الحالة أيضاً بجانب «🛡️ الحارس» (تطبيق سطح المكتب لا يعرض سطر الحالة).');
   lines.push('للتحديث بعد تحديث القالب: أعد الأمر نفسه. للإزالة: أضف --remove.');
   process.stdout.write(`${lines.join('\n')}\n`);
 }
