@@ -76,6 +76,20 @@ r = claudeGuard('Grep', { pattern: 'KEY', path: tmp, glob: '.env.local', output_
 check('HOST: the same glob protection holds in Claude Code', r.json?.hookSpecificOutput?.permissionDecision === 'deny', r.out + r.err);
 check('CUR guard: Grep over the env template stays allowed', silent(pre('Grep', { pattern: 'KEY', file_path: tmp, glob: '.env.example', output_mode: 'content' })));
 
+// ---------- أوامر قائمة ask: Claude Code و OpenCode يسألان عنها من قوائم صلاحياتهما، و Cursor بلا قوائم فيفحصها الحارس
+const { ASK_PREFIXES } = await import(pathToFileURL(join(REPO, '.claude/hooks/lib/patterns.mjs')).href);
+const settingsAsk = JSON.parse(readFileSync(join(REPO, '.claude/settings.json'), 'utf8')).permissions.ask
+  .filter((rule) => rule.startsWith('Bash(')).map((rule) => rule.slice(5, -3));
+check('ASK: the guard list mirrors the Bash ask list in .claude/settings.json', ASK_PREFIXES.join('|') === settingsAsk.join('|'), `${ASK_PREFIXES} vs ${settingsAsk}`);
+r = pre('Shell', { command: 'git reset --hard HEAD~1' });
+check('CUR guard: destructive Git command → refused, since Cursor has no approval window', r.json?.permission === 'deny'
+  && r.json.agent_message.includes('git reset --hard') && r.json.agent_message.includes('نافذة موافقة'), r.out + r.err);
+check('CUR guard: rm -rf inside a compound command is caught', pre('Shell', { command: 'npm test && rm  -rf   dist' }).json?.permission === 'deny');
+check('CUR guard: ordinary Git and safe deletes pass', ['git status', 'git push origin main', 'git branch -d old', 'rm -r dist'].every((command) => silent(pre('Shell', { command }))));
+check('HOST: Claude Code leaves these to its own ask list (no double prompt)', claudeGuard('Bash', { command: 'git reset --hard HEAD~1' }).out === '');
+r = runNode('.claude/hooks/guard-secrets.mjs', { session_id: 'oc-0', tool_name: 'shell', tool_input: { command: 'rm -rf dist' } }, { args: ['--host=opencode'] });
+check('HOST: OpenCode asks too (its bridge shows it in the same approval window as opencode.json)', r.json?.hookSpecificOutput?.permissionDecision === 'ask', r.out + r.err);
+
 // ---------- إرسال الرسالة: ملخص الحالة مع أول رسالة لأن Cursor لا يوصل سياق بداية الجلسة
 freshProject({ kicked: true });
 r = prompt();

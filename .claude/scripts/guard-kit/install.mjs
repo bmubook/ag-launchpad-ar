@@ -1,16 +1,21 @@
 /**
  * تركيب حقيبة الحارس في مشروع قائم وتحديثها وإزالتها (يستدعيها guard-install.mjs).
- * تنسخ طبقة الإنفاذ من هذا القالب إلى .claude/launchpad/، وتدمج إعداداتها، وتضيف قواعد الوكيل القصيرة.
- * لا تمس كود المشروع ولا CLAUDE.md؛ وكل ما تضيفه مسجّل في manifest.json لتُزيله --remove وحده.
+ * تنسخ طبقة الإنفاذ من هذا القالب إلى .claude/launchpad/، وتدمج إعداداتها لـ Claude Code و OpenCode و Cursor،
+ * وتضيف قواعد الوكيل القصيرة. لا تمس كود المشروع ولا CLAUDE.md ولا AGENTS.md؛ وكل ما تضيفه مسجّل في manifest.json
+ * لتُزيله --remove وحده.
  */
-import {
-  cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync, writeFileSync,
-} from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join, parse, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { detectChecks } from '../../hooks/lib/checks.mjs';
+import {
+  KitError, addBlock, isObject, list, readConfigJson, readJsonFile, removeBlock, removeIfEmpty, writeJson,
+} from './common.mjs';
+import { HOST_PATHS, applyHosts, prepareHosts, removeHosts } from './hosts.mjs';
 import { kitSettings, mergeSettings, removeSettings } from './settings.mjs';
+
+export { KitError };
 
 export const TEMPLATE = fileURLToPath(new URL('../../../', import.meta.url));
 export const KIT_DIR = '.claude/launchpad';
@@ -31,7 +36,7 @@ const PAYLOAD = [
 // كل ما يُكتب أو يُحذف: لا يُتبع رابط رمزي في أي منها حتى لا تمتد الكتابة خارج المشروع
 const WRITTEN_PATHS = [
   '.claude', KIT_DIR, `${KIT_DIR}/hooks`, `${KIT_DIR}/scripts`, `${KIT_DIR}/statusline.mjs`, MANIFEST_FILE,
-  '.claude/rules', RULES_FILE, SETTINGS_FILE, CONFIG_FILE, STATE_DIR, '.gitignore',
+  '.claude/rules', RULES_FILE, SETTINGS_FILE, CONFIG_FILE, STATE_DIR, '.gitignore', ...HOST_PATHS,
 ];
 
 export const DEFAULT_CONFIG = {
@@ -41,15 +46,7 @@ export const DEFAULT_CONFIG = {
   checks: [],
 };
 
-/** خطأ يُعرض لصاحب المشروع كما هو، دون تتبع برمجي. */
-export class KitError extends Error {}
-
-const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-const readJsonFile = (path) => { try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; } };
 const isLink = (path) => { try { return lstatSync(path).isSymbolicLink(); } catch { return false; } };
-const list = (dir) => { try { return readdirSync(dir); } catch { return []; } };
-const writeJson = (path, value) => writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
-const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** إصدار القالب: آخر مدخل في سجل تطويره (يصلح لنسخة git clone ولملف zip معاً). */
 export function templateVersion() {
@@ -84,13 +81,8 @@ function checkTarget(target) {
 
 /** إعدادات المشروع، أو null إن لم توجد. ملف تالف، أو بشكل لا تفهمه الحقيبة، يوقف كل شيء قبل أي تغيير. */
 function readSettings(path) {
-  if (!existsSync(path)) return null;
-  const text = readFileSync(path, 'utf8').replace(/^﻿/, '');
-  if (!text.trim()) return {};
-  let value = null;
-  try { value = JSON.parse(text); } catch { value = null; }
-  if (!isObject(value)) throw new KitError(`${SETTINGS_FILE} ليس JSON صالحاً، فلم أغيّر شيئاً. أصلحه ثم أعد الأمر.`);
-  assertSettingsShape(value);
+  const value = readConfigJson(path, SETTINGS_FILE);
+  if (value) assertSettingsShape(value);
   return value;
 }
 
@@ -110,26 +102,8 @@ function addGitignoreBlock(target) {
   const path = join(target, '.gitignore');
   const exists = existsSync(path);
   if (!exists && !existsSync(join(target, '.git'))) return false;
-  const text = exists ? readFileSync(path, 'utf8') : '';
-  if (ALREADY_IGNORED.test(text)) return false;
-  const separator = !text ? '' : text.endsWith('\n') ? '\n' : '\n\n';
-  writeFileSync(path, `${text}${separator}${GITIGNORE_BLOCK.join('\n')}\n`);
-  return true;
-}
-
-function removeGitignoreBlock(target, createdFile) {
-  const path = join(target, '.gitignore');
-  if (!existsSync(path)) return;
-  const block = new RegExp(`(\\r?\\n)?${GITIGNORE_BLOCK.map(escapeRegex).join('\\r?\\n')}\\r?\\n?`);
-  const text = readFileSync(path, 'utf8').replace(block, '');
-  if (createdFile && !text.trim()) rmSync(path, { force: true });
-  else writeFileSync(path, text);
-}
-
-function removeIfEmpty(dir) {
-  try {
-    if (!readdirSync(dir).length) rmdirSync(dir);
-  } catch { /* المجلد غير موجود أو غير فارغ: يبقى كما هو */ }
+  if (exists && ALREADY_IGNORED.test(readFileSync(path, 'utf8'))) return false;
+  return addBlock(path, GITIGNORE_BLOCK);
 }
 
 /** ملفات الحالة التي تكتبها Hooks الحقيبة وحدها. */
@@ -161,6 +135,7 @@ export function install(target) {
     gitignore: !existsSync(join(target, '.gitignore')),
   };
   const { settings, added } = mergeSettings(existing || {}, kitSettings(templateSettings), previous.added);
+  const hostPlan = prepareHosts(target, TEMPLATE, previous.hosts);
 
   // التحديث يستبدل الحواجز كلها، فلا يبقى ملف حذفه القالب في إصدار أحدث
   for (const dir of ['hooks', 'scripts']) rmSync(join(target, KIT_DIR, dir), { recursive: true, force: true });
@@ -168,19 +143,21 @@ export function install(target) {
     mkdirSync(dirname(join(target, to)), { recursive: true });
     cpSync(join(TEMPLATE, from), join(target, to), { recursive: true });
   }
+  const rulesText = readFileSync(join(TEMPLATE, '.claude', 'scripts', 'guard-kit', 'guard-rules.md'), 'utf8');
   mkdirSync(join(target, '.claude', 'rules'), { recursive: true });
-  writeFileSync(join(target, RULES_FILE), readFileSync(join(TEMPLATE, '.claude', 'scripts', 'guard-kit', 'guard-rules.md'), 'utf8'));
+  writeFileSync(join(target, RULES_FILE), rulesText);
   const configCreated = !existsSync(join(target, CONFIG_FILE));
   if (configCreated) writeJson(join(target, CONFIG_FILE), DEFAULT_CONFIG);
   writeJson(settingsPath, existing ? settings : { $schema: SCHEMA, ...settings });
+  const hosts = applyHosts(hostPlan, rulesText);
   const gitignoreAdded = addGitignoreBlock(target);
   const version = templateVersion();
   const now = new Date().toISOString();
   writeJson(join(target, MANIFEST_FILE), {
-    version, installedAt: previous.installedAt || now, updatedAt: now, created, added, gitignore: gitignoreAdded || Boolean(previous.gitignore),
+    version, installedAt: previous.installedAt || now, updatedAt: now, created, added, gitignore: gitignoreAdded || Boolean(previous.gitignore), hosts,
   });
   return {
-    version, previousVersion: previous.version || null, configCreated, gitignoreAdded,
+    version, previousVersion: previous.version || null, configCreated, gitignoreAdded, opencodeJsonc: hosts.opencodeJsonc,
     ownStatusLine: Boolean(existing?.statusLine) && !added.statusLine, checks: detectChecks(target),
   };
 }
@@ -197,10 +174,11 @@ export function remove(target) {
     if (manifest.created?.settings && Object.keys(cleaned).every((key) => key === '$schema')) rmSync(settingsPath, { force: true });
     else writeJson(settingsPath, cleaned);
   }
+  removeHosts(target, manifest.hosts);
   rmSync(join(target, KIT_DIR), { recursive: true, force: true });
   rmSync(join(target, RULES_FILE), { force: true });
   removeState(target);
-  if (manifest.gitignore) removeGitignoreBlock(target, manifest.created?.gitignore);
+  if (manifest.gitignore) removeBlock(join(target, '.gitignore'), GITIGNORE_BLOCK, manifest.created?.gitignore);
   const configPath = join(target, CONFIG_FILE);
   if (manifest.created?.config && sameConfig(readJsonFile(configPath), DEFAULT_CONFIG)) rmSync(configPath, { force: true });
   if (manifest.created?.rulesDir) removeIfEmpty(join(target, '.claude', 'rules'));

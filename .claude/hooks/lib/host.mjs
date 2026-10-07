@@ -26,13 +26,16 @@ const isObject = (value) => Boolean(value) && typeof value === 'object' && !Arra
 /**
  * ما تقدّمه كل أداة مقارنة بـ Claude Code، لتعدّل الـ Hooks سلوكها دون تفرّع على اسم الأداة:
  * approvalPrompt = تطلب موافقة المستخدم عند قرار ask؛ sessionContext = توصل ملخص بداية الجلسة للنموذج؛
- * rulesLoaded = ملفات القواعد في سياق النموذج تلقائياً؛ fullContentEdits = ترسل الملف كاملاً حتى عند تعديل سطر.
+ * rulesLoaded = ملفات القواعد في سياق النموذج تلقائياً؛ fullContentEdits = ترسل الملف كاملاً حتى عند تعديل سطر؛
+ * permissionRules = تسأل قبل الأوامر المدمّرة من قائمة ask يضمنها القالب (settings.json)، وإلا فحصها الحارس بنفسه.
+ * OpenCode يقرأ قائمته من opencode.json، وقد لا تكون فيه (opencode.jsonc لا يُمس)؛ وسؤال الحارس فيه يظهر في
+ * نافذة الموافقة نفسها التي تفتحها القائمة، فلا يتكرر.
  * الأداة غير المعروفة تأخذ أحوط القيم.
  */
 const HOST_TRAITS = {
-  claude: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false },
-  cursor: { approvalPrompt: false, sessionContext: false, rulesLoaded: false, fullContentEdits: true },
-  opencode: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false },
+  claude: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false, permissionRules: true },
+  cursor: { approvalPrompt: false, sessionContext: false, rulesLoaded: false, fullContentEdits: true, permissionRules: false },
+  opencode: { approvalPrompt: true, sessionContext: true, rulesLoaded: true, fullContentEdits: false, permissionRules: false },
 };
 
 export function hostTraits(host) {

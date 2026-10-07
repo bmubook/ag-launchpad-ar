@@ -4,10 +4,12 @@
  * التشغيل من مجلد القالب:
  *   node .claude/scripts/guard-install.mjs <مسار المشروع>            تركيب، أو تحديث إذا كانت مركّبة
  *   node .claude/scripts/guard-install.mjs <مسار المشروع> --remove   إزالة كل ما أضافته الحقيبة
- * لا يمس كود المشروع ولا CLAUDE.md، ويدمج إعداداته في .claude/settings.json دون حذف ما كتبه صاحب المشروع.
+ * يركّبها لـ Claude Code و OpenCode و Cursor معاً. لا يمس كود المشروع ولا CLAUDE.md ولا AGENTS.md، ويدمج إعداداته في
+ * .claude/settings.json و .cursor/hooks.json و opencode.json دون حذف ما كتبه صاحب المشروع.
  * رموز الخروج: 0 نجاح، 1 خطأ (يُطبع سببه، ولا يتغير شيء إن كان الخطأ قبل الكتابة).
  */
 import { resolve } from 'node:path';
+import { CURSOR_HOOKS, CURSOR_IGNORE, CURSOR_RULES, OPENCODE_CONFIG, OPENCODE_PLUGIN } from './guard-kit/hosts.mjs';
 import { CONFIG_FILE, KIT_DIR, KitError, RULES_FILE, install, remove } from './guard-kit/install.mjs';
 
 const args = process.argv.slice(2);
@@ -37,15 +39,19 @@ function printInstall(dir, result) {
   const heading = result.previousVersion
     ? `🛡️ حُدّثت حقيبة الحارس من v${result.previousVersion} إلى v${result.version} في: ${dir}`
     : `🛡️ رُكّبت حقيبة الحارس v${result.version} في: ${dir}`;
+  const opencode = result.opencodeJsonc
+    ? `${OPENCODE_PLUGIN} (لم ألمس opencode.jsonc؛ الإضافة نفسها تمنع قراءة ملفات الأسرار)`
+    : `${OPENCODE_PLUGIN} و ${OPENCODE_CONFIG}`;
   const lines = [
     heading, '', 'ما أُضيف إلى المشروع:',
-    `  • ${KIT_DIR}/ — الحواجز وأداة الفحص (لا تعدّل ما فيه؛ التحديث يستبدله)`,
-    `  • ${RULES_FILE} — تعليمات قصيرة للوكيل`,
+    `  • ${KIT_DIR}/ — الحواجز وأداة الفحص، للبرامج الثلاثة (لا تعدّل ما فيه؛ التحديث يستبدله)`,
     `  • ${CONFIG_FILE} — إعداداتك: الوضع وأوامر الفحص وسقف الحجم${result.configCreated ? '' : ' (موجود من قبل، لم يُمس)'}`,
-    '  • .claude/settings.json — دُمجت فيه الحواجز مع إعداداتك دون حذف شيء',
+    `  • لـ Claude Code: .claude/settings.json (دُمجت فيه الحواجز دون حذف شيء) و ${RULES_FILE}`,
+    `  • لـ OpenCode: ${opencode}`,
+    `  • لـ Cursor: ${CURSOR_HOOKS} و ${CURSOR_RULES} و ${CURSOR_IGNORE}`,
   ];
   if (result.gitignoreAdded) lines.push('  • .gitignore — سطر واحد: .claude/state/');
-  lines.push('', ...checksLines(result.checks), '', 'الخطوة التالية: افتح المشروع في Claude Code وابدأ جلسة جديدة.');
+  lines.push('', ...checksLines(result.checks), '', 'الخطوة التالية: افتح المشروع في برنامجك (Claude Code أو OpenCode أو Cursor) وابدأ جلسة جديدة.');
   lines.push('في آخر كل رد عدّل فيه الوكيل كوداً يذكر لك نتيجة الفحص.');
   lines.push(result.ownStatusLine
     ? 'ℹ️ سطر الحالة الخاص بك بقي كما هو، فلن تظهر فيه شارة الحارس.'

@@ -6,16 +6,19 @@
  * - ما يُضاف إلى event.system في session hook("context") يصل للنموذج دون أن يظهر للمستخدم، ويُعاد بناؤه مع كل طلب.
  * - لا حدث «توقف» قابل للمنع: بعد session.execution.succeeded تُرسل رسالة متابعة بـ session.prompt فيستأنف الوكيل.
  * - جلسات الوكلاء الفرعيين لا تمر بـ hook("prompt")، فلا يُحقن فيها شيء ولا تُفحص عند توقفها.
+ * في حقيبة الحارس تحمّله .opencode/plugins/launchpad-guard.js من .claude/launchpad/hooks/lib، فيشغّل Hooks الحقيبة
+ * ويحقن قواعدها القصيرة بدل ملفات القالب الحاكمة.
  */
 import { spawn } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { GUARD_HOME, GUARD_KIT } from './kit.mjs';
 import { findNode } from './node-path.mjs';
 import { findPatchText, parsePatch } from './patch.mjs';
 
-/** جذر المشروع من موضع هذا الملف (.claude/hooks/lib)، لا من مجلد الجلسة الذي قد يكون مجلداً فرعياً. */
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+/** جذر المشروع من موضع هذا الملف (.claude/hooks/lib أو .claude/launchpad/hooks/lib)، لا من مجلد الجلسة الذي قد يكون مجلداً فرعياً. */
+const ROOT = fileURLToPath(new URL(GUARD_KIT ? '../../../../' : '../../../', import.meta.url));
 const NODE = findNode();
 // ملفات البيئة تبقى محمية بصلاحيات opencode.json حتى دون Node؛ ما يتعطل هو بقية الحماية الآلية
 const NODE_MISSING = '⚠️ إضافة AG Launchpad لم تجد Node.js على هذا الجهاز، فالحماية الآلية معطلة الآن: '
@@ -23,12 +26,16 @@ const NODE_MISSING = '⚠️ إضافة AG Launchpad لم تجد Node.js على 
   + '«ثبّت Node.js 18 أو أحدث من nodejs.org ثم أعد تشغيل OpenCode»، والتزم بالقواعد ذاتياً حتى ذلك الحين.';
 const HOOK_TIMEOUT_MS = 20000;
 /** ما يستورده CLAUDE.md في Claude Code؛ هنا يُحقن نصه في سياق كل طلب فلا يعتمد على تذكّر النموذج. */
-const RULE_FILES = ['CLAUDE.md', 'master_rules.md', 'rules_security.md', 'rules_code_quality.md', 'rules_workflow.md'];
-const RULES_HEADER = '# ملفات القواعد الحاكمة — تحمّلها إضافة القالب تلقائياً في OpenCode فلا تُعد قراءتها من القرص. '
-  + 'rules_ui.md وحده يُقرأ كاملاً قبل أي عمل على الواجهات.';
+const RULE_FILES = GUARD_KIT
+  ? ['.claude/rules/launchpad-guard.md']
+  : ['CLAUDE.md', 'master_rules.md', 'rules_security.md', 'rules_code_quality.md', 'rules_workflow.md'];
+const RULES_HEADER = GUARD_KIT
+  ? '# قواعد حارس AG Launchpad — تحمّلها إضافة الحارس تلقائياً في OpenCode فلا تُعد قراءتها من القرص.'
+  : '# ملفات القواعد الحاكمة — تحمّلها إضافة القالب تلقائياً في OpenCode فلا تُعد قراءتها من القرص. '
+    + 'rules_ui.md وحده يُقرأ كاملاً قبل أي عمل على الواجهات.';
 const GUARDED_TOOLS = new Set(['read', 'write', 'edit', 'patch', 'shell', 'grep']);
 const EDIT_TOOLS = new Set(['write', 'edit', 'patch']);
-const FOLLOW_UP_PREFIX = '⚙️ رسالة آلية من حماية القالب (لا تحتاج رداً منك):\n\n';
+const FOLLOW_UP_PREFIX = `⚙️ رسالة آلية من ${GUARD_KIT ? 'الحارس' : 'حماية القالب'} (لا تحتاج رداً منك):\n\n`;
 
 function parseJson(text) {
   try {
@@ -43,7 +50,7 @@ export function runHook(script, payload, root = ROOT, node = NODE) {
   if (!node) return Promise.resolve(null);
   return new Promise((done) => {
     let out = '';
-    const child = spawn(node, [join('.claude', 'hooks', script), '--host=opencode'], {
+    const child = spawn(node, [join(GUARD_HOME, 'hooks', script), '--host=opencode'], {
       cwd: root, windowsHide: true, env: { ...process.env, CLAUDE_PROJECT_DIR: root },
     });
     const timer = setTimeout(() => child.kill(), HOOK_TIMEOUT_MS);

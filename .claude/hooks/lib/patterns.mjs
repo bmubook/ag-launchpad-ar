@@ -179,6 +179,14 @@ export const KEYCHAIN_READ = /\bsecurity\s+(?:find-(?:generic|internet)-password
  */
 export const DOTNET_FILE_WRITE = /\[(?:System\.)?IO\.(?:File|Directory)\]::(?:Write|Append|Delete|Move|Copy|Replace|Create|OpenWrite|SetAttributes)\w*|(?:New-Object\s+(?:-TypeName\s+)?|\[)(?:System\.)?IO\.StreamWriter\b/i;
 export const MUTATING_GIT = /^(?:rm|mv|checkout|restore|clean|apply|reset|stash)$/;
+/**
+ * بادئات الأوامر التي تسألك عنها قائمة ask في .claude/settings.json (و shell في opencode.json). الأداة التي بلا قوائم
+ * صلاحيات (Cursor) يفحصها الحارس بنفسه، بالمطابقة نفسها: بداية كل مقطع من الأمر المركّب.
+ */
+export const ASK_PREFIXES = [
+  'git push --force', 'git push -f', 'git push --force-with-lease', 'git reset --hard', 'git clean', 'git branch -D',
+  'git checkout --', 'git restore', 'rm -rf', 'rm -fr',
+];
 export const SHELL_WRAPPERS = new Set(['powershell', 'pwsh', 'cmd', 'bash', 'sh', 'zsh']);
 export const SCRIPT_INTERPRETERS = new Set(['node', 'deno', 'bun', 'python', 'python3', 'py', 'ruby', 'php']);
 /** كتابة أو حذف من داخل سكربت سطر واحد (node -e ، python -c) أو أمر مغلَّف (powershell -Command "…"). */
