@@ -202,4 +202,23 @@ if (git('init', '-q').status === 0) {
   check('GIT: git is available for the listing tests', false, git('--version').stderr);
 }
 
+// ---------- Supabase: اختبارات pgTAP على القاعدة المحلية وحدها
+freshProject({ kicked: true });
+write('package.json', JSON.stringify({ scripts: { test: 'vitest run' } }));
+check('SB: no supabase/tests → no Supabase step', !names().includes('supabase'), names());
+write('supabase/tests/database/notes_test.sql', 'begin; select plan(1); select ok(true); select * from finish(); rollback;\n');
+check('SB: supabase/tests → a rules-only step that rebuilds the local db then runs pgTAP',
+  cmd('supabase:rules') === 'supabase db reset --local && supabase test db --local' && steps().find((s) => s.name === 'supabase:rules')?.rulesOnly === true, JSON.stringify(steps()));
+check('SB: the step names --local and never a remote database', !/--linked|--db-url/.test(cmd('supabase:rules')) && (cmd('supabase:rules').match(/--local/g) || []).length === 2);
+check('SB: verify skips it unless rules changed or --rules', probe('checks', 'm.planChecks({}, root).steps.map((s) => s.name)').join() === 'test');
+write('node_modules/supabase/package.json', '{}');
+check('SB: CLI installed in the project → npx --no-install', cmd('supabase:rules').startsWith('npx --no-install supabase db reset --local'), cmd('supabase:rules'));
+write('package.json', JSON.stringify({ scripts: { test: 'vitest run', 'test:rules': 'firebase emulators:exec "vitest run tests/rules"' } }));
+check('SB: Firebase rules tests do not replace the Supabase ones', names() === 'test,rules,supabase:rules', names());
+write('package.json', JSON.stringify({ scripts: { test: 'vitest run', 'test:rules': 'supabase test db' } }));
+check('SB: the project\'s own test:rules wins, no duplicate step', names() === 'test,rules', names());
+const rulesFile = (path) => probe('quality', `m.isRulesFile(${JSON.stringify(path)})`);
+check('SB: a migration or a pgTAP test counts as a rules change', rulesFile('supabase/migrations/20261103_notes.sql') && rulesFile('supabase/tests/database/notes_test.sql') && rulesFile('firestore.rules'));
+check('SB: other SQL and seed data do not', !rulesFile('supabase/seed.sql') && !rulesFile('db/schema.sql'));
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) report();

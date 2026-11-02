@@ -240,7 +240,7 @@ r = runNode('.claude/scripts/size-report.mjs', '');
 check('SR: lists huge.ts as 🚨', r.out.includes('src/huge.ts') && r.out.includes('🚨'), r.out);
 check('SR: does not skip src/state/', r.out.includes('src/state/store.ts'), r.out);
 r = runNode('.claude/scripts/env-audit.mjs', '', { args: ['--json'] });
-check('EA: JSON ok with node version + 12 ports incl. Firebase emulators', (() => { try { const j = JSON.parse(r.out); return j.tools.find((t) => t.name === 'Node.js').version.split('.')[0] >= 18 && j.tools.some((t) => t.min === 21) && j.ports.length === 12 && j.ports.some((p) => p.port === 9099); } catch { return false; } })(), r.out.slice(0, 400) + r.err);
+check('EA: JSON ok with node version + 16 ports incl. Firebase emulators and local Supabase', (() => { try { const j = JSON.parse(r.out); return j.tools.find((t) => t.name === 'Node.js').version.split('.')[0] >= 18 && j.tools.some((t) => t.min === 21) && j.ports.length === 16 && j.ports.some((p) => p.port === 9099) && j.ports.some((p) => p.port === 54322) && j.tools.some((t) => t.name === 'Supabase CLI'); } catch { return false; } })(), r.out.slice(0, 400) + r.err);
 r = runNode('.claude/scripts/env-audit.mjs', '');
 check('EA: markdown contains table', r.out.includes('| الأداة | الإصدار |') && r.out.includes('نظام التشغيل'), r.out);
 

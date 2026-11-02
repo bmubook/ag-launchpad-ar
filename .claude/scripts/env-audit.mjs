@@ -20,11 +20,14 @@ const TOOLS = [
   { name: 'Firebase CLI', command: 'firebase --version', timeout: 30000 },
   { name: 'FlutterFire CLI', command: 'flutterfire --version' },
   { name: 'Java (لمحاكيات Firebase)', command: 'java -version 2>&1', min: 21 },
+  { name: 'Supabase CLI', command: ['supabase --version', 'npx --no-install supabase --version'], timeout: 30000 },
+  { name: 'Docker (لقاعدة Supabase المحلية)', command: 'docker --version' },
 ];
 
 /* منافذ التطوير الشائعة + منافذ محاكيات Firebase الافتراضية:
-   4000 واجهة المحاكيات، 5001 Functions، 8080 Firestore، 9099 Auth، 9199 Storage. */
-const DEV_PORTS = [3000, 3001, 4000, 4200, 5000, 5001, 5173, 8000, 8080, 8081, 9099, 9199];
+   4000 واجهة المحاكيات، 5001 Functions، 8080 Firestore، 9099 Auth، 9199 Storage.
+   ومنافذ Supabase المحلية: 54321 الواجهة البرمجية، 54322 Postgres، 54323 Studio، 54324 Mailpit. */
+const DEV_PORTS = [3000, 3001, 4000, 4200, 5000, 5001, 5173, 8000, 8080, 8081, 9099, 9199, 54321, 54322, 54323, 54324];
 const MISSING = 'غير مثبت';
 
 function run(command, timeout = 15000) {

@@ -20,8 +20,9 @@ description: "فحص ما قبل الإطلاق — تدقيق شامل قبل �
 | صحة المشروع | `node .claude/scripts/health-report.mjs --audit` — الاختصارات، الملفات غير المختبرة، ثغرات الحزم. إن لم يُنفَّذ `/health-check` للمرحلة الأخيرة فنفّذه أولاً |
 | أحجام الملفات | `node .claude/scripts/size-report.mjs` |
 | ثغرات الاعتماديات | `npm audit --omit=dev` (أو ما يعادله لمدير الحزم) / `flutter pub outdated` |
-| أسرار متتبَّعة في Git | `git ls-files` بلا أي ملف `.env` حقيقي ولا ملف حساب خدمة (`*adminsdk*.json`)، ثم `git grep -n -I -e sk_live_ -e "PRIVATE KEY" -e service_account` على الفرع الحالي |
+| أسرار متتبَّعة في Git | `git ls-files` بلا أي ملف `.env` حقيقي ولا ملف حساب خدمة (`*adminsdk*.json`)، ثم `git grep -n -I -e sk_live_ -e "PRIVATE KEY" -e service_account -e sb_secret_ -e sbp_ -e service_role` على الفرع الحالي |
 | قواعد الأمان | افحص `firestore.rules` و `storage.rules`: لا `if true` ولا شرط تاريخ «وضع الاختبار»، والقاعدة الختامية `match /{document=**}` مغلقة، ولكل مجموعة يستخدمها الكود قاعدة؛ ثم شغّل `firebase emulators:exec "npm run test:rules"` |
+| حماية Supabase (إن وُجد `supabase/`) | `node .claude/scripts/verify.mjs --rules` يشغّل اختبارات pgTAP محلياً، ثم `supabase db lint`. واطلب من المستخدم فتح **Security Advisor** في لوحة Supabase ونقل تنبيهاته (🔍): جدول بلا RLS، دالة مكشوفة لـ `anon`، عرض يتخطى RLS — كلها ❌. وفي **Storage**: كل حاوية عامة مقصودة عمداً، ولكل حاوية سياسات بشرط مجلد المالك (🔍) |
 | مفاتيح في ملفات البناء | ابنِ التطبيق ثم `node .claude/scripts/release-check.mjs` — يفحص ما سيُرفع فعلاً (`dist`، `build`، `.next/static`...)، لأن مفتاحاً غائباً عن المستودع قد يُحقن في الحزمة وقت البناء. ❌ = مفتاح يقرؤه أي زائر |
 | الموقع الحي (بعد النشر) | `node .claude/scripts/release-check.mjs --url <رابط الموقع> --expect <رقم الإصدار الجديد>` — رؤوس الحماية، و**وصول النشر فعلاً**: رسالة «تم النشر» من الأداة ليست دليلاً، فقد يكون النشر «Skipped» وبقي القديم. أعِده بعد كل نشر |
 

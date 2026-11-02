@@ -69,6 +69,18 @@ function flutterSteps(dir) {
   return steps;
 }
 
+/**
+ * Supabase: اختبارات pgTAP في supabase/tests على القاعدة المحلية (supabase start، يتطلب Docker)، بعد إعادة بنائها
+ * من الهجرات حتى تُختبر آخر سياسة كُتبت. --local صراحةً: لا تُختبر قاعدة الإنتاج ولو كان المشروع مربوطاً بها.
+ * يُتخطى فقط إن كان test:rules في المشروع يشغّل اختبارات Supabase نفسها؛ اختبارات Firebase لا تغني عنها.
+ */
+function supabaseSteps(root) {
+  const ownRules = readJson(join(root, 'package.json'))?.scripts?.['test:rules'] || '';
+  if (!existsSync(join(root, 'supabase', 'tests')) || /\bsupabase\b/.test(ownRules)) return [];
+  const cli = existsSync(join(root, 'node_modules', 'supabase')) ? 'npx --no-install supabase' : 'supabase';
+  return [{ name: 'supabase:rules', label: 'قواعد الأمان (Supabase)', cmd: `${cli} db reset --local && ${cli} test db --local`, cwd: root, rulesOnly: true }];
+}
+
 const STEP_LABELS = { format: 'التنسيق', lint: 'التدقيق', types: 'الأنواع', test: 'الاختبارات', rules: 'قواعد الأمان', build: 'البناء' };
 
 /**
@@ -104,6 +116,7 @@ export function detectChecks(root = projectDir()) {
   steps.push(...stackSteps(root));
   const functionsDir = join(root, 'functions');
   if (existsSync(join(functionsDir, 'package.json'))) steps.push(...nodeSteps(functionsDir, 'functions:'));
+  steps.push(...supabaseSteps(root));
   return steps;
 }
 

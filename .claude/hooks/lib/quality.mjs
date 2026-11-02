@@ -18,7 +18,8 @@ const HISTORY_LIMIT = 30;
 /** حد الخطوة: أقصى ما يُعدَّل بين فحصين ناجحين قبل تنبيه الوكيل بالتوقف والتحقق. */
 export const STEP_LIMIT = { files: 8, lines: 200 };
 
-export const isRulesFile = (relPath) => /\.rules$/i.test(relPath || '');
+// قواعد Firebase (.rules)، أو هجرات Supabase واختباراتها: فيها RLS والمنح والدوال
+export const isRulesFile = (relPath) => /\.rules$|(^|\/)supabase\/(migrations|tests)\/.+\.sql$/i.test(relPath || '');
 
 const emptyPending = () => ({ files: [], lines: 0, lastEditAt: 0, warnedLines: 0 });
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);

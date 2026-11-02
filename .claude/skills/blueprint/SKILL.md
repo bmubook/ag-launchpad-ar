@@ -1,7 +1,7 @@
 ---
 name: blueprint
 description: "المخطط التقني الجاهز — يعرض الحزمة التقنية الموصى بها لطبيعة المشروع من مجلد blueprints/ ويقارنها باحتياجاته ويعتمدها بعد الموافقة (tech stack, blueprint, architecture)."
-argument-hint: "[web | flutter | react-native | backend]"
+argument-hint: "[web | flutter | react-native | backend] [supabase]"
 ---
 <div dir="rtl">
 
@@ -21,6 +21,7 @@ argument-hint: "[web | flutter | react-native | backend]"
    | `React Native` | `blueprints/react-native.md` |
    | `باك إند` | `blueprints/backend.md` |
 3. إذا تعذّر التحديد فاسأل بأداة AskUserQuestion (header: `المخطط`) بالخيارات الأربعة.
+4. **أساس البيانات:** Firebase افتراضياً. اقرأ معه `blueprints/supabase.md` واقترح Supabase بدلاً منه إذا طلبه المستخدم (`$ARGUMENTS` فيه `supabase`)، أو وُجد مجلد `supabase/` في المشروع، أو أظهر العصف الذهني علاقات كثيرة أو تقارير أو مالاً ونقاطاً، أو ذكر المستخدم مشروع Supabase قائماً. للمبتدئ تماماً بلا سبب من هذه: Firebase. عند Supabase تحل أقسامه 2 و4–8 محل ما يخص البيانات في المخطط الأصلي، ويُسجَّل السبب في ADR.
 
 ## 2. اقرأ وقارن
 1. اقرأ ملف المخطط كاملاً، والقسمين 2 و3 (الفكرة والمستخدم) والقسم 6 (البيئة المحلية) من `project_map.md`.
