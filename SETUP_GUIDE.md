@@ -55,6 +55,7 @@
 | **Git** | أحدث إصدار | على ويندوز: **Git for Windows إلزامي** لأن الـ Hooks تعمل عبر Git Bash. [تحميل من الموقع الرسمي](https://git-scm.com/) |
 | **حساب Firebase** | لاحقاً — ليس مطلوباً عند الإقلاع | حساب Google مجاني يكفي لإنشاء مشروع Firebase على الخطة المجانية (Spark)؛ ستحتاجه عند مرحلة البيانات والمصادقة. بعض الخدمات (Cloud Functions،&rlm; App Hosting، تخزين الملفات) تتطلب خطة Blaze — التفاصيل في `blueprints/README.md` |
 | **Firebase CLI + Java** | لاحقاً — عند مرحلة البيانات | Firebase CLI (`npm install -g firebase-tools`) و **JDK 21 أو أحدث** لمحاكيات Firebase من [adoptium.net](https://adoptium.net) — الإصدارات الأقدم يرفضها Firebase CLI، والفحص البيئي ينبّهك تلقائياً |
+| **أو Supabase CLI + Docker** | لاحقاً — إن اخترت Supabase بدل Firebase | حساب Supabase مجاني، و [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)، و **Docker Desktop** لقاعدة الاختبار المحلية. يقترحه الوكيل إذا كانت بياناتك مترابطة أو فيها تقارير أو مال؛ وإلا فـ Firebase أسهل للمبتدئ — التفاصيل في `blueprints/supabase.md` |
 
 **تثبيت Claude Code CLI على ويندوز** (في PowerShell — غير مطلوب إذا استخدمت تطبيق سطح المكتب):
 ```powershell
@@ -240,6 +241,7 @@ flowchart TD
 | **Git** | أحدث إصدار | [تحميل من الموقع الرسمي](https://git-scm.com/) |
 | **حساب Firebase** | لاحقاً — ليس مطلوباً عند الإقلاع | حساب Google مجاني يكفي لإنشاء مشروع Firebase على الخطة المجانية (Spark)؛ ستحتاجه عند مرحلة البيانات والمصادقة. بعض الخدمات (Cloud Functions،&rlm; App Hosting، تخزين الملفات) تتطلب خطة Blaze — التفاصيل في `blueprints/README.md` |
 | **Firebase CLI + Java** | لاحقاً — عند مرحلة البيانات | Firebase CLI (`npm install -g firebase-tools`) و **JDK 21 أو أحدث** لمحاكيات Firebase من [adoptium.net](https://adoptium.net) — الإصدارات الأقدم يرفضها Firebase CLI، والفحص البيئي ينبّهك تلقائياً |
+| **أو Supabase CLI + Docker** | لاحقاً — إن اخترت Supabase بدل Firebase | حساب Supabase مجاني، و [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)، و **Docker Desktop** لقاعدة الاختبار المحلية. يقترحه الوكيل إذا كانت بياناتك مترابطة أو فيها تقارير أو مال؛ وإلا فـ Firebase أسهل للمبتدئ — التفاصيل في `blueprints/supabase.md` |
 
 > 💡 **نصيحة:** شغّل الأوامر التالية في الطرفية للتحقق السريع:
 > ```bash
@@ -260,7 +262,7 @@ flowchart TD
 "السلام عليكم. أنا مستخدم Vibe Builder، وهذا المجلد يحتوي على ملفات الإدارة الأساسية في الجذر. بما أنك تعمل داخل بيئة Antigravity 2.0 وتملك صلاحيات الملفات والطرفية، نفّذ المهام التالية فوراً وبشكل تلقائي:
 
 1. اقرأ جميع الملفات الحاكمة التسعة والتزم ببروتوكول بداية الجلسة (Session Start Protocol) حسب الترتيب الإجباري: `master_rules.md`،&rlm; `rules_security.md`،&rlm; `rules_code_quality.md`،&rlm; `rules_workflow.md`،&rlm; `rules_ui.md`،&rlm; `project_map.md`، وآخر 5 مدخلات في `changelog.md`، والأخطاء النشطة في `bugs_log.md`، وآخر 5 قرارات في `decisions_log.md` بالإضافة إلى `.agents/AGENTS.md` واعتبرها الدستور الحاكم الصارم لك.
-2. تأكد من استيعاب كافة القواعد والقوانين الحاكمة (اللغة العربية الفصحى، حماية قواعد الأمان في Firebase، منع الكسل، سقف حجم الملفات حسب نوعها (البند 14)، تتبّع الهجرات SQL، وحظر فوضى الحزم).
+2. تأكد من استيعاب كافة القواعد والقوانين الحاكمة (اللغة العربية الفصحى، حماية قواعد الأمان في Firebase أو RLS في Supabase، منع الكسل، سقف حجم الملفات حسب نوعها (البند 14)، تتبّع الهجرات SQL، وحظر فوضى الحزم).
 3. استخدم الطرفية والـ Sandbox المدمج لديك لتشغيل الفحص البيئي (Environment Audit) لمعرفة نظام تشغيلي وإصدارات (Node/Python/Git) والمنافذ المتاحة، وسجّل النتائج فوراً في قسم البيئة المحلية بملف `project_map.md`.
 4. اسم مشروعي الجديد هو: [اكتب اسم مشروعك هنا]
 5. طبيعة المشروع وهويته التقنية هي: [اختر بدقة: تطبيق ويب متجاوب لجميع الشاشات / تطبيق جوال Flutter و Dart / تطبيق جوال React Native / مشروع باك إند وقاعدة بيانات فقط]

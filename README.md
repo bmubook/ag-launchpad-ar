@@ -272,10 +272,37 @@
 
 * **أين ترى الحالة؟** في آخر كل رد عدّل فيه الوكيل كوداً يكتب سطر `🧪 الفحص: ✅ ...` أو `🔴 ...`، وفي أي وقت اكتب `/project-status`. وفي الطرفية (CLI) يعرضها أيضاً سطر الحالة: `✅ مفحوص` أو `🟠 غير مفحوص` أو `🔴 الفحص فاشل`، و`🚩 N` للاختصارات المفتوحة؛ سطر الحالة لا يظهر في تطبيق سطح المكتب.
 * **لا مفرّ عبر الطرفية:** تعديل الكود بأمر طرفية (`sed` أو سكربت) يُكتشف من وقت تعديل الملفات كأي تعديل آخر، وملف منطق جديد بلا اختبار يستورده يوقف إنهاء الرد.
+* **«تم» تعني وصل:** ملف جديد لا يستورده أي جزء من التطبيق يوقف إنهاء الرد مرة، لأنه لم يصل إليك بعد. والوكيل يكتب في ختام كل تعديل `🚚 الوصول:` بحالة ثبتت فعلاً: في الكود، أو في نسخة منشورة، أو وصل للمستخدم.
 * **بأي لغة:** يكتشف الحارس أوامر الفحص في Node و Flutter و Python و Go و Rust و Java و .NET و PHP و Ruby و Swift — [ماذا يكتشف في كل لغة](#languages). وإن كان لمشروعك أوامر فحص خاصة، فاطلب من الوكيل كتابتها في `.claude/launchpad.json`، ووافق حين يسألك؛ فهي ما يحكم إعلان النجاح.
 * **الثمن:** الفحص الكامل يأخذ وقتاً بعد كل تعديل (نحو دقيقة ونصف في مشروع Next.js متوسط). وضع `prototype` يكتفي بالفحص السريع دون البناء.
 * **الحدود:** هذه الطبقات تمسك ما تستطيع الآلة فحصه. خطأ منطقي في مسار لم يُكتب له اختبار قد يمرّ؛ دليل القبول يضيّق هذه الفجوة ولا يغلقها.
 * **ماذا تفعل حين يطلب الوكيل إذناً، أو يفشل الفحص، أو يظهر اختصار؟** انظر الجدول التالي.
+
+<a id="real-lessons"></a>
+
+### 🔐 أمان من مشاكل حقيقية، لا من كتاب
+
+**ما هو؟** حمايات أُضيفت في الإصدارات 4.12 حتى 4.15، بعد فحص ثمانية مشاريع حقيقية بُنيت بوكلاء الذكاء الاصطناعي. خرج الفحص بـ 83 درساً، ومعها دروس 96 ثغرة أُغلقت في تطبيق منشور.
+
+**لماذا؟** الأخطاء نفسها تكررت في كل المشاريع تقريباً: مفاتيح سرية نُسخت إلى رسائل الإيداع وملفات السجلات، و«تم» لميزات لم تُربط بأي شاشة، وبيانات مكتوبة باليد تظهر حين يفشل الاتصال، وجداول قاعدة بيانات يقرؤها أي أحد.
+
+**كيف تستفيد؟** لا شيء عليك فعله: تعمل تلقائياً في Claude Code و OpenCode و Cursor، وتبقى قواعد مكتوبة في Antigravity.
+
+| الحماية | متى تعمل | ماذا تمنع |
+|:--------|:---------|:----------|
+| 🛡️ **الحارس لا يصمت إذا تعطّل** | قبل كل إجراء | ملف معطوب في الحارس كان يعني السماح بكل شيء؛ الآن يسألك عن كل إجراء حتى يُصلَح |
+| 🔑 **المفاتيح خارج الأوامر والسجلات** | عند كتابة أمر أو ملف | مفتاح يُنسخ إلى رسالة إيداع أو `bugs_log.md` فيُنشر مع المستودع، وعرض متغيرات البيئة كلها دفعة واحدة |
+| 🚩 **البديل الوهمي** | لحظة كتابة الكود | قائمة مكتوبة باليد أو رسالة «نجاح» تظهر للمستخدم حين يفشل الاتصال |
+| 🚩 **المحارف الخفية** | لحظة كتابة الكود | كود يبدو للعين غير ما ينفّذه، أو تعليمات خفية للوكيل داخل ملف (علامات الاتجاه التي يحتاجها النص العربي مسموحة) |
+| 🧩 **الملف المعزول** | عند إنهاء الرد | إعلان اكتمال ميزة كُتب ملفها ولم يُربط بأي شاشة |
+| 🚚 **حالات الإنجاز الثلاث** | في ختام كل تعديل | «صار متاحاً للمستخدمين» قبل النشر: الوكيل يكتب «في الكود» أو «في نسخة منشورة» أو «وصل للمستخدم» بما ثبت فعلاً |
+| 🚀 **فحص ما قبل الإطلاق** (`/launch-check`) | قبل النشر وبعده | مفتاح داخل ملفات البناء المنشورة، ورؤوس حماية غائبة، ونشر «تم» بينما بقي الموقع القديم |
+| 🔍 **تحقق بنفسك** | في التقارير | ما لا يراه الوكيل في الملفات (لوحة السحابة، المتجر، جهاز حقيقي) يُكتب لك لتتأكد منه، لا ✅ بالتخمين |
+| 🧑‍⚖️ **مراجع الأمن** | بعد التعديلات الكبيرة | مستخدم يرفع رصيده أو يجعل نفسه مشرفاً، ونداء ذكاء اصطناعي مدفوع بلا حد، وحماية تسمح حين تفشل |
+| 🐘 **أساس Supabase** | عند اختيار قاعدة البيانات | جدول بلا حماية RLS، ومفتاح الخادم داخل التطبيق، واختبار يُشغَّل على قاعدة الإنتاج |
+
+* **ما لا تفعله:** لا تُلغي هذه الحمايات المفاتيح التي تسرّبت قبل تركيبها؛ المفتاح المكشوف في تاريخ Git يُلغى من لوحة المزوّد ويُستبدل.
+* **حدودها** مذكورة بصدق في [حدود معروفة](#known-limits) و[حقن الأوامر](#injection).
 
 <a id="when"></a>
 
@@ -473,7 +500,7 @@ claude
 | `/checkpoint` | محادثة طويلة أو شك في السياق | نقطة تفتيش يدوية تعيد تثبيت القواعد والمرحلة النشطة |
 | `/import-skill` | الحاجة لمهارة خارجية | يستورد مهارة من مصدر رسمي بعد فحصها أمنياً ضد الحقن (البندان 4 و6) |
 | `/health-check` | عند نهاية كل مرحلة، أو حين تكثر الإصلاحات | يقيس صحة المشروع بأرقام تُحسب آلياً (الفحص الكامل، الاختصارات، الملفات غير المختبرة، ثغرات الحزم، الإصلاح مقابل البناء)، ويحفظ `docs/health-report.md`، ويقترح جولة صيانة |
-| `/db-change` | أي تعديل على قاعدة البيانات أو صلاحياتها | يحدّث نموذج البيانات وقواعد الأمان (`firestore.rules`) والفهارس، ويختبرها على محاكي Firebase، ولا ينشرها إلا بموافقتك (البند 18) |
+| `/db-change` | أي تعديل على قاعدة البيانات أو صلاحياتها | مع Firebase: يحدّث نموذج البيانات وقواعد الأمان (`firestore.rules`) والفهارس ويختبرها على المحاكي. ومع Supabase: يكتب هجرة SQL فيها حماية RLS والصلاحيات، ويختبرها بـ pgTAP على قاعدة محلية منفصلة. ولا ينشر إلا بموافقتك (البند 18) |
 | `/project-status` | في أي وقت | لوحة حالة للقراءة فقط + إشارات نمو المشروع (البند 29) |
 
 > 📝 **في البيئات الأخرى:**
@@ -593,7 +620,7 @@ ag-launchpad-ar/
 ├── 📁 .claude/                ← طبقة Claude Code
 │   ├── ⚙️ settings.json       ← الصلاحيات + الـ Hooks + سطر الحالة
 │   ├── 📁 hooks/              ← سكربتات Node تنفّذ القواعد آلياً
-│   ├── 📁 scripts/            ← الفحص البيئي + أحجام الملفات + بوابة الإثبات + تقرير الصحة + خارطة الطريق
+│   ├── 📁 scripts/            ← الفحص البيئي + أحجام الملفات + بوابة الإثبات + تقرير الصحة + خارطة الطريق + فحص ما قبل الإطلاق
 │   │                             + guard-install.mjs و guard-kit/ (تركيب حقيبة الحارس في مشروع قائم)
 │   ├── 📁 agents/             ← وكلاء المراجعة الثلاثة (الأمن / الأداء / تجربة المستخدم)
 │   ├── 📁 skills/             ← المهارات الـ 16 (/kickoff، /next، /fix ...)
@@ -616,7 +643,8 @@ ag-launchpad-ar/
 │   ├── 🌐 web.md              ← تطبيق ويب متجاوب
 │   ├── 📱 flutter.md          ← تطبيق جوال Flutter و Dart
 │   ├── 📱 react-native.md     ← تطبيق جوال React Native
-│   └── 🗄️ backend.md          ← باك إند وقاعدة بيانات فقط
+│   ├── 🗄️ backend.md          ← باك إند وقاعدة بيانات فقط
+│   └── 🐘 supabase.md         ← أساس بيانات بديل لأي مخطط: Supabase بدل Firebase
 ├── 📁 docs/
 │   ├── 📖 glossary.md         ← قاموس المصطلحات (يكبر مع مشروعك)
 │   ├── 🗺️ roadmap.html        ← خارطة الطريق المرئية (تُنشأ بعد الإقلاع وتتحدث تلقائياً)
@@ -659,7 +687,7 @@ ag-launchpad-ar/
 | **⚙️ وضعا تشغيل** | `prototype` للتجريب السريع، `production` للصرامة الكاملة |
 | **🤝 شبكة إجماع حقيقية** | في Claude Code: 3 وكلاء مراجعة فرعيون مستقلون (الأمن، الأداء، تجربة المستخدم) يعمل كل منهم بسياق نظيف وبالتوازي عبر `/consensus-gate` |
 | **🛡️ إنفاذ آلي للقواعد** | في Claude Code: Hooks بلغة Node تمنع قراءة `.env` وكتابة المفاتيح السرية، وتفرض نقاط التفتيش والفحص والتوثيق — القاعدة تُنفَّذ ولا تُترك لذاكرة الوكيل |
-| **🗺️ مخططات تقنية جاهزة** | 4 مخططات (ويب، Flutter،&rlm; React Native، باك إند) بحزمة تقنية وخط أساس أمني وخط أساس للجودة وخطة نشر، مع روابط التوثيق الرسمي — في البيئتين |
+| **🗺️ مخططات تقنية جاهزة** | 4 مخططات (ويب، Flutter،&rlm; React Native، باك إند) بحزمة تقنية وخط أساس أمني وخط أساس للجودة وخطة نشر، مع روابط التوثيق الرسمي، ولكل منها أساس بيانات: Firebase افتراضياً أو Supabase بديلاً — في البيئتين |
 | **🎓 وضع التعلّم** | في Claude Code: شرح مبسّط لكل قرار مهم ولكل مصطلح عند أول ظهور، وقاموس `docs/glossary.md` يكبر مع مشروعك |
 | **💡 اقتراحات بعد كل مهمة** | في Claude Code: 3 خيارات تطوير (ميزة، جودة وأمان، تجربة مستخدم) مع حماية نطاق الـ MVP من التضخم |
 | **🗺️ خارطة طريق مرئية** | صفحة تتحدث وحدها من خريطة المشروع: محطات الرحلة و«أنت هنا»، والمراحل ونسبها، وكل ميزة وحالتها، والخطوة التالية — [التفاصيل](#roadmap) |
@@ -680,6 +708,7 @@ ag-launchpad-ar/
 | **Node.js** | v18+ — **إلزامي** (الـ Hooks تعمل به) | v18+ |
 | **Git** | أحدث إصدار — على ويندوز: **Git for Windows إلزامي** لأن الـ Hooks تعمل عبر Git Bash | أحدث إصدار |
 | **Firebase CLI + Java** (لاحقاً — عند مرحلة البيانات) | Firebase CLI و **JDK 21 أو أحدث** لمحاكيات Firebase ([adoptium.net](https://adoptium.net)) — الأقدم يرفضه Firebase CLI، و `/env-audit` ينبّهك | نفسه |
+| **أو Supabase CLI + Docker** (إن اخترت Supabase بدل Firebase) | [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) و **Docker Desktop** (أو OrbStack على الماك) لقاعدة الاختبار المحلية — `/env-audit` يكشفهما | نفسه |
 
 > 🖱️ **Cursor (دعم تجريبي):** يحتاج اشتراكاً في Cursor يتيح وضع Agent (التجربة المجانية محدودة)، و Node.js 18+؛ ولا يلزمه Git Bash لأن أوامر الـ Hooks فيه تعمل في أي طرفية.
 >
@@ -756,7 +785,7 @@ ag-launchpad-ar/
 
 ## 🌐 In English
 
-**AG Launchpad AR** is an Arabic-first starter template that turns an AI coding agent (**Claude Code**, **Google Antigravity**, and in beta **Cursor** and **OpenCode 2**) into a disciplined software engineer for beginners ("vibe coders"). It ships 37 governance rules, automatic enforcement hooks (secrets protection, file-size ceilings, mandatory documentation, context checkpoints), three independent review subagents, and a guided journey: `/kickoff` → `/grill-me` → `/blueprint` → `/quality-setup` → `/next` → `/fix` → `/launch-check`. It includes an auto-updating visual roadmap page (docs/roadmap.html) showing where the project stands, a learning mode with an Arabic glossary and ready-made **Firebase** blueprints for web (Next.js), Flutter, React Native (Expo) and backend, with security rules verified on the Firebase emulator. All communication with the agent is in Arabic.
+**AG Launchpad AR** is an Arabic-first starter template that turns an AI coding agent (**Claude Code**, **Google Antigravity**, and in beta **Cursor** and **OpenCode 2**) into a disciplined software engineer for beginners ("vibe coders"). It ships 37 governance rules, automatic enforcement hooks (secrets protection, file-size ceilings, mandatory documentation, context checkpoints), three independent review subagents, and a guided journey: `/kickoff` → `/grill-me` → `/blueprint` → `/quality-setup` → `/next` → `/fix` → `/launch-check`. It includes an auto-updating visual roadmap page (docs/roadmap.html) showing where the project stands, a learning mode with an Arabic glossary and ready-made **Firebase** blueprints for web (Next.js), Flutter, React Native (Expo) and backend, with security rules verified on the Firebase emulator, plus a **Supabase** data foundation (RLS, SQL migrations, pgTAP tests on a separate local database) as an alternative. Security lessons from eight real projects are enforced: the guard fails closed when it breaks, blocks secrets in shell commands and logs, flags fake fallbacks and hidden Unicode characters, stops the agent from calling a feature done while its file is imported by nothing, and `/launch-check` scans the built bundle for keys and confirms the deploy actually reached the live site. All communication with the agent is in Arabic.
 
 **Quick start:** download the repo → open the folder in the Claude desktop app (Code tab) → say hello. MIT licensed.
 
