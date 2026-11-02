@@ -123,7 +123,7 @@ rollback;
 
    - `plan(N)` يساوي عدد الحالات؛ عدّله مع كل حالة تضيفها.
    - حالة رفض بنص رسالة السياسة (لا بالرمز وحده) تثبت أن **السياسة** رفضت، لا غياب المنح.
-   - حاوية ملفات: ملف مستقل `supabase/tests/database/avatars_test.sql` بالمستخدمَين أنفسهم:
+   - حاوية ملفات: ملف مستقل `supabase/tests/database/avatars_test.sql` بالمستخدمَين أنفسهم. لا تختبر الحذف بـ `delete` في SQL: يمنعه Supabase من أي أحد (الحذف عبر واجهة التخزين فقط)، فيفشل الاختبار لا السياسة:
 
 ```sql
 begin;
@@ -139,7 +139,7 @@ select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-2222222
 select is_empty($$ select 1 from storage.objects where bucket_id = 'avatars' $$, 'الغريب لا يرى ملفات غيره');
 select throws_ok($$ insert into storage.objects (bucket_id, name) values ('avatars', '11111111-1111-1111-1111-111111111111/x.png') $$,
   '42501', 'new row violates row-level security policy for table "objects"', 'الغريب لا يرفع في مجلد غيره');
-select is_empty($$ delete from storage.objects where bucket_id = 'avatars' returning 1 $$, 'الغريب لا يحذف ملفات غيره');
+select is_empty($$ update storage.objects set name = '22222222-2222-2222-2222-222222222222/a.png' where bucket_id = 'avatars' returning 1 $$, 'الغريب لا ينقل ملف غيره إلى مجلده');
 
 select * from finish();
 rollback;
