@@ -10,7 +10,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { projectDir, toProjectRelative } from './common.mjs';
 import {
-  DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MAX_COMMAND_CHARS, MUTATING_COMMANDS, MUTATING_GIT,
+  DOTNET_FILE_WRITE, DOWNLOAD_TO_SCRIPT, ENV_DUMP, INLINE_WRITE, KEYCHAIN_READ, KEY_MATERIAL, LOCAL_HOST, MAX_COMMAND_CHARS, MUTATING_COMMANDS, MUTATING_GIT,
   PROJECT_KEY_FILES, PROTECTED_DIRS, PROTECTED_INSTRUCTION_PATHS, READ_OR_EXFIL_COMMAND, REMOTE_EXEC, SCRIPT_INTERPRETERS, SCRIPT_RUNNER_WORD,
   SECRET_STORES, SHELL_WRAPPERS, UPLOAD, URL_HOST,
 } from './patterns.mjs';
@@ -164,6 +164,11 @@ function keychainDecision(command) {
   return decide('deny', '🔒 حماية الأسرار: هذا الأمر يقرأ كلمات مرور محفوظة في سلسلة مفاتيح الجهاز، فلا يشغّله الوكيل.');
 }
 
+function envDumpDecision(command) {
+  if (!ENV_DUMP.test(command)) return null;
+  return decide('ask', '🔒 هذا الأمر يعرض متغيرات البيئة، وفيها مفاتيح الخدمات، فتصل قيمها إلى سجل المحادثة. وافق فقط إذا طلبتَ أنت ذلك.');
+}
+
 function uploadDecision(command) {
   if (!any(UPLOAD, command)) return null;
   const hosts = [...command.matchAll(URL_HOST)].map((match) => match[1]);
@@ -177,7 +182,7 @@ export function checkCommandThreats(command) {
   // علامات التنصيص المهرَّبة (\" و \') كما يكتبها بعض النماذج تُعاد إلى أصلها، وإلا تحولت الشرطة المائلة إلى جزء من المسار
   const text = String(command || '').replace(/\\(?=["'])/g, '');
   if (!text.trim()) return null;
-  const whole = [remoteExecDecision(text), uploadDecision(text), keychainDecision(text)];
+  const whole = [remoteExecDecision(text), uploadDecision(text), keychainDecision(text), envDumpDecision(text)];
   const variables = assignedValues(slashes(text));
   // توسيع المقاطع كلها بميزانية واحدة: متغيرات كثيرة الاستعمال تضخّم الأمر أضعافاً، فيُسأل عنه المستخدم بدل فحصه
   const expanded = [];

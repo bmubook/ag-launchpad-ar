@@ -149,7 +149,7 @@ for (const [cmd, want] of bashCases) { const o = guard('Bash', { command: cmd })
 check('G: PowerShell Get-Content .env → deny', decision(guard('PowerShell', { command: 'Get-Content .env' })) === 'deny');
 check('G: PowerShell Copy-Item template → allow', decision(guard('PowerShell', { command: 'Copy-Item .env.example .env' })) === null);
 r = runNode('.claude/hooks/guard-secrets.mjs', '{{{');
-check('G: garbage stdin → silent exit 0', r.code === 0 && r.out === '', r.out + r.err);
+check('G: garbage stdin → ask (the guard cannot tell what it would check: fail closed)', r.code === 0 && decision(r) === 'ask', r.out + r.err);
 
 // ---------- Firebase specifics
 r = guard('Write', { file_path: join(tmp, 'src/lib/firebase/client.ts'), content: `const cfg = { apiKey: "${FAKE.google}" }` });
@@ -268,6 +268,7 @@ await import('./quality.test.mjs');
 await import('./gate.test.mjs');
 await import('./hosts.test.mjs');
 await import('./attacks.test.mjs');
+await import('./leaks.test.mjs');
 await import('./opencode.test.mjs');
 await import('./roadmap.test.mjs');
 await import('./stacks.test.mjs');

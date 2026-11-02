@@ -11,6 +11,13 @@ export const SECRET_HIGH = [
   { name: 'Google/Firebase API key', re: /\bAIza[0-9A-Za-z_-]{35}\b/, publicInFirebaseConfig: true },
   { name: 'Slack token', re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
   { name: 'Supabase secret key', re: /\bsb_secret_[A-Za-z0-9_-]{20,}/ },
+  // مفاتيح وُجدت مكشوفة في مشاريع حقيقية بُنيت بالذكاء الاصطناعي (docs/research-lessons-2026-11.md)
+  { name: 'Supabase access token', re: /\bsbp_[A-Za-z0-9]{40,}/ },
+  { name: 'Groq API key', re: /\bgsk_[A-Za-z0-9]{40,}/ },
+  { name: 'ElevenLabs API key', re: /\bsk_[a-f0-9]{48}\b/ },
+  { name: 'Hugging Face token', re: /\bhf_[A-Za-z0-9]{34,}/ },
+  { name: 'Google OAuth client secret', re: /\bGOCSPX-[A-Za-z0-9_-]{24,}/ },
+  { name: 'Stripe webhook secret', re: /\bwhsec_[A-Za-z0-9]{24,}/ },
   { name: 'Private key block', re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----/ },
 ];
 
@@ -161,7 +168,10 @@ export const SECRET_STORES = [
   /^(?:~|\$HOME|\$env:USERPROFILE|%USERPROFILE%|\/(?:home|Users)\/[^/]+|[A-Za-z]:\/Users\/[^/]+)\/\.npmrc$/i,
 ];
 /** ملفات توقيع داخل المشروع: تُعامل كملف البيئة (لا تُقرأ ولا تُعدَّل، ويُسمح بإنشائها أول مرة). */
-export const PROJECT_KEY_FILES = [/\.(p12|pfx|jks)$/i, /(^|\/)(?!debug\.keystore$)[^/]*\.keystore$/i, /(^|\/)key\.properties$/];
+// ‎.p8 = مفتاح Apple الخاص (دخول آبل، الإشعارات، App Store Connect)، و client_secret*.json = سر عميل OAuth من Google
+export const PROJECT_KEY_FILES = [
+  /\.(p12|pfx|jks|p8)$/i, /(^|\/)(?!debug\.keystore$)[^/]*\.keystore$/i, /(^|\/)key\.properties$/, /(^|\/)client_secret[^/]*\.json$/i,
+];
 /** قد يكون مفتاحاً خاصاً وقد يكون شهادة عامة: يُسأل المستخدم. */
 export const KEY_MATERIAL = /\.(pem|key)$/i;
 
@@ -173,6 +183,18 @@ export const MUTATING_COMMANDS = new Set([
 ]);
 /** قراءة كلمات المرور المحفوظة في سلسلة مفاتيح الماك (Keychain) أو مخزن أسرار Linux. */
 export const KEYCHAIN_READ = /\bsecurity\s+(?:find-(?:generic|internet)-password|dump-keychain|export)\b|\bsecret-tool\s+lookup\b/i;
+/**
+ * عرض متغيرات البيئة كلها: في مطلع مقطع من الأمر أو بعد غلاف (bash -c، ‏cmd /c): printenv، ‏env أو set أو export
+ * وحدها أو بخياراتها، ‏Get-ChildItem env:؛ وفي أي موضع: process.env أو os.environ دون اسم متغير، و ‎/proc/self/environ.
+ * ‏env FOO=1 cmd و Set-Location و set -e و node -e "…process.env.HOME" لا تطابق.
+ */
+// لا مسافتان متغيرتان متجاورتان: كل \s مسبوقة بنص ثابت أو متبوعة به، فيبقى الزمن خطياً (redos في leaks.test.mjs)
+const DUMP_END = String.raw`(?:\s*["'])?\s*(?=$|[;&|\n)>"'])`;
+const DUMP_WRAPPER = String.raw`(?:(?:(?:ba|z|da)?sh|pwsh|powershell|cmd)(?:\.exe)?(?:\s+[-/][A-Za-z]+)*\s+["']?)?`;
+export const ENV_DUMP = new RegExp(String.raw`(?:^|[;&|\n(\`])\s*${DUMP_WRAPPER}`
+  + String.raw`(?:printenv\b|(?:env|printenv)(?:\s+-[-\w]+)*${DUMP_END}|(?:set|export)${DUMP_END}|export\s+-p\b|declare\s+-[px]${DUMP_END}|compgen\s+-[ev]\b`
+  + String.raw`|(?:Get-ChildItem|gci|dir|ls|Get-Item|gi)\s+(?:-Path\s+)?env:)`
+  + String.raw`|\[(?:System\.)?Environment\]::GetEnvironmentVariables\b|\bprocess\.env(?![\w.[])|\bos\.environ(?![\w.[])|\/proc\/[^/\s]+\/environ\b`, 'i');
 /**
  * كتابة أو حذف بدوال ‎.NET من PowerShell، مثل ‎[System.IO.File]::AppendAllText("$PWD\AGENTS.md", …)‎:
  * صيغة يلجأ إليها النموذج على ويندوز لتفادي مشكلات الترميز، ولا تبدأ بكلمة أمر معروفة.

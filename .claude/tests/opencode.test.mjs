@@ -183,7 +183,7 @@ check('OC runHook without Node → null', await runHook('guard-secrets.mjs', {},
 // ---------- runHook الحقيقي ومحمّل القواعد
 r = await runHook('guard-secrets.mjs', { session_id: 's', tool_name: 'read', tool_input: { path: '.env' } }, tmp);
 check('OC runHook: spawns the real guard with --host=opencode and parses its JSON', r?.hookSpecificOutput?.permissionDecision === 'deny', JSON.stringify(r));
-check('OC runHook: a missing script fails open (null)', await runHook('missing.mjs', {}, tmp) === null);
+check('OC runHook: a missing script is reported as failed, not as "nothing to say"', (await runHook('missing.mjs', {}, tmp))?.failed === true);
 const rules = rulesLoader(tmp);
 const first = rules();
 write('rules_security.md', '# أمن محدّث\n');

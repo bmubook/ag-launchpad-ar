@@ -45,29 +45,37 @@ function parseJson(text) {
   }
 }
 
-/** يشغّل سكربت Hook ويعيد مخرجه، أو null عند أي فشل — الفشل المفتوح كبقية الـ Hooks. */
+/** مخرج سكربت Hook تعذّر تشغيله أو انتهت مهلته أو خرج بخطأ: بقية الـ Hooks تتجاهله، والحارس يسأل عنه. */
+export const HOOK_FAILED = Object.freeze({ failed: true });
+const GUARD_FAILED = '🛡️ تعطّل الحارس الأمني أثناء فحص هذا الإجراء، فلم يُفحص. وافق فقط إذا كنت تعرف ما يفعله، '
+  + 'وأخبر المستخدم أن الحارس يحتاج إصلاحاً: شغّل node .claude/scripts/verify.mjs لمعرفة الملف المعطوب.';
+
+/** يشغّل سكربت Hook ويعيد مخرجه، أو null حين لا يطبع شيئاً، أو HOOK_FAILED عند الفشل. بلا Node يعيد null (تنبيه NODE_MISSING). */
 export function runHook(script, payload, root = ROOT, node = NODE) {
   if (!node) return Promise.resolve(null);
   return new Promise((done) => {
     let out = '';
+    let timedOut = false;
     const child = spawn(node, [join(GUARD_HOME, 'hooks', script), '--host=opencode'], {
       cwd: root, windowsHide: true, env: { ...process.env, CLAUDE_PROJECT_DIR: root },
     });
-    const timer = setTimeout(() => child.kill(), HOOK_TIMEOUT_MS);
+    const timer = setTimeout(() => { timedOut = true; child.kill(); }, HOOK_TIMEOUT_MS);
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk) => { out += chunk; });
-    child.on('error', () => { clearTimeout(timer); done(null); });
-    child.on('close', () => { clearTimeout(timer); done(parseJson(out)); });
-    child.stdin.on('error', () => done(null));
+    child.on('error', () => { clearTimeout(timer); done(HOOK_FAILED); });
+    child.on('close', (code) => { clearTimeout(timer); done(timedOut || code !== 0 ? HOOK_FAILED : parseJson(out)); });
+    child.stdin.on('error', () => done(HOOK_FAILED));
     child.stdin.end(JSON.stringify(payload));
   });
 }
 
 export const contextOf = (output) => output?.hookSpecificOutput?.additionalContext || '';
 
-/** أشد قرارات الحارس بين عدة ملفات: المنع ثم السؤال؛ null = يمرّ. */
+/** أشد قرارات الحارس بين عدة ملفات: المنع ثم السؤال؛ null = يمرّ. الحارس الذي تعطّل يُعامل كسؤال (الفشل المغلق). */
 export function strongestDecision(outputs) {
-  const decisions = outputs.map((output) => output?.hookSpecificOutput).filter((specific) => specific?.permissionDecision);
+  const decisions = outputs
+    .map((output) => (output === HOOK_FAILED ? { permissionDecision: 'ask', permissionDecisionReason: GUARD_FAILED } : output?.hookSpecificOutput))
+    .filter((specific) => specific?.permissionDecision);
   return decisions.find((d) => d.permissionDecision === 'deny') || decisions.find((d) => d.permissionDecision === 'ask') || null;
 }
 
