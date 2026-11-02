@@ -25,7 +25,7 @@ export function removeIfEmpty(dir) {
  */
 export function readConfigJson(path, label) {
   if (!existsSync(path)) return null;
-  const text = readFileSync(path, 'utf8').replace(/^﻿/, '');
+  const text = readFileSync(path, 'utf8').replace(/^\uFEFF/, '');
   if (!text.trim()) return {};
   let value = null;
   try { value = JSON.parse(text); } catch { value = null; }

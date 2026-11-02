@@ -26,6 +26,13 @@ const HOSTILE = {
   'database URLs': repeat('mysql://a:'),
   // جولة المراجعة الثالثة: «catch {» في أسطر تعليق متتالية كان يعيد مسح ما بعده عند كل ظهور (14 ث)
   'catch { in comment lines': repeat('// catch {\n'),
+  // البدائل الوهمية (المرحلة 5): كل جزء متغير يسبقه نص ثابت
+  'fallback arrays repeated': repeat('?? [{ a: '),
+  'catch return repeated': repeat('catch (e) { return [ '),
+  '.catch arrow repeated': repeat('.catch((e) => ( '),
+  'except return repeated': repeat('except E:\n return { '),
+  // استخراج أسماء الملفات المعزولة: مقطع واحد فيه آلاف النقاط
+  'dotted path segment': `'/${'a.'.repeat(SIZE / 2)}'`,
 };
 
 freshProject({ kicked: true });

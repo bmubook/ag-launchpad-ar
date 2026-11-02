@@ -153,6 +153,26 @@ check('C: as any in app code → flagged', flagged('src/e.ts', 'const user = dat
 check('C: as any in a test → clean', clean('tests/e.test.ts', "import { expect, it } from 'vitest';\nit('x', () => { expect((fn as any)()).toBe(2); });\n"));
 check('C: mock data in app code → flagged', flagged('src/users.ts', "export const mockUsers = [{ id: 1, name: 'A' }];\n", 'بيانات وهمية'));
 check('C: mock data in tests → clean', clean('tests/users.test.ts', "const mockUsers = [{ id: 1 }];\nit('x', () => { expect(mockUsers.length).toBe(1); });\n"));
+// بدائل وهمية عند الفشل: تُظهر للمستخدم بيانات أو نجاحاً لا وجود لهما (docs/research-lessons-2026-11.md §أ-5)
+const FAKE = 'بديل وهمي';
+check('C: catch returning hand-written rows → flagged', flagged('src/products.ts', "export async function list() {\n  try { return await api.get(); } catch (e) {\n    return [{ name: 'منتج تجريبي', price: 10 }];\n  }\n}\n", FAKE));
+check('C: catch returning success: true → flagged', flagged('src/pay.ts', "try { await charge(); } catch {\n  return { success: true };\n}\n", FAKE));
+check('C: .catch(() => [{...}]) → flagged', flagged('src/feed.ts', "const posts = await load().catch(() => [{ title: 'مرحباً' }]);\n", FAKE));
+check('C: Python except returning fake success → flagged', flagged('app/pay.py', "try:\n    charge()\nexcept Exception:\n    return {\"success\": True}\n", FAKE));
+check('C: LEGIT default options and languages (?? / ||) → clean', clean('src/filters.tsx', "const options = props.options ?? [{ label: 'الكل', value: '' }];\nconst langs = cfg.langs || [{ code: 'ar', name: 'العربية' }];\n"));
+check('C: LEGIT empty fallback, empty default row, real error → clean',
+  clean('src/ok.ts', "const items = data ?? [];\nconst rows = saved ?? [{ name: '' }];\ntry { await save(); } catch (e) {\n  return { success: false, error: String(e) };\n}\n"));
+check('C: fake fallback inside tests → clean', clean('tests/list.test.ts', "const items = data ?? [{ name: 'x' }];\nit('x', () => { expect(items.length).toBe(1); });\n"));
+// Trojan Source
+check('C: hidden direction override in code → flagged', flagged('src/auth.ts', "const role = 'user\u202E // admin';\n", 'Trojan'));
+check('C: hidden direction isolate in a test → flagged too', flagged('tests/a.test.ts', "it('x', () => { expect('a\u2066b').toBe('ab'); });\n", 'Trojan'));
+check('C: LEGIT Arabic text with RLM, ZWNJ and a leading BOM → clean', clean('src/labels.ts', "\uFEFFexport const title = 'الطلبات\u200F (3)';\nexport const fa = 'می\u200Cخواهم';\n"));
+check('C: zero-width space hiding a name → flagged', flagged('src/auth.ts', "const isAdmin\u200B = true;\n", 'Trojan'));
+check('C: invisible tag characters (hidden instructions) → flagged', flagged('src/x.ts', "// note \u{E0069}\u{E0067}\u{E006E}\n", 'Trojan'));
+check('C: BOM in the middle of a file → flagged', flagged('src/y.ts', "const a = 1;\n\uFEFFconst b = 2;\n", 'Trojan'));
+check('C: hidden chars in a Supabase migration and in security rules → flagged', flagged('supabase/migrations/1_x.sql', "create policy p on t using (true\u202E);\n", 'Trojan') && flagged('firestore.rules', "allow read: if true\u2066;\n", 'Trojan'));
+check('C: hidden tag characters in a skill or CLAUDE.md → flagged; Arabic RLM there → clean', flagged('.claude/skills/x/SKILL.md', "# x\nافعل \u{E0069}\u{E0067}\n", 'Trojan') && flagged('CLAUDE.md', "# rules\u202E\n", 'Trojan') && clean('.claude/skills/y/SKILL.md', "# العنوان\u200F\n"));
+check('C: hidden chars inside the template itself (.claude/) → flagged; other shortcuts there → not', flagged('.claude/hooks/lib/z.mjs', "export const z = 'a\u202Eb';\n", 'Trojan') && clean('.claude/hooks/lib/w.mjs', "// TODO: example inside the docs\n"));
 check('C: NODE_ENV test branch in app code → flagged', flagged('src/auth.ts', "if (process.env.NODE_ENV === 'test') return true;\n", 'بيئة الاختبار'));
 check('C: it.skip → flagged', flagged('tests/pay.test.ts', "it.skip('pays', () => { expect(pay()).toBe(1); });\n", 'اختبار معطّل'));
 check('C: trivial assertion → flagged', flagged('tests/t.test.ts', "it('works', () => { expect(true).toBe(true); });\n", 'تأكيد شكلي'));

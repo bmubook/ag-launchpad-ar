@@ -125,11 +125,15 @@ export function* walkFiles(root) {
   if (budgets.some((budget) => budget.truncated)) truncatedWalks.add(root);
 }
 
-/** نص الملف، أو null إذا كان أكبر من 2MB أو غير قابل للقراءة. */
+/**
+ * نص الملف، أو null إذا كان أكبر من 2MB أو غير قابل للقراءة أو ليس ملفاً عادياً:
+ * رابط رمزي إلى /dev/zero أو FIFO حجمه صفر في stat، فيُقرأ بلا نهاية ويتجاوز Hook مهلته فيمرّ الرد دون فحص.
+ */
 export function readText(root, relPath) {
   try {
     const full = join(root, relPath);
-    return statSync(full).size > MAX_FILE_BYTES ? null : readFileSync(full, 'utf8');
+    const stat = statSync(full);
+    return !stat.isFile() || stat.size > MAX_FILE_BYTES ? null : readFileSync(full, 'utf8');
   } catch {
     return null;
   }

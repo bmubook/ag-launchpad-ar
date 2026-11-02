@@ -15,7 +15,7 @@ import { hostTraits } from './lib/host.mjs';
 import { CONFIG_FILE, GUARD_KIT } from './lib/kit.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import { detectChecks, needsVerification, recordPendingEdit, setOpenShortcuts, verifyCommand } from './lib/quality.mjs';
-import { NO_ASSERTION, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
+import { NO_ASSERTION, TEMPLATE_PATH, isAssertionlessTest, scanFile, scanShortcuts } from './lib/shortcuts.mjs';
 
 /** نص الملف بعد التعديل؛ ملف أكبر من 2MB (مولّد غالباً) يُعامل كفارغ فلا يطول الـ Hook عن مهلته. */
 const readFile = (relPath) => readText(projectDir(), relPath) || '';
@@ -121,6 +121,16 @@ runHook(async () => {
   if (ROADMAP_SOURCES.has(relPath) && readProjectState().kickedOff) {
     const note = await refreshRoadmap();
     if (note) messages.push(note);
+  }
+
+  // ملفات القالب نفسه لا تدخل بوابة الإثبات، لكنها تُفحص بالمحارف الخفية (scanShortcuts يتخطى فيها بقية الأنماط):
+  // كود الحارس أثمن هدف لـ Trojan Source
+  if (!needsVerification(relPath) && TEMPLATE_PATH.test(relPath)) {
+    const found = scanShortcuts(relPath, added);
+    if (found.length) {
+      session.shortcuts[relPath] = [...new Set([...(session.shortcuts[relPath] || []), ...found.map((f) => f.kind)])];
+      messages.push(shortcutMessage(relPath, found));
+    }
   }
 
   if (needsVerification(relPath)) {

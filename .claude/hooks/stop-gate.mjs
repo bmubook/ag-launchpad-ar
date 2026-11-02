@@ -4,7 +4,8 @@
  * 1) تُعالَج الاختصارات المرصودة أو تُذكر للمستخدم صراحةً (البند 11).
  * 2) ينجح فحص المشروع بعد آخر تعديل: node .claude/scripts/verify.mjs (البنود 8 و 13 و 16).
  * 3) يكون لكل ملف منطق عُدّل اختبارٌ يستورده (البند 13).
- * 4) يُحدَّث changelog.md (master_rules.md §2). حقيبة الحارس بلا سجلات: تاريخ المشروع القائم في Git.
+ * 4) لا يبقى ملف عُدّل في هذه الجولة معزولاً لا يستورده التطبيق، أو يُصرَّح بأنه غير مكتمل.
+ * 5) يُحدَّث changelog.md (master_rules.md §2). حقيبة الحارس بلا سجلات: تاريخ المشروع القائم في Git.
  * «عُدّل في هذه الجولة» = ما سجّلته أدوات التعديل + ما تغيّر على القرص منذ بداية الجولة (sed، سكربتات، مولّدات).
  * stop_hook_active يمنع الحلقات اللانهائية: المنع مرة واحدة، ثم تبقى الحالة ظاهرة في سطر الحالة.
  */
@@ -15,13 +16,15 @@ import { collectTests, isCovered, isLogicFile } from './lib/coverage.mjs';
 import { changedSince, modifiedAt, readText, walkWasTruncated } from './lib/files.mjs';
 import { changedPrints, fingerprint } from './lib/fingerprint.mjs';
 import { GUARD_KIT } from './lib/kit.mjs';
+import { findOrphans } from './lib/orphans.mjs';
 import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
   gateStatus, loadQuality, needsVerification, setOpenShortcuts, verifyCommand, verifyWindows,
 } from './lib/quality.mjs';
-import { scanFile } from './lib/shortcuts.mjs';
+import { HIDDEN_CHARS, scanFile } from './lib/shortcuts.mjs';
 
-const list = (files) => truncate(files.join('، '), 300);
+// أسماء الملفات بيانات يختارها من أنشأها: تُحذف منها المحارف الخفية ومحارف التحكم وتُعلَّم بـ ` قبل أن تصل سياق الوكيل
+const list = (files) => truncate(files.map((f) => `\`${f.replace(HIDDEN_CHARS, '').replace(/[\u0000-\u001f\u007f`]/g, '')}\``).join('، '), 300);
 
 /*
  * حدود Hook التوقف: مهلته 15 ث، وجولة لمست آلاف الملفات (touch جماعي مثلاً) قد تُطيل إعادة الفحص حتى ينقطع
@@ -117,6 +120,12 @@ function verifyProblem(gate, mode, files, quality) {
     + 'وإذا كان العمل متوقفاً بانتظار قراره فاكتب «🟠 الفحص: مؤجل — <السبب>».';
 }
 
+function orphanProblem(files) {
+  return `🧩 ملفات عُدّلت في هذه الجولة ولا يستوردها أي جزء من التطبيق (الاختبارات لا تُحسب): ${list(files)}. `
+    + 'ملف لا يستورده شيء لم يصل للمستخدم، فلا تصفه بأنه مكتمل. اربطه بالشاشة أو الخدمة التي تستخدمه ثم أعد الفحص، '
+    + 'أو قل للمستخدم صراحةً إنه غير مكتمل بعد وما الذي ينقصه؛ وإن كان مستخدماً بطريقة لا يراها هذا الفحص (تحميل ديناميكي) فاذكر ذلك.';
+}
+
 function untestedProblem(files) {
   return `🧪 ملفات منطق عُدّلت ولا يستوردها أي اختبار (البند 13): ${list(files)}. `
     + 'اكتب لكل منها اختباراً يغطي سلوكه (حالة ناجحة وحالة خطأ على الأقل) ثم أعد الفحص. '
@@ -167,6 +176,12 @@ runHook(async () => {
       const untested = untestedLogic(root, logic, partial);
       if (untested.length) problems.push(untestedProblem(untested));
     }
+  }
+  // أثقل خطوة (تقرأ ملفات التطبيق كلها)، فتأتي أخيراً وفقط إن لم يكن هناك ما يوقف الرد أصلاً: لو تجاوز الـ Hook مهلته
+  // لضاعت المشكلات المجموعة قبلها ومرّ الرد. وما لم يتسع له الوقت أو الحجم لا يُفحص هنا؛ تقرير الصحة يذكره
+  if (verifiable.length && !problems.length && !partial.size && !late()) {
+    const { orphans } = findOrphans(root, verifiable.filter((rel) => modifiedAt(root, rel)), late);
+    if (orphans.length) problems.push(orphanProblem(orphans));
   }
   if (partial.size) problems.push(partialProblem(partial, mode));
 

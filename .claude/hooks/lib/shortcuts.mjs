@@ -5,6 +5,20 @@
 const TS = /\.(m?tsx?|cts)$/i;
 const RULES = /\.rules$/i;
 const ANY_CODE = /\.(m?[jt]sx?|c[jt]s|vue|svelte|astro|dart|py|go|rb|php|java|kts?|swift|rs|cs)$/i;
+/** ملفات القالب نفسه وإعدادات البرامج الثلاثة: أمثلة الاختصارات فيها جزء من شرحها */
+export const TEMPLATE_PATH = /^\.(claude|agents|opencode|cursor)\/|^(CLAUDE|AGENTS)\.md$/;
+// ملفات التعليمات والإعدادات (SKILL.md، CLAUDE.md، settings.json) أرجح حامل لتعليمات خفية بمحارف الوسوم
+const INSTRUCTION_FILE = /^(CLAUDE|AGENTS)\.md$|^\.(claude|agents|opencode|cursor)\/.+\.(md|json)$/i;
+const CODE_RULES_SQL = /\.(m?[jt]sx?|c[jt]s|vue|svelte|astro|dart|py|go|rb|php|java|kts?|swift|rs|cs|rules|sql)$/i;
+
+/*
+ * محارف لا تراها العين: تقلب اتجاه العرض (Trojan Source)، أو مسافات بعرض صفر، أو حروف حشو تصلح أسماء خفية،
+ * أو محارف الوسوم التي تُدسّ بها تعليمات يقرؤها الوكيل ولا يراها الإنسان. U+FEFF مسموح في أول الملف (BOM).
+ * مسموح عمداً ما يحتاجه النص العربي: RLM و LRM (U+200F و U+200E)، و ZWNJ و ZWJ (U+200C و U+200D)، و ALM (U+061C).
+ */
+const HIDDEN = String.raw`[\u202A-\u202E\u2066-\u2069\u200B\u2060\u3164\u115F\u1160]|[\u{E0000}-\u{E007F}]|(?<=[\s\S])\uFEFF`;
+const HIDDEN_CHAR = new RegExp(HIDDEN, 'u');
+export const HIDDEN_CHARS = new RegExp(HIDDEN, 'gu');
 
 const TEST_FILE = /(^|\/)(tests?|__tests__|spec|e2e)\/|\.(test|spec)\.[a-z0-9]+$|_test\.(dart|go|py)$|(^|\/)test_[^/]+\.py$|(^|\/)tests?\.py$|_spec\.rb$/i;
 // أعراف Java و Kotlin و C# و Swift و PHP: FooTest.java و FooTests.cs ومشروع MyApp.Tests/. حساسة لحالة الأحرف عمداً: Latest.java ليس اختباراً
@@ -78,6 +92,12 @@ export const SHORTCUTS = [
   { kind: 'fake-data', label: 'بيانات وهمية خارج الاختبارات', files: ANY_CODE, where: inProductionCode,
     // نوع المتغير (بعد :) لا يعبر اسماً وهمياً آخر، فلا يتداخل المسح بين أسماء متتالية في سطر واحد
     re: /\b(mock|fake|dummy)[A-Z_][A-Za-z0-9_]*\s*(?::(?:(?!\b(?:mock|fake|dummy)[A-Z_])[^=\n])*)?:?=\s*[[{]|lorem ipsum/i },
+  // «تم» كاذبة: عند فشل الاتصال يعيد الكود قائمة مكتوبة يدوياً أو نجاحاً، فيرى المستخدم بيانات أو رسالة نجاح لا وجود لها.
+  // البديل المسموح قائمة فارغة أو رسالة خطأ. القيم الافتراضية (?? [{ label: 'الكل' }]) لا تُرصد: أغلبها مشروع
+  { kind: 'fake-fallback', label: 'بديل وهمي يُظهر بيانات أو نجاحاً عند الفشل', files: ANY_CODE, where: inProductionCode,
+    re: /catch\s*(?:\([^()\n]*\))?\s*\{\s*return\s*(?:\[\s*\{|\{\s*["']?(?:success|ok)["']?\s*:\s*true)|\.catch\(\s*(?:\([^()\n]*\)|\w+)\s*=>\s*\(?\s*(?:\[\s*\{|\{\s*["']?(?:success|ok)["']?\s*:\s*true)|^[ \t]*except\b[^:\n]*:\s*return\s*(?:\[\s*\{|\{\s*["'](?:success|ok)["']\s*:\s*True)/m },
+  // Trojan Source والنص الخفي: يُفحص في كل مسار بما فيه .claude (everywhere)، وفي القواعد وهجرات SQL حيث يخفي شرط صلاحية
+  { kind: 'bidi-control', label: 'محارف خفية تُظهر الكود بغير ما ينفّذه (Trojan Source) — إن كانت مقصودة في نص عربي فاكتبها برمزها المرئي مثل \\u2066', files: { test: (path) => CODE_RULES_SQL.test(path) || INSTRUCTION_FILE.test(path) }, everywhere: true, re: HIDDEN_CHAR },
   { kind: 'trivial-assert', label: 'تأكيد شكلي لا يختبر شيئاً', files: ANY_CODE, where: isTestPath,
     re: /expect\(\s*(true|false|1|0|null)\s*\)\s*\.\s*(toBe|toEqual|toStrictEqual)\(\s*\1\s*\)|expect\(\s*(true|1)\s*\)\s*\.\s*(toBeTruthy|toBeDefined)\(\s*\)|assert\(\s*true\s*\)|expect\(\s*true\s*,\s*(isTrue|true)\s*\)|\bassert\s+(True|true)\b|\bassert!\(\s*true\s*\)|\b[Aa]ssert(True|\.True|\.IsTrue|That)?\(\s*(true|True)\s*\)|XCTAssertTrue\(\s*true\s*\)|expect\(\s*true\s*\)\.to\b/ },
   // القراءة العامة (allow read: if true) قد تكون مقصودة لملفات عامة؛ الكتابة المفتوحة ليست مقصودة أبداً
@@ -90,10 +110,12 @@ const HAS_ASSERTION = /\bexpect\s*\(|\bassert|\.should\b|\bverify\s*\(|\bexpectL
 /** الاختصارات الموجودة في نص (مضاف أو ملف كامل) لمسار نسبي: [{ kind, label }]، نوع واحد مرة واحدة. */
 export function scanShortcuts(relPath, text) {
   const path = String(relPath || '');
-  if (!text || /^\.(claude|agents)\//.test(path)) return [];
+  if (!text) return [];
+  // ملفات القالب نفسه تُستثنى من أنماط الاختصارات (أمثلتها جزء من شرحها)، لا من المحارف الخفية
+  const template = TEMPLATE_PATH.test(path);
   const sample = normalize(text);
   const found = SHORTCUTS
-    .filter((s) => s.files.test(path) && (!s.where || s.where(path)) && (s.match ? s.match(sample) : s.re.test(sample)))
+    .filter((s) => (!template || s.everywhere) && s.files.test(path) && (!s.where || s.where(path)) && (s.match ? s.match(sample) : s.re.test(sample)))
     .map(({ kind, label }) => ({ kind, label }));
   return found.filter((item, index) => found.findIndex((other) => other.kind === item.kind) === index);
 }
@@ -110,7 +132,7 @@ export const NO_ASSERTION = { kind: 'no-assertion', label: 'ملف اختبار 
 /** فحص ملف كامل: الأنماط + ملف الاختبار الخالي من التأكيدات. */
 export function scanFile(relPath, fullText) {
   const found = scanShortcuts(relPath, fullText);
-  if (isAssertionlessTest(relPath, fullText)) found.push(NO_ASSERTION);
+  if (!TEMPLATE_PATH.test(relPath || '') && isAssertionlessTest(relPath, fullText)) found.push(NO_ASSERTION);
   return found;
 }
 

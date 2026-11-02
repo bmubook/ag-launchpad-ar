@@ -3,7 +3,7 @@
 // تُشغَّل ضمن hooks.test.mjs، أو وحدها: node .claude/tests/gate.test.mjs
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { check, ctx, freshProject, report, runNode, tmp } from './helpers.mjs';
 
 const write = (file, content) => { mkdirSync(dirname(join(tmp, file)), { recursive: true }); writeFileSync(join(tmp, file), content); };
@@ -79,7 +79,40 @@ post('src/components/Card.tsx', 'export const Card = () => null;\n');
 post('src/types.ts', 'export type Id = string;\n');
 verify('--quick');
 runNode('.claude/hooks/post-edit.mjs', { session_id: 'e', tool_input: { file_path: join(tmp, 'changelog.md') } });
+r = stop();
+check('O: a component nothing imports → block, it never reached the user', blockReason(r).includes('🧩') && blockReason(r).includes('src/components/Card.tsx') && !blockReason(r).includes('types.ts'), r.out);
+write('tests/card.test.tsx', "import { Card } from '../src/components/Card';\nit('renders', () => { expect(Card()).toBe(null); });\n");
+check('O: imported by a test only → still blocked (tests do not count)', blockReason(stop()).includes('src/components/Card.tsx'), stop().out);
+post('src/app/page.tsx', "import { Card } from '@/components/Card';\nexport default function Page() { return Card(); }\n");
+verify('--quick');
 check('U: components and type files do not require a test', stop().out === '', stop().out);
+const { findOrphans, isModuleFile } = await import(pathToFileURL(join(tmp, '.claude/hooks/lib/orphans.mjs')).href);
+write('lib/services/api_client.dart', 'class ApiClient {}\n');
+write('lib/screens/home.dart', "import 'package:shop/services/api_client.dart';\n");
+write('lib/widgets/badge.dart', 'class Badge {}\n');
+write('lib/widgets/row.dart', "import 'badge.dart';\n");
+const dart = findOrphans(tmp, ['lib/services/api_client.dart', 'lib/widgets/badge.dart', 'lib/screens/home.dart']);
+check('O: Dart package and same-folder imports count; an unused screen does not', JSON.stringify(dart.orphans) === '["lib/screens/home.dart"]', JSON.stringify(dart));
+check('O: entry points are never orphans (pages, layouts, main, index, Expo routes)',
+  ['src/app/page.tsx', 'app/(tabs)/index.tsx', 'lib/main.dart', 'src/components/index.ts', 'src/pages/about.tsx', 'src/types.d.ts'].every((f) => !isModuleFile(f)));
+write('src/components/Button.tsx', 'export const Button = () => null;\n');
+write('src/app/about/page.tsx', "import { Button } from 'some-ui';\nexport default () => <Button>x</Button>;\n");
+check('O: a JSX closing tag </Button> is not an import of components/Button', findOrphans(tmp, ['src/components/Button.tsx']).orphans.length === 1);
+check('O: Vercel functions and Nuxt server routes are entry points', ['api/hello.ts', 'server/api/users.get.ts', 'server/utils/db.ts'].every((f) => !isModuleFile(f)));
+write('composables/useCart.ts', 'export const useCart = () => 1;\n');
+check('O: without auto-import, an unused composable is an orphan', findOrphans(tmp, ['composables/useCart.ts']).orphans.length === 1);
+write('nuxt.config.ts', 'export default {};\n');
+check('O: Nuxt auto-imports components/composables/utils → not orphans', findOrphans(tmp, ['composables/useCart.ts']).orphans.length === 0);
+check('O: running out of time → partial, nothing accused', JSON.stringify(findOrphans(tmp, ['lib/widgets/badge.dart'], () => true)) === '{"orphans":[],"partial":true}');
+if (process.platform !== 'win32') {
+  const { symlinkSync } = await import('node:fs');
+  symlinkSync('/dev/zero', join(tmp, 'src/components/Zero.tsx'));
+  const started = Date.now();
+  findOrphans(tmp, ['src/components/Zero.tsx']);
+  check('O: a symlink to /dev/zero is skipped, not read forever', Date.now() - started < 5000);
+}
+r = runNode('.claude/scripts/health-report.mjs', '', { args: ['--json'] });
+check('O: the health report counts files the app never imports', (() => { try { return JSON.parse(r.out).indicators.some((i) => i.name === 'ملفات لا يستوردها التطبيق' && i.status === 'warn'); } catch { return false; } })(), r.out.slice(0, 400) + r.err);
 
 // ---------- الاختصارات تبقى ظاهرة بعد تجاهل المنع
 freshProject({ kicked: true, mode: 'prototype' });

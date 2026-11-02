@@ -122,7 +122,7 @@ const NORMALIZERS = { cursor: fromCursor, opencode: fromOpenCode };
  * input لغير Claude يحمل الحقل host؛ مدخلات Claude Code لا تُمس.
  */
 export function parseHookInput(rawText, args = process.argv.slice(2)) {
-  const text = String(rawText || '').replace(/^﻿/, '').trim();
+  const text = String(rawText || '').replace(/^\uFEFF/, '').trim();
   const flag = args.find((arg) => arg.startsWith(HOST_FLAG));
   const raw = parseObject(text);
   // الكشف من مفتاح في أعلى المدخلات تكتبه الأداة نفسها، لا من بحث نصي قد يطابق محتوى يكتبه النموذج فيُسكت الحارس

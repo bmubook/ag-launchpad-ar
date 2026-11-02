@@ -18,7 +18,7 @@ const BASE = { conversation_id: 'c1', session_id: 'c1', cursor_version: '3.12.17
 
 /** ما يفعله PowerShell بمدخلات Cursor على Windows: UTF-8 يُقرأ بصفحة الترميز المحلية، ويُسبق النص بـ BOM. */
 const mangle = (text, codepage = 'windows-1256') => new TextDecoder(codepage).decode(Buffer.from(text, 'utf8'));
-const wire = (payload) => `﻿${mangle(JSON.stringify({ ...BASE, ...payload }))}`;
+const wire = (payload) => `\uFEFF${mangle(JSON.stringify({ ...BASE, ...payload }))}`;
 const hook = (script, payload, opts = CURSOR) => runNode(`.claude/hooks/${script}`, wire(payload), opts);
 const write = (file, content) => { mkdirSync(dirname(join(tmp, file)), { recursive: true }); writeFileSync(join(tmp, file), content); };
 const pre = (tool_name, tool_input, opts) => hook('guard-secrets.mjs', { hook_event_name: 'preToolUse', tool_name, tool_input }, opts);
@@ -102,7 +102,7 @@ r = prompt();
 check('CUR prompt: 15th prompt → checkpoint', r.json?.continue === true && r.json.additional_context.includes('نقطة تفتيش'), r.out + r.err);
 check('CUR prompt: Claude Code first prompt stays silent (its summary comes from SessionStart)', silent(runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'cl-1' })));
 check('CUR session-start: Claude-format registration loaded by Cursor → silent', silent(hook('session-start.mjs', { hook_event_name: 'sessionStart' }, CLAUDE_REGISTRATION)));
-r = runNode('.claude/hooks/session-start.mjs', `﻿${JSON.stringify({ source: 'startup' })}`);
+r = runNode('.claude/hooks/session-start.mjs', `\uFEFF${JSON.stringify({ source: 'startup' })}`);
 check('HOST: a BOM before the JSON is tolerated', r.json?.hookSpecificOutput?.additionalContext?.includes('🧭'), r.out + r.err);
 
 // ---------- ما بعد التعديل

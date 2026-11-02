@@ -32,7 +32,7 @@ function project(files = {}) {
     },
     /** Hook مركّب يستدعيه Cursor: مدخلاته تبدأ بـ BOM كما يرسلها PowerShell، وفيها cursor_version. */
     cursor(script, payload, args = ['--host=cursor']) {
-      const input = `﻿${JSON.stringify({ conversation_id: 'c1', session_id: 'c1', cursor_version: '3.12.17', workspace_roots: [dir], ...payload })}`;
+      const input = `\uFEFF${JSON.stringify({ conversation_id: 'c1', session_id: 'c1', cursor_version: '3.12.17', workspace_roots: [dir], ...payload })}`;
       const r = spawnSync('node', [join(dir, KIT_HOOKS, script), ...args], { input, encoding: 'utf8', cwd: dir, env: { ...process.env, CLAUDE_PROJECT_DIR: dir } });
       let json = null;
       try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* مخرج نصي */ }

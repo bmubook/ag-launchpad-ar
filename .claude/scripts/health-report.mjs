@@ -12,17 +12,19 @@ import { projectDir, readProjectFile, readProjectState, tableRows } from '../hoo
 import { ceilingFor, ceilingStatus, countLines } from '../hooks/lib/ceilings.mjs';
 import { collectTests, isCovered, isLogicFile } from '../hooks/lib/coverage.mjs';
 import { needsVerification, readText, walkFiles } from '../hooks/lib/files.mjs';
+import { findOrphans } from '../hooks/lib/orphans.mjs';
 import { gateStatus, loadQuality, setOpenShortcuts } from '../hooks/lib/quality.mjs';
 import { isTestFile, scanFile } from '../hooks/lib/shortcuts.mjs';
 
 const root = projectDir();
 const args = new Set(process.argv.slice(2));
-const SEVERE_SHORTCUTS = new Set(['open-rules', 'config-loosened', 'test-skip', 'no-assertion', 'test-branch']);
+const SEVERE_SHORTCUTS = new Set(['open-rules', 'config-loosened', 'test-skip', 'no-assertion', 'test-branch', 'fake-fallback', 'bidi-control']);
 
 function scanProject() {
   const sizes = { soft: 0, hard: 0 };
   const shortcuts = [];
   const logic = [];
+  const sources = [];
   let rulesFiles = 0;
   let rulesTested = false;
   for (const rel of walkFiles(root)) {
@@ -36,6 +38,7 @@ function scanProject() {
     if (/.rules$/i.test(rel)) rulesFiles += 1;
     if (isTestFile(rel) && (/rules/i.test(rel) || text.includes('rules-unit-testing'))) rulesTested = true;
     if (isLogicFile(rel)) logic.push({ file: rel, lines });
+    sources.push(rel);
   }
   const tests = collectTests(root);
   const untested = logic.filter((f) => !isCovered(f.file, tests, root)).sort((a, b) => b.lines - a.lines);
@@ -44,7 +47,7 @@ function scanProject() {
   for (const s of shortcuts) (byFile[s.file] ||= []).push(s.kind);
   const known = loadQuality(root).shortcuts;
   setOpenShortcuts({ ...Object.fromEntries(Object.keys(known).map((rel) => [rel, []])), ...byFile }, root);
-  return { sizes, shortcuts, logicCount: logic.length, untested, tests: tests.count, rulesFiles, rulesTested };
+  return { sizes, shortcuts, logicCount: logic.length, untested, tests: tests.count, rulesFiles, rulesTested, orphans: findOrphans(root, sources) };
 }
 
 function auditDependencies() {
@@ -82,6 +85,10 @@ function build() {
 
   const ratio = scan.logicCount ? scan.untested.length / scan.logicCount : 0;
   add('ملفات منطق لا يغطيها اختبار', `${scan.untested.length} من ${scan.logicCount}`, scan.logicCount >= 4 && ratio > 0.5 ? 'warn' : 'ok', scan.untested.length ? 'ابدأ بأكبرها حجماً (القائمة أدناه)' : '—');
+
+  const { orphans, partial } = scan.orphans;
+  add('ملفات لا يستوردها التطبيق', partial ? 'المشروع أكبر من حد الفحص' : `${orphans.length}`, orphans.length ? 'warn' : 'ok',
+    orphans.length ? `ليست مكتملة: لم تُربط بأي شاشة أو خدمة — ${orphans.slice(0, 5).join('، ')}` : '—');
 
   const severe = scan.shortcuts.filter((s) => SEVERE_SHORTCUTS.has(s.kind)).length;
   add('الاختصارات (البند 11)', `${scan.shortcuts.length}${severe ? ` (منها ${severe} خطيرة)` : ''}`, severe ? 'bad' : scan.shortcuts.length ? 'warn' : 'ok', scan.shortcuts.length ? 'أزلها أو وثّق سبب كل واحد (القائمة أدناه)' : '—');
