@@ -96,11 +96,16 @@ r = prompt();
 const summary = r.json?.additional_context || '';
 check('CUR prompt: first prompt carries the session summary', r.json?.continue === true && summary.includes('🧭') && summary.includes('«يا مدير»'), r.out + r.err);
 check('CUR prompt: summary orders reading the rule files (not auto-imported here)', summary.includes('لا تستورد') && summary.includes('rules_workflow.md'), summary);
-check('CUR prompt: second prompt → silent', silent(prompt()));
+check('CUR prompt: first prompt also carries the Arabic reminder', summary.includes('🔤'), summary);
+r = prompt();
+check('CUR prompt: second prompt → Arabic reminder only, no summary', r.json?.continue === true
+  && r.json.additional_context.includes('🔤') && !r.json.additional_context.includes('🧭'), r.out + r.err);
 for (let i = 3; i < 15; i += 1) prompt();
 r = prompt();
 check('CUR prompt: 15th prompt → checkpoint', r.json?.continue === true && r.json.additional_context.includes('نقطة تفتيش'), r.out + r.err);
-check('CUR prompt: Claude Code first prompt stays silent (its summary comes from SessionStart)', silent(runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'cl-1' })));
+r = runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'cl-1' });
+check('CUR prompt: Claude Code first prompt → Arabic reminder only (its summary comes from SessionStart)',
+  (r.json?.hookSpecificOutput?.additionalContext || '').includes('🔤') && !r.out.includes('🧭'), r.out + r.err);
 check('CUR session-start: Claude-format registration loaded by Cursor → silent', silent(hook('session-start.mjs', { hook_event_name: 'sessionStart' }, CLAUDE_REGISTRATION)));
 r = runNode('.claude/hooks/session-start.mjs', `\uFEFF${JSON.stringify({ source: 'startup' })}`);
 check('HOST: a BOM before the JSON is tolerated', r.json?.hookSpecificOutput?.additionalContext?.includes('🧭'), r.out + r.err);

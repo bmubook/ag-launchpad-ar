@@ -4,6 +4,8 @@
  * 1) يبدأ "جولة" جديدة بتصفير قائمة الملفات المعدّلة (يستخدمها Hook التوثيق عند التوقف).
  * 2) يعدّ رسائل المستخدم، وكل 15 رسالة يحقن نقطة تفتيش إلزامية (master_rules.md §12-ب).
  * 3) في أداة لا توصل سياق بداية الجلسة للنموذج (Cursor): يحقن ملخص الحالة مع أول رسالة في المحادثة.
+ * 4) يحقن تذكير العربية مع كل رسالة (master_rules.md §2)، لأن النموذج يعود للإنجليزية بعد رسالتين أو ثلاث
+ *    خصوصاً في الجمل القصيرة بين الخطوات ووصف أوامر الطرفية.
  */
 import {
   addContext, loadSession, projectDir, pruneOldSessions, readProjectState, readStdinJson, runHook, saveSession,
@@ -16,6 +18,9 @@ import { buildSessionContext } from './lib/summary.mjs';
 
 const CHECKPOINT_EVERY = 15;
 const FS_CLOCK_SLACK_MS = 15;
+const ARABIC_REMINDER = '🔤 إلزامي في هذا الرد كله (master_rules.md §2): كل ما يظهر للمستخدم يُكتب بالعربية — الرد، '
+  + 'والجمل القصيرة بين الخطوات أثناء العمل، ووصف أوامر الطرفية، وبنود قائمة المهام، والملخص الختامي، والأسئلة وخياراتها. '
+  + 'الإنجليزية فقط داخل الكود والأوامر والمسارات وأسماء التقنيات ورسائل Git.';
 
 function checkpointContext(count) {
   const state = readProjectState();
@@ -45,5 +50,7 @@ runHook(async () => {
   }
   // نقطة التفتيش تعيد قراءة الملفات الحاكمة، والحقيبة بلا ملفات حاكمة
   if (prompts % CHECKPOINT_EVERY === 0 && !GUARD_KIT) context.push(checkpointContext(prompts));
+  // الحقيبة تحمل الحواجز وحدها بلا قواعد التواصل
+  if (!GUARD_KIT) context.push(ARABIC_REMINDER);
   if (context.length) addContext('UserPromptSubmit', context.join('\n\n'));
 });

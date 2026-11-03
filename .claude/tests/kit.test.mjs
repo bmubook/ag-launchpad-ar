@@ -79,6 +79,7 @@ check('KH: session start → guard line + gate, no kickoff, no beginner rules', 
 check('KH: status line shows the guard, not /kickoff', p.statusline().includes('🛡️ الحارس') && !p.statusline().includes('/kickoff'), p.statusline());
 for (let i = 0; i < 15; i += 1) r = p.hook('prompt-submit', { prompt: 'x' });
 check('KH: no 15-message checkpoint (no governance files to re-read)', !ctx(r).includes('نقطة تفتيش'), ctx(r));
+check('KH: no Arabic reminder (the kit carries guards only, not the communication rules)', !ctx(r).includes('🔤'), ctx(r));
 r = p.write('src/cart.js', `${Array.from({ length: 300 }, (_, i) => `export const v${i} = ${i};`).join('\n')}\n`);
 check('KH: size ceiling off by default in existing projects', !ctx(r).includes('سقف الحجم'), ctx(r));
 r = p.write('src/pay.js', 'export function pay() {\n  // TODO: validate the amount\n  return 1;\n}\n');

@@ -104,9 +104,11 @@ check('G2: other skill with same phrase → injection alarm', reason(r).includes
 freshProject({ kicked: true });
 const outs = [];
 for (let i = 1; i <= 15; i++) outs.push(runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'ps', prompt: 'x' }));
-check('PS: silent for prompts 1..14', outs.slice(0, 14).every((o) => o.out.trim() === ''), outs.map((o) => o.out).join('|'));
+check('PS: every prompt carries the Arabic reminder', outs.every((o) => ctx(o).includes('🔤') && ctx(o).includes('بالعربية')), outs.map((o) => o.out).join('|'));
+check('PS: no checkpoint for prompts 1..14', outs.slice(0, 14).every((o) => !ctx(o).includes('نقطة تفتيش')), outs.map((o) => o.out).join('|'));
 check('PS: checkpoint at 15', ctx(outs[14]).includes('نقطة تفتيش إلزامية') && ctx(outs[14]).includes('رقم 15'), outs[14].out);
-check('PS: other session independent', runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'other' }).out.trim() === '');
+r = runNode('.claude/hooks/prompt-submit.mjs', { session_id: 'other' });
+check('PS: other session independent', ctx(r).includes('🔤') && !ctx(r).includes('نقطة تفتيش'), r.out);
 
 // ---------- guard-secrets
 freshProject({ kicked: true });
