@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import {
   GOVERNANCE_FILES, projectDir, readProjectFile, readProjectState, tableRows, truncate,
 } from './common.mjs';
+import { flowState } from './flows.mjs';
 import { hostTraits } from './host.mjs';
 import { CONFIG_FILE, GUARD_KIT } from './kit.mjs';
 import { detectChecks, gateStatus, loadQuality, unverifiedFiles, verifyCommand } from './quality.mjs';
@@ -84,8 +85,10 @@ const contractIncomplete = (cells) => cells.slice(2, -3).some((cell) => BLANK_CE
 function flowLines() {
   const rows = tableRows(readProjectFile('project_map.md'), /فهرس التدفقات/);
   if (!rows.length) return [];
-  const withStatus = (mark) => rows.filter((cells) => (cells[cells.length - 1] || '').includes(mark));
-  const [locked, open, broken, waiting] = ['🔒', '🟡', '🔴', '⬜'].map(withStatus);
+  const statusCell = (cells) => cells[cells.length - 1] || '';
+  const withState = (state) => rows.filter((cells) => flowState(statusCell(cells)) === state);
+  const [locked, open, broken] = ['done', 'doing', 'broken'].map(withState);
+  const waiting = withState('upcoming').filter((cells) => statusCell(cells).includes('⬜'));
   const parts = [`🔒 ${locked.length} مقفل`];
   if (open.length) parts.push(`🟡 قيد العمل: ${open.map(flowName).join('، ')}`);
   if (broken.length) parts.push(`🔴 مكسور: ${broken.map(flowName).join('، ')}`);

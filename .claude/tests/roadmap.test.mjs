@@ -64,6 +64,12 @@ check('RM phases: names, statuses, and percentages clamped to 0–100', JSON.str
 check('RM phases: active phase and overall average', data.activePhase === 2 && data.overall === 60, `${data.activePhase} ${data.overall}`);
 check('RM flows: phase number and status per flow, unknown phase → null', JSON.stringify(data.flows.map((f) => [f.name, f.phase, f.status]))
   === JSON.stringify([['إنشاء حساب', 2, 'done'], ['طلب منتج', 3, 'doing'], ['دفع', null, 'upcoming']]), JSON.stringify(data.flows));
+write('project_map.md', projectMap({ flows: [[1, 'إنشاء حساب', 2, '🔒 مقفل'], [2, 'اللقطات', 3, '🟡 قيد العمل — جزء الموشن 🔒 مقفل']] }));
+data = roadmapData(tmp);
+check('RM flows: a status cell with 🟡 and a 🔒 note is still open, and the journey stays at build', data.flows[1].status === 'doing' && stationOf(data) === 'build',
+  `${JSON.stringify(data.flows)} ${stationOf(data)}`);
+write('project_map.md', projectMap({ flows: [[1, 'إنشاء حساب', 2, '🔴 مكسور — كان 🔒 مقفل']] }));
+check('RM flows: 🔴 wins over a 🔒 in the same cell', roadmapData(tmp).flows[0].status === 'broken');
 write('changelog.md', '| 2026-10-01 10:00 | v0.1.0 | chore |\n| 2026-10-05 09:30 | v0.2.0 | feat |\n');
 check('RM updated: the date of the last changelog row', roadmapData(tmp).updatedAt === '2026-10-05');
 
@@ -103,7 +109,24 @@ check('RM hook: editing project_map.md creates the roadmap and asks the agent to
 write('project_map.md', projectMap({ flows: [[1, 'إنشاء حساب', 2, '🔒 مقفل']] }));
 r = post();
 check('RM hook: later edits refresh it silently', !ctx(r).includes('🗺️') && readFileSync(join(tmp, 'docs/roadmap.html'), 'utf8').includes('"status":"done"'), r.out);
+
+// التوثيق المكتوب بسكربت أو أمر طرفية لا يمرّ بـ post-edit: Hook الإيقاف يعيد توليد الخارطة في نهاية كل رد
+const stopGate = (extra = {}) => runNode('.claude/hooks/stop-gate.mjs', { session_id: 'rm-stop', hook_event_name: 'Stop', stop_hook_active: false, ...extra });
+const pageFlow = () => JSON.parse(readFileSync(join(tmp, 'docs/roadmap.html'), 'utf8')
+  .match(/<script id="roadmap-data" type="application\/json">([\s\S]*?)<\/script>/)[1]).flows[0].status;
+write('project_map.md', projectMap({ flows: [[1, 'إنشاء حساب', 2, '🟡 قيد العمل']] }));
+r = stopGate();
+check('RM stop: project_map.md changed by a script → the roadmap is refreshed at the end of the reply, silently',
+  pageFlow() === 'doing' && !(r.json?.reason || '').includes('🗺️'), `${pageFlow()} ${r.out}${r.err}`);
+write('project_map.md', projectMap({ flows: [[1, 'إنشاء حساب', 2, '⬜ لم يبدأ']] }));
+r = stopGate({ stop_hook_active: true });
+check('RM stop: refreshed even on the follow-up stop after a block', pageFlow() === 'upcoming' && r.out === '', `${pageFlow()} ${r.out}${r.err}`);
+rmSync(join(tmp, 'docs/roadmap.html'));
+r = stopGate();
+check('RM stop: a missing roadmap is created at the end of the reply without blocking it', existsSync(join(tmp, 'docs/roadmap.html')) && r.out === '', r.out + r.err);
 freshProject();
+r = stopGate();
+check('RM stop: before kickoff no roadmap is written', !existsSync(join(tmp, 'docs/roadmap.html')), r.out);
 r = runNode('.claude/hooks/post-edit.mjs', { session_id: 'rm2', tool_name: 'Edit', tool_input: { file_path: join(tmp, 'project_map.md'), old_string: 'a', new_string: 'b' } });
 check('RM hook: before kickoff no roadmap is written', !existsSync(join(tmp, 'docs/roadmap.html')), r.out);
 r = runNode('.claude/scripts/roadmap.mjs', '', { args: ['--dry-run-open'] });

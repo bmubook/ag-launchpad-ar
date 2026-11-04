@@ -6,6 +6,7 @@
  * 3) يكون لكل ملف منطق عُدّل اختبارٌ يستورده (البند 13).
  * 4) لا يبقى ملف عُدّل في هذه الجولة معزولاً لا يستورده التطبيق، أو يُصرَّح بأنه غير مكتمل.
  * 5) يُحدَّث changelog.md (master_rules.md §2). حقيبة الحارس بلا سجلات: تاريخ المشروع القائم في Git.
+ * وفي كل رد يعيد توليد خارطة الطريق من project_map.md، أياً كانت طريقة تعديله.
  * «عُدّل في هذه الجولة» = ما سجّلته أدوات التعديل + ما تغيّر على القرص منذ بداية الجولة (sed، سكربتات، مولّدات).
  * stop_hook_active يمنع الحلقات اللانهائية: المنع مرة واحدة، ثم تبقى الحالة ظاهرة في سطر الحالة.
  */
@@ -21,6 +22,7 @@ import { PROTECTED_INSTRUCTION_PATHS } from './lib/patterns.mjs';
 import {
   gateStatus, loadQuality, needsVerification, setOpenShortcuts, verifyCommand, verifyWindows,
 } from './lib/quality.mjs';
+import { refreshRoadmap } from './lib/roadmap.mjs';
 import { HIDDEN_CHARS, scanFile } from './lib/shortcuts.mjs';
 
 // أسماء الملفات بيانات يختارها من أنشأها: تُحذف منها المحارف الخفية ومحارف التحكم وتُعلَّم بـ ` قبل أن تصل سياق الوكيل
@@ -147,9 +149,12 @@ function docsProblem(codeFiles, logs) {
 
 runHook(async () => {
   const input = await readStdinJson();
+  const root = projectDir();
+  // الخارطة تتبع الملفات على القرص لا أداة التعديل، فتُحدَّث في نهاية كل رد حتى بعد المنع الأول.
+  // بصمت: إبلاغ المستخدم بإنشائها مهمة /kickoff و post-edit، ولا يوقف رد لأجله
+  if (!GUARD_KIT && readProjectState().kickedOff) await refreshRoadmap(root);
   if (input.stop_hook_active) return;
 
-  const root = projectDir();
   const session = loadSession(input.session_id);
   const quality = loadQuality(root);
   // فحص ملفات الحوكمة أولاً: هو خط الدفاع الثاني، فلا يتأخر خلف مسح الاختصارات

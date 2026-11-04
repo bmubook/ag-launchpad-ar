@@ -60,6 +60,9 @@ check('SS: a v4.6.0 index without contract columns is still summarised', flowsLi
 freshProject({ kicked: true, flows: ['| 1 | الدفع | العميل | طلب مدفوع أو مرفوض | — | — | 3 | tests/pay.test.ts | 🔴 مكسور |', '| 2 | إلغاء الطلب | العميل | طلب ملغى | — | — | 3 | — | 🟡 قيد العمل |'] });
 flowsLine = flowsOf();
 check('SS: a broken flow is repaired before anything else', flowsLine.includes('أصلح «الدفع»') && !flowsLine.includes('أكمل «إلغاء الطلب»') && !flowsLine.includes('ناقص:'), flowsLine);
+freshProject({ kicked: true, flows: ['| 1 | اللقطات | المصمم | لقطة محفوظة | المصمم | ملف بلا لقطة | 3 | tests/shots.test.ts | 🟡 قيد العمل — جزء الموشن 🔒 مقفل |'] });
+flowsLine = flowsOf();
+check('SS: an open flow with a 🔒 note inside its status is still open, not locked', flowsLine.includes('🔒 0') && flowsLine.includes('أكمل «اللقطات»'), flowsLine);
 
 // القالب المشحون: جمل العقد الأربع في فهرس التدفقات، وعقد التدفق في /next يراعي مستويات الخبرة الثلاثة
 const shippedHeader = readFileSync(join(REPO, 'project_map.md'), 'utf8').split(/\r?\n/).find((line) => line.startsWith('| # | التدفق |')) || '';

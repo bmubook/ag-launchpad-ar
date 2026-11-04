@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * خارطة الطريق التفاعلية: يولّد docs/roadmap.html من project_map.md ليرى صاحب المشروع أين وصل.
- * تُحدَّث تلقائياً بعد كل تعديل على project_map.md أو changelog.md (Hook ما بعد التعديل)، ويشغّلها /document
- * في البيئات التي لا تعمل فيها الـ Hooks.
+ * تُحدَّث تلقائياً بعد كل تعديل على project_map.md أو changelog.md (Hook ما بعد التعديل)، وفي نهاية كل رد
+ * (Hook الإيقاف) لما عُدّل بسكربت أو أمر طرفية؛ ويشغّلها /document في البيئات التي لا تعمل فيها الـ Hooks.
  * الاستخدام: node .claude/scripts/roadmap.mjs          ← يولّد الخارطة
  *            node .claude/scripts/roadmap.mjs --open   ← يولّدها ويفتحها في المتصفح
  */

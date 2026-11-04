@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { detectChecks } from '../../hooks/lib/checks.mjs';
+import { flowState } from '../../hooks/lib/flows.mjs';
 
 const DEFAULT_BRAND = '#4f46e5';
 const HEX = /#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/i;
@@ -48,13 +49,6 @@ function anchor(markdown, label) {
 
 const phaseStatus = (cell) => (cell.includes('✅') ? 'done' : cell.includes('🟡') ? 'doing' : 'upcoming');
 
-function flowStatus(cell) {
-  if (cell.includes('🔒')) return 'done';
-  if (cell.includes('🟡')) return 'doing';
-  if (cell.includes('🔴')) return 'broken';
-  return 'upcoming';
-}
-
 function phases(map) {
   return numberedRows(sectionLines(map, 10)).map((cells) => ({
     number: Number(cells[0]),
@@ -67,7 +61,7 @@ function phases(map) {
 function flows(map) {
   return numberedRows(sectionLines(map, 13)).map((cells) => {
     const phase = parseInt(cells[6], 10);
-    return { number: Number(cells[0]), name: cells[1], phase: Number.isFinite(phase) ? phase : null, status: flowStatus(cells[cells.length - 1] || '') };
+    return { number: Number(cells[0]), name: cells[1], phase: Number.isFinite(phase) ? phase : null, status: flowState(cells[cells.length - 1] || '') };
   });
 }
 
