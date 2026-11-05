@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/العربية-أولاً-2dd4a8?style=for-the-badge" alt="Arabic First">
   <img src="https://img.shields.io/badge/Firebase-Standard-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Supabase-Supported-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-  <img src="https://img.shields.io/badge/Version-4.19-f59e0b?style=for-the-badge" alt="Version 4.19">
+  <img src="https://img.shields.io/badge/Version-4.20-f59e0b?style=for-the-badge" alt="Version 4.20">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
