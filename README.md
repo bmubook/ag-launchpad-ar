@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/العربية-أولاً-2dd4a8?style=for-the-badge" alt="Arabic First">
   <img src="https://img.shields.io/badge/Firebase-Standard-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Supabase-Supported-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-  <img src="https://img.shields.io/badge/Version-4.20-f59e0b?style=for-the-badge" alt="Version 4.20">
+  <img src="https://img.shields.io/badge/Version-4.21-f59e0b?style=for-the-badge" alt="Version 4.21">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -543,7 +543,7 @@ claude
 
 | الآلية | متى تعمل | ماذا تفعل |
 |:-------|:---------|:----------|
-| **🧭 Hook بداية الجلسة** (`session-start.mjs`) | عند فتح جلسة أو استئنافها أو مسحها، وبعد `/compact` | يحقن ملخص حالة المشروع: الاسم والطبيعة، اسم النداء، الوضع، المرحلة النشطة، مستوى خبرتك، عدد أفكار Backlog المفتوحة، آخر 5 تغييرات، الأخطاء النشطة، آخر 5 قرارات، والملفات الحاكمة المفقودة. إذا لم يُقلع المشروع يقترح `/kickoff`، وبعد `/compact` يفرض نقطة تفتيش فورية |
+| **🧭 Hook بداية الجلسة** (`session-start.mjs`) | عند فتح جلسة أو استئنافها أو مسحها، وبعد `/compact` | يحقن ملخص حالة المشروع: الاسم والطبيعة، اسم النداء، الوضع، المرحلة النشطة، مستوى خبرتك، عدد أفكار Backlog المفتوحة، دروس المشروع (ما صحّحته له والأخطاء التي أصلحها، حتى لا يكررها)، آخر 5 تغييرات، الأخطاء النشطة، آخر 5 قرارات، والملفات الحاكمة المفقودة. إذا لم يُقلع المشروع يقترح `/kickoff`، وبعد `/compact` يفرض نقطة تفتيش فورية |
 | **🎓 تذكير وضع التعلّم** (ضمن `session-start.mjs`) | مع بداية كل جلسة، إذا كان وضع التعلّم مفعّلاً | يلزم الوكيل بكتلة `🎓 تعلّم:` بعد كل قرار أو تعديل مهم، وبشرح كل مصطلح تقني عند أول ظهور، وبإضافة المصطلحات الجديدة إلى `docs/glossary.md` |
 | **💡 تذكير الاقتراحات** (ضمن `session-start.mjs`) | مع بداية كل جلسة، إذا كانت اقتراحات التطوير مفعّلة | يلزم الوكيل بعد إكمال أي مهمة وتوثيقها بعرض 3 اقتراحات تطوير (ميزة، جودة وأمان، تجربة مستخدم) وفق بروتوكول الاقتراحات في مهارة `/next` |
 | **🔄 Hook نقطة التفتيش** (`prompt-submit.mjs`) | مع كل رسالة ترسلها | يذكّر الوكيل `🔤` أن كل ما يظهر لك بالعربية، حتى الجمل القصيرة بين الخطوات ووصف الأوامر (لأنه يعود للإنجليزية بعد رسالتين أو ثلاث)، ويعدّ رسائلك فيفرض عند كل رسالة 15 `🔄 نقطة تفتيش إلزامية` |

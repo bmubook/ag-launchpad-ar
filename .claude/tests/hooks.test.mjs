@@ -72,6 +72,24 @@ const contractStep = nextSkill.slice(nextSkill.indexOf('## الخطوة 2.ب'), 
 check('SKILL next: flow contract step names its four sentences', ['من يبدأ', 'النتيجة المحفوظة', 'من يحق له التغيير', 'ما يرفضه الاختبار'].every((name) => contractStep.includes(name)), contractStep.slice(0, 200));
 check('SKILL next: the contract is worded for each of the three experience levels', ['مبتدئ تماماً', 'لدي أساسيات', 'مطوّر'].every((level) => contractStep.includes(`\`${level}\``)), contractStep.slice(0, 200));
 
+// دروس المشروع (القسم 14): تُعرض كلها في كل جلسة حتى لا يتكرر خطأ أُصلح، ولها حد يُنبَّه عند تجاوزه
+check('SS: no lessons recorded → no lessons line', !c.includes('دروس المشروع'), c);
+const lessonRow = (i, text = `درس رقم ${i}`) => `| ${i} | ${text} | تصحيح المستخدم | 2026-11-0${(i % 9) + 1} |`;
+freshProject({ kicked: true, lessons: [lessonRow(1, 'لا تستخدم localStorage لحفظ الجلسة لأنه مكشوف لهجمات XSS'), '| 2 | اختبر قواعد الأمان على المحاكي قبل النشر | خطأ #4 | 2026-11-02 |'] });
+let lessonsCtx = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+check('SS: every lesson is shown with its source', lessonsCtx.includes('🧠 دروس المشروع') && lessonsCtx.includes('localStorage لحفظ الجلسة') && lessonsCtx.includes('(خطأ #4)'), lessonsCtx);
+check('SS: lessons within the limit → no pruning warning', !lessonsCtx.includes('تجاوزت حدها'), lessonsCtx);
+freshProject({ lessons: [lessonRow(1)] });
+check('SS: before kickoff → lessons hidden', !ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' })).includes('🧠'));
+freshProject({ kicked: true, lessons: Array.from({ length: 16 }, (_, i) => lessonRow(i + 1)) });
+lessonsCtx = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' }));
+check('SS: more than 15 lessons → all shown + merge or prune warning', lessonsCtx.includes('درس رقم 16') && lessonsCtx.includes('تجاوزت حدها (15)'), lessonsCtx);
+const shippedLessons = readFileSync(join(REPO, 'project_map.md'), 'utf8');
+check('TPL: shipped project_map has an empty lessons section 14', shippedLessons.includes('## 14. دروس المشروع') && shippedLessons.includes('| - | لا توجد دروس بعد | - | - |'));
+for (const skill of ['fix', 'document']) {
+  check(`SKILL ${skill}: records a lesson in project_map §14`, readFileSync(join(REPO, `.claude/skills/${skill}/SKILL.md`), 'utf8').includes('دروس المشروع'));
+}
+
 freshProject({ missing: ['rules_ui.md', 'bugs_log.md'] });
 r = runNode('.claude/hooks/session-start.mjs', { source: 'startup' });
 check('SS: missing governance files warned', ctx(r).includes('rules_ui.md') && ctx(r).includes('bugs_log.md'), ctx(r));

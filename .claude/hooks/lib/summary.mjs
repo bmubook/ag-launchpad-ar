@@ -1,6 +1,6 @@
 /**
  * ملخص حالة المشروع الذي يُحقن في بداية الجلسة (master_rules.md §12-أ):
- * المراسي من project_map.md، آخر 5 تغييرات، الأخطاء النشطة، آخر 5 قرارات، وحالة بوابة الإثبات.
+ * المراسي من project_map.md ودروس المشروع (§14)، آخر 5 تغييرات، الأخطاء النشطة، آخر 5 قرارات، وحالة بوابة الإثبات.
  * يستخدمه session-start.mjs في Claude Code، و prompt-submit.mjs مع أول رسالة في الأدوات التي لا توصل سياق بداية الجلسة.
  */
 import { existsSync } from 'node:fs';
@@ -102,6 +102,20 @@ function flowLines() {
   return [`• 🧩 التدفقات (project_map.md §13): ${parts.join(' | ')}. ${advice}${lock}`];
 }
 
+export const LESSONS_LIMIT = 15;
+
+/** دروس المشروع (project_map.md §14): تُعرض كلها في كل جلسة لأنها محدودة العدد، فلا يتكرر خطأ أُصلح أو تصحيح قاله المستخدم. */
+function lessonLines() {
+  const rows = tableRows(readProjectFile('project_map.md'), /دروس المشروع/).filter((cells) => cells[1]);
+  if (!rows.length) return [];
+  const lines = ['• 🧠 دروس المشروع (project_map.md §14) — التزم بها ولا تكرر ما نهت عنه:',
+    ...rows.map((cells) => `  - ${truncate(cells[1], 160)} (${cells[2] || '—'})`)];
+  if (rows.length > LESSONS_LIMIT) {
+    lines.push(`  ⚠️ الدروس ${rows.length} وتجاوزت حدها (${LESSONS_LIMIT}): اقترح على المستخدم دمج المتشابه وحذف ما لم يعد صحيحاً.`);
+  }
+  return lines;
+}
+
 function section(title, items, emptyText) {
   return [`• ${title}:`, ...(items.length ? items : [`  - ${emptyText}`])];
 }
@@ -140,6 +154,7 @@ export function buildSessionContext(source, host) {
     lines.push(`• وضع التشغيل: ${state.mode} | المرحلة النشطة: ${state.phase || 'غير محددة'}`);
     lines.push(...guidanceLines(state));
     lines.push(...flowLines());
+    lines.push(...lessonLines());
     lines.push(...gateLines(state.mode));
   }
 

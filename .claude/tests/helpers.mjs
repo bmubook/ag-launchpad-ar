@@ -11,7 +11,7 @@ export let tmp;
 /** ترويسة فهرس التدفقات كما تُشحن في project_map.md: جمل العقد الأربع بين اسم التدفق والأعمدة الثلاثة الأخيرة. */
 export const FLOW_HEADER = '| # | التدفق | من يبدأ | النتيجة المحفوظة | من يحق له التغيير | ما يرفضه الاختبار | المرحلة | الاختبار | الحالة |';
 
-export function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [], flows = [] } = {}) {
+export function freshProject({ kicked = false, mode = 'production', extraChangelogRows = 0, bugs = [], missing = [], learning = null, suggestions = null, backlog = [], flows = [], lessons = [] } = {}) {
   if (tmp) rmSync(tmp, { recursive: true, force: true });
   tmp = mkdtempSync(join(tmpdir(), 'aglp-'));
   cpSync(join(REPO, '.claude'), join(tmp, '.claude'), { recursive: true, filter: (s) => !s.includes(join('.claude', 'state')) && !s.endsWith('settings.local.json') });
@@ -31,7 +31,9 @@ export function freshProject({ kicked = false, mode = 'production', extraChangel
     '## 12. أفكار التطوير المستقبلية (Backlog):', '', '| # | الفكرة | التصنيف | الأولوية | المصدر | الحالة |', '| :-: | :-- | :-- | :-: | :-- | :-- |',
     ...(backlog.length ? backlog : ['| - | لا توجد أفكار بعد | - | - | - | - |']), '',
     '## 13. فهرس التدفقات (Flow Index):', '', FLOW_HEADER, '| :---: | :--- | :--- | :--- | :--- | :--- | :---: | :--- | :---: |',
-    ...(flows.length ? flows : ['| - | لا توجد تدفقات بعد | - | - | - | - | - | - | - |']), '', '</div>',
+    ...(flows.length ? flows : ['| - | لا توجد تدفقات بعد | - | - | - | - | - | - | - |']), '',
+    '## 14. دروس المشروع (Lessons):', '', '| # | الدرس | المصدر | التاريخ |', '| :---: | :--- | :--- | :---: |',
+    ...(lessons.length ? lessons : ['| - | لا توجد دروس بعد | - | - |']), '', '</div>',
   ].join('\n');
   writeFileSync(join(tmp, 'project_map.md'), map);
   const rows = Array.from({ length: 3 + extraChangelogRows }, (_, i) =>
