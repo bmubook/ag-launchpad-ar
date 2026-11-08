@@ -38,7 +38,8 @@ const ASK_TEXT = (label) => `🔒 حماية الأسرار (البند 5): هذ
   + 'الخيار الثاني يحفظ الأمر بحروفه، ومعه السر، نصاً مكشوفاً في .claude/settings.local.json. الأفضل أن يقرأ الأمر السر من .env أو من متغير بيئة ($NAME) بدل كتابته فيه.';
 
 /** إضافة بالقوة (-f / --force) لملف الإعدادات المحلية أو لمجلد .claude كله أو للمشروع كله: تتخطى .gitignore فترفع الأسرار المحفوظة. */
-const FORCE_ADD = /\bgit\s{1,20}add\b([^\n;|&]{0,500})/gi;
+// git في موضع أمر فقط (أول السطر أو بعد ; & | أو قوس)، لا كلمة داخل نص: رسالة إيداع أو ملاحظة تذكر «git add -f» لا تُرفض
+const FORCE_ADD = /(?:^|[;&|(\n])\s{0,20}git\s{1,20}add\b([^\n;|&]{0,500})/gi;
 const FORCE_FLAG = /(?:^|\s)(?:-[A-Za-z]*f[A-Za-z]*|--force)(?=\s|$)/;
 const DANGEROUS_TARGET = /(?:^|\s)["']?(?:\.claude\/settings\.local\.json|\.claude\/?|\.\/?|\*|-A|--all)["']?(?=\s|$)|settings\.local\.json/;
 

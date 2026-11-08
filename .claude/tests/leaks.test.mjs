@@ -77,6 +77,10 @@ const SAVED_SECRET_CASES = [
   ['LEGIT: a placeholder in an example command', 'API_KEY=your-api-key-here npm start', 'allow'],
   ['LEGIT: committing the shared settings file', 'git add .claude/settings.json', 'allow'],
   ['LEGIT: force-adding one build file', 'git add -f dist/app.js', 'allow'],
+  // خطأ ظهر لحظة الكتابة: ملاحظة تُكتب بـ heredoc وتذكر الأمر نصاً كانت تُرفض
+  ['LEGIT: a note that mentions "git add -f .claude/" as text', "cat >> notes.md <<'EOF'\nيمنع الحارس git add -f للملف و.claude/\nEOF", 'allow'],
+  ['LEGIT: a commit message that mentions the blocked command', 'git commit -m "fix(guard): block git add -f .claude/"', 'allow'],
+  ['force-adding after another command', 'npm test && git add -f .claude/settings.local.json', 'deny'],
 ];
 for (const [name, command, expected] of SAVED_SECRET_CASES) {
   const c = inClaude('Bash', { command });
