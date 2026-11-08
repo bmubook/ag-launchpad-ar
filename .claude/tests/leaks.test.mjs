@@ -51,6 +51,41 @@ for (const [name, command, expected] of COMMAND_CASES) {
   check(`LEAK Bash: ${name} → ${expected}`, says(c) === expected, c.out + c.err);
 }
 
+// ---------- أسرار بلا شكل ثابت داخل الأوامر: «Yes, and don't ask again» يحفظ الأمر بحروفه في .claude/settings.local.json
+// (Apiiro، 2026-11: 1,122 نسخة من هذا الملف فيها أسرار في مستودعات GitHub العامة)
+const JWT = 'eyJhbGciOiJIUzI1NiJ9' + '.' + 'eyJyb2xlIjoic2VydmljZSJ9' + '.abcdefghijklmnop';
+const SAVED_SECRET_CASES = [
+  ['a password inside a database URL', 'psql postgresql://admin:S3cretPassw0rd@db.example.com:5432/app', 'ask'],
+  ['a password glued to mysql -p', 'mysql -u root -pS3cretPassw0rd -h db.example.com', 'ask'],
+  ['a --password option', 'mysqldump --password=S3cretPassw0rd app > dump.sql', 'ask'],
+  ['a --token option', 'vercel deploy --token Ab12Cd34Ef56Gh78Ij90', 'ask'],
+  ['a JWT bearer token', `curl -H "Authorization: Bearer ${JWT}" https://x.supabase.co/rest/v1/items`, 'ask'],
+  ['an opaque bearer token', 'curl -H "Authorization: Bearer Ab12Cd34Ef56Gh78Ij90Kl12" https://api.example.com', 'ask'],
+  ['a secret in an inline variable', 'API_TOKEN=abcd1234efgh5678ijkl npm run deploy', 'ask'],
+  ['a secret in a PowerShell variable', '$env:STRIPE_SECRET="abcd1234efgh5678ijkl"; npm run deploy', 'ask'],
+  ['a secret in a URL query', 'curl "https://api.example.com/v1/items?access_token=abcd1234efgh5678ijkl"', 'ask'],
+  ['force-adding the local settings file to Git', 'git add -f .claude/settings.local.json', 'deny'],
+  ['force-adding the whole .claude folder', 'git add --force .claude/', 'deny'],
+  ['force-adding everything, ignored files included', 'git add -f -A && git commit -m "all"', 'deny'],
+  ['LEGIT: a local database with its default password', 'psql postgresql://postgres:postgres@localhost:54322/postgres', 'allow'],
+  ['LEGIT: mysql asks for the password itself', 'mysql -u root -p -h db.example.com', 'allow'],
+  ['LEGIT: the token comes from a variable', 'curl -H "Authorization: Bearer $SUPABASE_TOKEN" https://x.supabase.co', 'allow'],
+  ['LEGIT: a variable that copies another variable', 'API_TOKEN=$API_TOKEN npm run deploy', 'allow'],
+  ['LEGIT: an ordinary inline variable', 'NODE_ENV=production npm run build', 'allow'],
+  ['LEGIT: a --token option read from the environment', 'vercel deploy --token "$VERCEL_TOKEN"', 'allow'],
+  ['LEGIT: docker publishes a port', 'docker run -p8080:80 nginx', 'allow'],
+  ['LEGIT: a placeholder in an example command', 'API_KEY=your-api-key-here npm start', 'allow'],
+  ['LEGIT: committing the shared settings file', 'git add .claude/settings.json', 'allow'],
+  ['LEGIT: force-adding one build file', 'git add -f dist/app.js', 'allow'],
+];
+for (const [name, command, expected] of SAVED_SECRET_CASES) {
+  const c = inClaude('Bash', { command });
+  check(`SAVED Bash: ${name} → ${expected}`, says(c) === expected, c.out + c.err);
+}
+r = inClaude('Bash', { command: 'API_TOKEN=abcd1234efgh5678ijkl npm run deploy' });
+check('SAVED: the ask explains that "don\'t ask again" stores the secret in plain text', reason(r).includes('settings.local.json') && reason(r).includes('.env'), reason(r));
+check('SAVED Cursor: a secret in a command → refused (no approval window)', inCursor('Bash', { command: 'API_TOKEN=abcd1234efgh5678ijkl npm run deploy' }).json?.permission === 'deny');
+
 // ---------- ملفات مفاتيح آبل وجوجل في جذر المشروع (Native Prime، raho، toyorsa)
 check('LEAK: Read an Apple .p8 key → deny', says(inClaude('Read', { file_path: join(tmp, 'AuthKey_ABC123.p8') })) === 'deny');
 check('LEAK: Read a Google OAuth client_secret json → deny', says(inClaude('Read', { file_path: join(tmp, 'client_secret_1234-abc.apps.googleusercontent.com.json') })) === 'deny');

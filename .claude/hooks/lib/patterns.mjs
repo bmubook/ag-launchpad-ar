@@ -21,7 +21,7 @@ export const SECRET_HIGH = [
   { name: 'Private key block', re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----/ },
 ];
 
-const PLACEHOLDER_VALUE = /your|example|placeholder|changeme|xxx|dummy|sample|fake|<|\$\{|process\.env|import\.meta\.env|os\.environ|getenv/i;
+export const PLACEHOLDER_VALUE = /your|example|placeholder|changeme|xxx|dummy|sample|fake|<|\$\{|process\.env|import\.meta\.env|os\.environ|getenv/i;
 
 // زمن كل نمط هنا خطي مع حجم النص: نص يُبطئ الحارس حتى تنتهي مهلته يمرّ دون فحص (tests/redos.test.mjs).
 // لذلك تبدأ المطابقة من أول الرمز فقط (lookbehind)، والأجزاء المتغيرة بحد أعلى.

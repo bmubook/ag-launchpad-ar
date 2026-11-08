@@ -13,6 +13,7 @@ import { resolve } from 'node:path';
 import {
   emit, isRealEnvFile, isServiceAccountFile, projectDir, readStdinJson, toProjectRelative,
 } from './common.mjs';
+import { scanSavedCommandSecrets } from './command-secrets.mjs';
 import { hostTraits } from './host.mjs';
 import {
   ASK_PREFIXES, ENFORCEMENT_PATHS, ENV_GLOB, ENV_REFERENCE, INJECTION, INJECTION_SCAN_EXEMPT, MAX_COMMAND_CHARS,
@@ -140,7 +141,7 @@ function checkCommand(command, host) {
   if (text.length > MAX_COMMAND_CHARS) {
     return decide('ask', `🛡️ هذا الأمر طويل جداً (${text.length} حرفاً)، فلا يستطيع الحارس فحصه كاملاً. وافق فقط إذا كنت تعرف ما يفعله؛ الأوامر الطويلة تُكتب عادةً في ملف سكربت يُراجَع قبل تشغيله.`);
   }
-  const decisions = [checkShellCommand(text), scanCommandSecrets(text), checkCommandThreats(text)];
+  const decisions = [checkShellCommand(text), scanCommandSecrets(text), scanSavedCommandSecrets(text), checkCommandThreats(text)];
   // Claude Code و OpenCode يسألان عن هذه الأوامر من قوائم صلاحياتهما؛ الأداة التي بلا قوائم يفحصها الحارس هنا
   const prefix = hostTraits(host).permissionRules ? null : askPrefix(text);
   if (prefix) decisions.push(decide('ask', `⚠️ الأمر «${prefix}» قد يحذف عملاً لا يُسترجع أو يعيد كتابة تاريخ Git، فيحتاج موافقة المستخدم الصريحة.`));

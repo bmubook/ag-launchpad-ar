@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/العربية-أولاً-2dd4a8?style=for-the-badge" alt="Arabic First">
   <img src="https://img.shields.io/badge/Firebase-Standard-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Supabase-Supported-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-  <img src="https://img.shields.io/badge/Version-4.21-f59e0b?style=for-the-badge" alt="Version 4.21">
+  <img src="https://img.shields.io/badge/Version-4.22-f59e0b?style=for-the-badge" alt="Version 4.22">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -592,6 +592,8 @@ claude
 | قراءة مخازن المفاتيح: مفاتيح SSH، حسابات AWS و Google Cloud، ملفات توقيع التطبيقات، وكلمات المرور في سلسلة مفاتيح الماك | 🚫 يُمنع | 🚫 يُمنع | 🚫 يُمنع | قاعدة مكتوبة |
 | كتابة مفتاح سري داخل الكود أو ملفات التوثيق والسجلات | 🚫 يُمنع، ويسألك عند الاشتباه | 🚫 يُمنع، ويسألك عند الاشتباه | 🚫 يُمنع | قاعدة مكتوبة |
 | مفتاح سري داخل أمر طرفية: رسالة إيداع، أو نص يُكتب إلى ملف، أو رابط | 🚫 يُمنع | 🚫 يُمنع | 🚫 يُمنع | قاعدة مكتوبة |
+| سر بلا شكل معروف داخل أمر: كلمة مرور في رابط قاعدة بيانات، رمز Bearer، قيمة في متغير مثل `API_TOKEN=...`. لو وافقت بـ «لا تسأل مجدداً» يُحفظ الأمر بسرّه في `.claude/settings.local.json` | ✋ يتوقف ويسألك، وينبّهك ألا تختار «لا تسأل مجدداً» | ✋ كذلك | 🚫 يُمنع | قاعدة مكتوبة |
+| رفع `.claude/settings.local.json` أو ملفات مستثناة إلى Git بالقوة (`git add -f`) | 🚫 يُمنع | 🚫 يُمنع | 🚫 يُمنع | قاعدة مكتوبة |
 | عرض متغيرات البيئة كلها (`printenv`، `env`، `Get-ChildItem env:`) | ✋ يتوقف ويسألك | ✋ يتوقف ويسألك | 🚫 يُمنع | قاعدة مكتوبة |
 | تعطّل الحارس نفسه (ملف معطوب أو خطأ داخلي) | ✋ يسألك عن كل إجراء ولا يسمح بصمت | ✋ كذلك | 🚫 يُمنع | — |
 | تنزيل سكربت من الإنترنت وتشغيله مباشرة | ✋ يتوقف ويسألك | ✋ يتوقف ويسألك | 🚫 يُمنع | قاعدة مكتوبة |

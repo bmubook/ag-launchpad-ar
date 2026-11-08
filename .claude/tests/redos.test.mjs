@@ -55,7 +55,8 @@ check('RD: stop gate re-scanning every hostile file → done in time', stop.ms <
 
 // ---------- أوامر الطرفية: الحد الأقصى يُفحص في وقته، وما فوقه يُسأل عنه دون فحص
 const bash = (command) => timed(() => runNode('.claude/hooks/guard-secrets.mjs', { session_id: 'r', tool_name: 'Bash', tool_input: { command } }));
-for (const unit of ['curl ', 'iwr ', 'Remove-Item -Recurse ', 'scp a ', 'x=$y=', 'open(']) {
+// والأسرار بلا شكل ثابت (command-secrets.mjs): رموز Bearer وأوامر mysql وأسماء متغيرات سرية وإضافة بالقوة متكررة
+for (const unit of ['curl ', 'iwr ', 'Remove-Item -Recurse ', 'scp a ', 'x=$y=', 'open(', 'Bearer ', 'mysql -x ', 'MY_TOKEN', 'token=', '--password ', 'git add -f ']) {
   const r = bash(repeat(unit, 9_990).slice(0, 9_990));
   check(`RD: a 9,990-character command of "${unit.trim()}" → checked in time`, r.ms < LIMIT_MS && r.code === 0, `${r.ms}ms`);
 }
