@@ -190,5 +190,14 @@ check('G: content really changed by a shell command → notice names that file o
 newTurn('g6');
 write('.agents/new-rule.md', 'تعليمات جديدة\n');
 check('G: a new governance file created by a shell command → notice', blockReason(stop('g6')).includes('.agents/new-rule.md'), stop('g6').out);
+// الدمج على Windows مع core.autocrlf يعيد كتابة ملف كتبته أداة الكتابة بـ LF بنهايات CRLF (كشفه دمج v4.22.0):
+// المحتوى نفسه، فلا تنبيه؛ وتغيير حقيقي مع تغيير نهايات الأسطر يبقى مكشوفاً
+write('.claude/hooks/lib/new-guard.mjs', 'export const a = 1;\nexport const b = 2;\n');
+newTurn('g7');
+write('.claude/hooks/lib/new-guard.mjs', 'export const a = 1;\r\nexport const b = 2;\r\n');
+check('G: only line endings changed (git merge with autocrlf on Windows) → no notice', stop('g7').out === '', stop('g7').out);
+newTurn('g8');
+write('.claude/hooks/lib/new-guard.mjs', 'export const a = 1;\nexport const b = 3;\n');
+check('G: real change plus line-ending change → notice', blockReason(stop('g8')).includes('new-guard.mjs'), stop('g8').out);
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) report();

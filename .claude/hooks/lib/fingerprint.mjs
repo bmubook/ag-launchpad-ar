@@ -55,6 +55,12 @@ function governanceCandidates(root) {
 }
 
 /**
+ * بصمة المحتوى بنهايات أسطر موحّدة: Git على Windows (core.autocrlf) يعيد كتابة ملف LF بنهايات CRLF عند الانتقال
+ * بين الفروع أو الدمج، والمحتوى لم يتغير. latin1 يحفظ كل بايت كما هو، فلا يضيع شيء غير \r قبل \n.
+ */
+const contentHash = (buffer) => createHash('sha256').update(buffer.toString('latin1').replace(/\r\n/g, '\n'), 'latin1').digest('hex');
+
+/**
  * بصمة محتوى كل ملف يطابق أحد patterns: { المسار: sha256 }. وقت التعديل لا يكفي هنا،
  * لأن أوامر Git (الانتقال بين الفروع، الدمج) تعيد كتابة الملفات بالمحتوى نفسه.
  */
@@ -62,7 +68,7 @@ export function fingerprint(root, patterns) {
   const prints = {};
   for (const rel of governanceCandidates(root)) {
     if (!patterns.some((re) => re.test(rel))) continue;
-    try { prints[rel] = createHash('sha256').update(readFileSync(join(root, rel))).digest('hex'); } catch { /* حُذف أثناء المسح */ }
+    try { prints[rel] = contentHash(readFileSync(join(root, rel))); } catch { /* حُذف أثناء المسح */ }
   }
   return prints;
 }
