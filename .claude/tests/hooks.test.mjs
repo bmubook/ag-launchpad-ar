@@ -94,6 +94,10 @@ lessonsCtx = ctx(runNode('.claude/hooks/session-start.mjs', { source: 'startup' 
 check('SS: more than 15 lessons → all shown + merge or prune warning', lessonsCtx.includes('درس رقم 16') && lessonsCtx.includes('تجاوزت حدها (15)'), lessonsCtx);
 const shippedLessons = readFileSync(join(REPO, 'project_map.md'), 'utf8');
 check('TPL: shipped project_map has an empty lessons section 14', shippedLessons.includes('## 14. دروس المشروع') && shippedLessons.includes('| - | لا توجد دروس بعد | - | - |'));
+// فحص الصحة: يقارن الخريطة بالكود (التدفقات المقفلة، الصلاحيات، نموذج البيانات، التقنيات) ويراجع الدروس دون أن يحذف بنفسه
+const healthSkill = readFileSync(join(REPO, '.claude/skills/health-check/SKILL.md'), 'utf8');
+check('SKILL health-check: drift check covers locked flows, who may change, data model and stack', healthSkill.includes('### 2.ب كشف الابتعاد') && ['🔒 مقفل', 'من يحق له التغيير', 'القسم 8', 'القسم 5', 'لا ابتعاد'].every((part) => healthSkill.includes(part)));
+check('SKILL health-check: lessons review proposes add, delete, merge and the 15 limit, never acting alone', healthSkill.includes('### 2.ج مراجعة دروس المشروع') && healthSkill.includes('أكثر من 15 درساً') && healthSkill.includes('لا تحذف درساً ولا تضيفه بنفسك'));
 for (const skill of ['fix', 'document']) {
   check(`SKILL ${skill}: records a lesson in project_map §14`, readFileSync(join(REPO, `.claude/skills/${skill}/SKILL.md`), 'utf8').includes('دروس المشروع'));
 }
