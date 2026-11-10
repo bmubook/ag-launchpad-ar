@@ -71,6 +71,14 @@ const nextSkill = readFileSync(join(REPO, '.claude/skills/next/SKILL.md'), 'utf8
 const contractStep = nextSkill.slice(nextSkill.indexOf('## الخطوة 2.ب'), nextSkill.indexOf('## الخطوة 3'));
 check('SKILL next: flow contract step names its four sentences', ['من يبدأ', 'النتيجة المحفوظة', 'من يحق له التغيير', 'ما يرفضه الاختبار'].every((name) => contractStep.includes(name)), contractStep.slice(0, 200));
 check('SKILL next: the contract is worded for each of the three experience levels', ['مبتدئ تماماً', 'لدي أساسيات', 'مطوّر'].every((level) => contractStep.includes(`\`${level}\``)), contractStep.slice(0, 200));
+// العين الجديدة: قارئ العقد يعمل في production فقط، دون رأي الكاتب، وجولة واحدة؛ والمراجعون الثلاثة يعيدون الصياغة قبل الفحص
+check('SKILL next: production contracts get one fresh-eyes read by contract-reviewer, skipped in prototype', contractStep.includes('`contract-reviewer`') && contractStep.includes('`production`') && contractStep.includes('`prototype`') && contractStep.includes('دون رأيك') && contractStep.includes('جولة واحدة'), contractStep.slice(0, 200));
+const contractReviewer = readFileSync(join(REPO, '.claude/agents/contract-reviewer.md'), 'utf8');
+check('AGENT contract-reviewer: read-only, paraphrases first, at most three questions', /^tools: Read, Grep, Glob\r?$/m.test(contractReviewer) && contractReviewer.indexOf('أعد الصياغة أولاً') < contractReviewer.indexOf('الأسئلة الخمسة') && contractReviewer.includes('**ما فهمته:**') && contractReviewer.includes('ثلاث ملاحظات كحد أقصى'));
+for (const critic of ['security-critic', 'performance-critic', 'ux-critic']) {
+  const text = readFileSync(join(REPO, `.claude/agents/${critic}.md`), 'utf8');
+  check(`AGENT ${critic}: paraphrases the change before the checklist and reports it`, text.indexOf('أعد الصياغة أولاً') > 0 && text.indexOf('أعد الصياغة أولاً') < text.indexOf('طبّق قائمة الفحص') && text.includes('**ما فهمته من التعديل:**'));
+}
 
 // دروس المشروع (القسم 14): تُعرض كلها في كل جلسة حتى لا يتكرر خطأ أُصلح، ولها حد يُنبَّه عند تجاوزه
 check('SS: no lessons recorded → no lessons line', !c.includes('دروس المشروع'), c);
